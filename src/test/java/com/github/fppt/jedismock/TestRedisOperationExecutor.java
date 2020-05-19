@@ -73,6 +73,9 @@ public class TestRedisOperationExecutor {
         assertEquals('-', executor.execCommand(RedisCommandParser.parse(command)).data()[0]);
     }
 
+    private String del(String key){ return executor.execCommand(RedisCommandParser.parse(array("DEL", key))).toString(); }
+    private String set(String key, String value){ return executor.execCommand(RedisCommandParser.parse(array("SET", key, value))).toString(); }
+
     @BeforeEach
     public void initCommandExecutor() {
         //TODO: Mock out the client here
@@ -90,6 +93,99 @@ public class TestRedisOperationExecutor {
         assertCommandOK(array("SET", "ab", "abd"));
         assertCommandEquals("abd", array("GET", "ab"));
         assertCommandNull(array("GET", "ac"));
+    }
+
+    // SET key value NX
+    @Test public void testSetNX() throws ParseErrorException {
+        assertCommandOK(array("SET", "key", "value", "NX"));
+        assertCommandEquals("value", array("GET", "key"));
+        assertCommandNull(array("SET", "key", "value", "NX"));
+        assertCommandEquals(1, array("DEL", "key"));
+    }
+
+    // SET key value XX
+    @Test public void testSetXX() throws ParseErrorException {
+        del("key");
+        assertCommandNull(array("SET", "key", "value", "XX"));
+        assertCommandOK(array("SET", "key", "value"));
+        assertCommandOK(array("SET", "key", "value", "XX"));
+        assertCommandEquals(1, array("DEL", "key"));
+    }
+
+    // SET key value EX s
+    @Test public void testSetEX() throws ParseErrorException, InterruptedException {
+        assertCommandOK(array("SET", "key", "value", "EX", "1"));
+        assertCommandEquals("value", array("GET", "key"));
+        Thread.sleep(1000);
+        assertCommandNull(array("GET", "key"));
+    }
+
+    // SET key value PX ms
+    @Test public void testSetPX() throws ParseErrorException, InterruptedException {
+        assertCommandOK(array("SET", "key", "value", "PX", "1000"));
+        assertCommandEquals("value", array("GET", "key"));
+        Thread.sleep(1000);
+        assertCommandNull(array("GET", "key"));
+    }
+
+    // SET key value EX s NX
+    @Test public void testSetEXNXexpires() throws ParseErrorException, InterruptedException {
+        assertCommandOK(array("SET", "key", "value", "EX", "1", "NX"));
+        assertCommandEquals("value", array("GET", "key"));
+        Thread.sleep(1000);
+        assertCommandNull(array("GET", "key"));
+    }
+    @Test public void testSetEXNXnotexists() throws ParseErrorException {
+        assertCommandOK(array("SET", "key", "value", "EX", "1", "NX"));
+        assertCommandEquals("value", array("GET", "key"));
+        assertCommandNull(array("SET", "key", "value", "EX", "1", "NX"));
+        assertCommandEquals(1, array("DEL", "key"));
+    }
+
+    // SET key value PX ms NX
+    @Test public void testSetPXNXexpires() throws ParseErrorException, InterruptedException {
+        assertCommandOK(array("SET", "key", "value", "PX", "1000", "NX"));
+        assertCommandEquals("value", array("GET", "key"));
+        Thread.sleep(1000);
+        assertCommandNull(array("GET", "key"));
+    }
+    @Test public void testSetPXNXnotexists() throws ParseErrorException {
+        assertCommandOK(array("SET", "key", "value", "PX", "1000", "NX"));
+        assertCommandEquals("value", array("GET", "key"));
+        assertCommandNull(array("SET", "key", "value", "PX", "1000", "NX"));
+        assertCommandEquals(1, array("DEL", "key"));
+    }
+
+    // SET key value EX s XX
+    @Test public void testSetEXXXexpires() throws ParseErrorException, InterruptedException {
+        set("key", "value");
+        assertCommandOK(array("SET", "key", "value", "EX", "1", "XX"));
+        assertCommandEquals("value", array("GET", "key"));
+        Thread.sleep(1000);
+        assertCommandNull(array("GET", "key"));
+    }
+    @Test public void testSetEXXXnotexists() throws ParseErrorException {
+        del("key");
+        assertCommandNull(array("SET", "key", "value", "EX", "1", "XX"));
+        assertCommandOK(array("SET", "key", "value"));
+        assertCommandOK(array("SET", "key", "value", "EX", "1", "XX"));
+        assertCommandEquals(1, array("DEL", "key"));
+    }
+
+    // SET key value PX ms XX
+    @Test public void testSetPXXXexpires() throws ParseErrorException, InterruptedException {
+        set("key", "value");
+        assertCommandOK(array("SET", "key", "value", "PX", "1000", "XX"));
+        assertCommandEquals("value", array("GET", "key"));
+        Thread.sleep(1000);
+        assertCommandNull(array("GET", "key"));
+    }
+    @Test public void testSetPXXXnotexists() throws ParseErrorException {
+        del("key");
+        assertCommandNull(array("SET", "key", "value", "PX", "1000", "XX"));
+        assertCommandOK(array("SET", "key", "value"));
+        assertCommandOK(array("SET", "key", "value", "PX", "1000", "XX"));
+        assertCommandEquals(1, array("DEL", "key"));
     }
 
     @Test
