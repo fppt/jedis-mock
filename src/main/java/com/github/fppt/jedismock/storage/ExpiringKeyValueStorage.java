@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.storage;
 
+import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.server.Slice;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
@@ -7,7 +8,9 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -16,9 +19,10 @@ import java.util.Map;
 @AutoValue
 public abstract class ExpiringKeyValueStorage {
     public abstract Table<Slice, Slice, Slice> values();
+
     public abstract Map<Slice, Long> ttls();
 
-    public static ExpiringKeyValueStorage create(){
+    public static ExpiringKeyValueStorage create() {
         return new AutoValue_ExpiringKeyValueStorage(HashBasedTable.create(), Maps.newHashMap());
     }
 
@@ -27,7 +31,7 @@ public abstract class ExpiringKeyValueStorage {
         values().row(key).clear();
     }
 
-    public void delete(Slice key1, Slice key2){
+    public void delete(Slice key1, Slice key2) {
         Preconditions.checkNotNull(key1);
         Preconditions.checkNotNull(key2);
         values().remove(key1, key2);
@@ -37,20 +41,20 @@ public abstract class ExpiringKeyValueStorage {
         }
     }
 
-    public void clear(){
+    public void clear() {
         values().clear();
         ttls().clear();
     }
 
-    public Slice get(Slice key){
+    public Slice get(Slice key) {
         return get(key, Slice.reserved());
     }
 
-    public Map<Slice, Slice> getFieldsAndValues(Slice hash){
+    public Map<Slice, Slice> getFieldsAndValues(Slice hash) {
         return values().row(hash);
     }
 
-    public Slice get(Slice key1, Slice key2){
+    public Slice get(Slice key1, Slice key2) {
         Preconditions.checkNotNull(key1);
         Preconditions.checkNotNull(key2);
 
@@ -80,15 +84,15 @@ public abstract class ExpiringKeyValueStorage {
         return null;
     }
 
-    public long setTTL(Slice key, long ttl){
+    public long setTTL(Slice key, long ttl) {
         return setDeadline(key, ttl + System.currentTimeMillis());
     }
 
-    public void put(Slice key, Slice value, Long ttl){
+    public void put(Slice key, Slice value, Long ttl) {
         put(key, Slice.reserved(), value, ttl);
     }
 
-    public void put(Slice key1, Slice key2, Slice value, Long ttl){
+    public void put(Slice key1, Slice key2, Slice value, Long ttl) {
         Preconditions.checkNotNull(key1);
         Preconditions.checkNotNull(key2);
         Preconditions.checkNotNull(value);
@@ -130,5 +134,34 @@ public abstract class ExpiringKeyValueStorage {
             }
         }
         return false;
+    }
+
+    public Slice type(Slice slice) {
+        //We also check for ttl here
+        if (!exists(slice)) {
+            return Slice.create("none");
+        }
+
+        Slice value = get(slice, Slice.reserved());
+        if (value == null) {
+            return Slice.create("hash");
+        }
+
+        //0xACED is a magic number denoting a serialized Java object
+        if (value.data()[0] == (byte) 0xAC
+                && value.data()[1] == (byte) 0xED){
+            Object o = Utils.deserializeObject(value);
+            if (o instanceof List){
+                return Slice.create("list");
+            }
+            if (o instanceof Set){
+                return Slice.create("set");
+            }
+            if (o instanceof Map){
+                return Slice.create("zset");
+            }
+            throw new IllegalStateException("Unknown value type");
+        }
+        return Slice.create("string");
     }
 }

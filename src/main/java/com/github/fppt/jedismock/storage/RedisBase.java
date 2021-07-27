@@ -130,4 +130,8 @@ public class RedisBase {
     public boolean exists(Slice slice) {
         return keyValueStorage.exists(slice);
     }
+
+    public Slice type(Slice slice) {
+        return keyValueStorage.type(slice);
+    }
 }

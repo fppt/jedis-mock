@@ -94,6 +94,7 @@ public class OperationFactory {
         TRANSACTIONAL_OPERATIONS.put("zremrangebyscore", RO_zremrangebyscore::new);
         TRANSACTIONAL_OPERATIONS.put("rename", RO_rename::new);
         TRANSACTIONAL_OPERATIONS.put("zscore", RO_zscore::new);
+        TRANSACTIONAL_OPERATIONS.put("type", RO_type::new);
     }
 
 
