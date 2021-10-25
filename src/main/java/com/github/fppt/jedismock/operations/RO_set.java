@@ -42,10 +42,10 @@ class RO_set extends AbstractRedisOperation {
         }
     }
 
-    private static final Slice NX = Slice.create("NX");
-    private static final Slice XX = Slice.create("XX");
-    private static final Slice EX = Slice.create("EX");
-    private static final Slice PX = Slice.create("PX");
+    private static final Slice NX = Slice.create("nx");
+    private static final Slice XX = Slice.create("xx");
+    private static final Slice EX = Slice.create("ex");
+    private static final Slice PX = Slice.create("px");
 
     private boolean nx(){
         int size = params().size();
