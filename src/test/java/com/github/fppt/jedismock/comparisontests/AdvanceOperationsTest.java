@@ -46,7 +46,7 @@ public class AdvanceOperationsTest {
     }
 
     @TestTemplate
-    public void whenSubscribingToAChannel_EnsurePublishedMessagesAreReceived(Jedis jedis) throws InterruptedException {
+    public void whenSubscribingToAChannel_EnsurePublishedMessagesAreReceived(Jedis jedis) throws InterruptedException, ExecutionException {
         String channel = "normalbob";
         String message = "SUPERBOB";
 
@@ -56,23 +56,23 @@ public class AdvanceOperationsTest {
 
         Client client = jedis.getClient();
         Jedis subscriber = new Jedis(client.getHost(), client.getPort());
+        CountDownLatch subscribeLatch = new CountDownLatch(1);
+        Future<?> submit = subsciberThread.submit(() -> {
+            subscribeLatch.countDown();
+            subscriber.subscribe(mockSubscriber, channel);
 
-        subsciberThread.submit(() -> subscriber.subscribe(mockSubscriber, channel));
-
+        });
+        subscribeLatch.await();
         //Give some time to subscribe
-        Thread.sleep(500);
+        Thread.sleep(100);
 
         //publish message
         jedis.publish(channel, message);
-
-        //Give some time for the message to go through
-        Thread.sleep(100);
-
+        //Getters block until message goes through
         assertEquals(channel, mockSubscriber.latestChannel());
         assertEquals(message, mockSubscriber.latestMessage());
-
         mockSubscriber.unsubscribe();
-        subsciberThread.shutdownNow();
+        submit.get();
     }
 
     @TestTemplate

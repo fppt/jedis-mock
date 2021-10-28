@@ -45,7 +45,7 @@
         <guava.version>19.0</guava.version>
         <junit.version>5.5.2</junit.version>
         <jedis.version>3.6.0</jedis.version>
-        <testcontainers.version>1.15.3</testcontainers.version>
+        <testcontainers.version>1.16.2</testcontainers.version>
         <spotbugs.version>4.2.3</spotbugs.version>
         <slf4j.version>1.7.20</slf4j.version>
         <auto-value.version>1.6.2</auto-value.version>
