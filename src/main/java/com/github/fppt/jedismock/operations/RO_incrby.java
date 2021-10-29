@@ -7,6 +7,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
+@TxOperation("incrby")
 class RO_incrby extends RO_incrOrDecrBy {
     RO_incrby(RedisBase base, List<Slice> params) {
         super(base, params);

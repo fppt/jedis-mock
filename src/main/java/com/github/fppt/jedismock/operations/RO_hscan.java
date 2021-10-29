@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@TxOperation("hscan")
 public class RO_hscan extends RO_scan {
     private Slice keySlice;
 

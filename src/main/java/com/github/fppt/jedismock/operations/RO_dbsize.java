@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
+@TxOperation("dbsize")
 class RO_dbsize extends AbstractRedisOperation {
     RO_dbsize(RedisBase base, List<Slice> params) {
         super(base, params);

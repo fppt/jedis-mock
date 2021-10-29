@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.server.Slice;
 
 import java.util.List;
 
+@TxOperation("pttl")
 class RO_pttl extends RO_ttl {
     RO_pttl(RedisBase base, List<Slice> params) {
         super(base, params);

@@ -8,6 +8,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToNonNegativeInteger;
 
+@TxOperation("getbit")
 class RO_getbit extends AbstractRedisOperation {
     RO_getbit(RedisBase base, List<Slice> params) {
         super(base, params);

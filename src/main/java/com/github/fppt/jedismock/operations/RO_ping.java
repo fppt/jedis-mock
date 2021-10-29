@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
+@TxOperation("ping")
 class RO_ping extends AbstractRedisOperation {
     RO_ping(RedisBase base, List<Slice> params) {
         super(base, params);

@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Set;
 
+@TxOperation("sismember")
 public class RO_sismember extends AbstractRedisOperation {
 
     RO_sismember(RedisBase base, List<Slice> params) {

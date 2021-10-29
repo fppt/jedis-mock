@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import java.util.LinkedList;
 import java.util.List;
 
+@TxOperation("rpush")
 class RO_rpush extends RO_add<LinkedList<Slice>> {
     RO_rpush(RedisBase base, List<Slice> params) {
         super(base, params);

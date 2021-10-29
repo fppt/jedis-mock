@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import java.util.LinkedList;
 import java.util.List;
 
+@TxOperation("llen")
 class RO_llen extends AbstractRedisOperation {
     RO_llen(RedisBase base, List<Slice> params) {
         super(base, params);

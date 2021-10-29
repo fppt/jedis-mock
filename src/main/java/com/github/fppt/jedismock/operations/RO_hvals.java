@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+@TxOperation("hvals")
 public class RO_hvals extends AbstractRedisOperation {
     public RO_hvals(RedisBase base, List<Slice> params) {
         super(base, params);

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@TxOperation("zscore")
 class RO_zscore extends AbstractRedisOperation {
     
     RO_zscore(RedisBase base, List<Slice> params) {

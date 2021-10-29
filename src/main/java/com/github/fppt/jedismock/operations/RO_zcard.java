@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@TxOperation("zcard")
 class RO_zcard extends AbstractRedisOperation {
 
     RO_zcard(RedisBase base, List<Slice> params) {

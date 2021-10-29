@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
+@TxOperation("hmget")
 public class RO_hmget extends AbstractRedisOperation {
     public RO_hmget(RedisBase base, List<Slice> params) {
         super(base, params);

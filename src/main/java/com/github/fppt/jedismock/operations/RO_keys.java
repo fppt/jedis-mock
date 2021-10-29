@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
+@TxOperation("keys")
 class RO_keys extends AbstractRedisOperation {
     RO_keys(RedisBase base, List<Slice> params) {
         super(base, params);

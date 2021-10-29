@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.server.Slice;
 
 import java.util.List;
 
+@TxOperation("decr")
 class RO_decr extends RO_decrby {
     RO_decr(RedisBase base, List<Slice> params) {
         super(base, params);

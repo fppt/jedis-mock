@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@TxOperation("sscan")
 class RO_sscan extends RO_scan {
 
     RO_sscan(RedisBase base, List<Slice> params) {

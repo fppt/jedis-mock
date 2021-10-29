@@ -12,6 +12,7 @@ import java.util.Set;
 
 import static com.github.fppt.jedismock.Utils.deserializeObject;
 
+@TxOperation("sinter")
 class RO_sinter extends AbstractRedisOperation {
     RO_sinter(RedisBase base, List<Slice> params) {
         super(base, params);

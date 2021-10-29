@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@TxOperation("set")
 class RO_set extends AbstractRedisOperation {
     private final List<String> additionalParams;
 

@@ -10,6 +10,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
+@TxOperation("brpoplpush")
 class RO_brpoplpush extends RO_rpoplpush {
     private long count = 0L;
 

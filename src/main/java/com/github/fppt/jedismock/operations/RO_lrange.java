@@ -11,6 +11,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
+@TxOperation("lrange")
 class RO_lrange extends AbstractRedisOperation {
     RO_lrange(RedisBase base, List<Slice> params) {
         super(base, params);

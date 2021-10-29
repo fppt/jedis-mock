@@ -9,6 +9,7 @@ import java.util.Map;
 
 import static com.github.fppt.jedismock.Utils.serializeObject;
 
+@TxOperation("zrem")
 class RO_zrem extends AbstractRedisOperation {
 
     RO_zrem(RedisBase base, List<Slice> params) {

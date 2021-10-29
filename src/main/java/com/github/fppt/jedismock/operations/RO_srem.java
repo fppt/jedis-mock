@@ -9,6 +9,7 @@ import java.util.Set;
 
 import static com.github.fppt.jedismock.Utils.serializeObject;
 
+@TxOperation("srem")
 class RO_srem extends AbstractRedisOperation {
 
 

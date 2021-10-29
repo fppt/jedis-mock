@@ -10,6 +10,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.server.Response.NULL;
 
+@TxOperation("rpoplpush")
 class RO_rpoplpush extends AbstractRedisOperation {
     RO_rpoplpush(RedisBase base, List<Slice> params) {
         super(base, params);

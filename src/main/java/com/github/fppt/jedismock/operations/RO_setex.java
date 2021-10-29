@@ -8,6 +8,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
+@TxOperation("setex")
 class RO_setex extends RO_set {
     RO_setex(RedisBase base, List<Slice> params) {
         super(base, params);

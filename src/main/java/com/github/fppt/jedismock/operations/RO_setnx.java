@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
+@TxOperation("setnx")
 class RO_setnx extends AbstractRedisOperation {
     RO_setnx(RedisBase base, List<Slice> params) {
         super(base, params);

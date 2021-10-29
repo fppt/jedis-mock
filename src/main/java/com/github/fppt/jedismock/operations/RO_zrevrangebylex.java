@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@TxOperation("zrevrangebylex")
 class RO_zrevrangebylex extends RO_zrangebylex {
 
     RO_zrevrangebylex(RedisBase base, List<Slice> params) {
