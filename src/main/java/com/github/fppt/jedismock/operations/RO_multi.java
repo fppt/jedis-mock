@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.server.Slice;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
+@MetaOperation("multi")
 public class RO_multi implements RedisOperation {
     private OperationExecutorState state;
 

@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
+@MetaOperation("subscribe")
 public class RO_subscribe extends AbstractRedisOperation {
     private OperationExecutorState state;
 

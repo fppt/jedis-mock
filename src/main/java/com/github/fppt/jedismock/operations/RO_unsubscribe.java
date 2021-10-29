@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+@MetaOperation("unsubscribe")
 public class RO_unsubscribe extends AbstractRedisOperation {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RO_unsubscribe.class);
     private OperationExecutorState state;

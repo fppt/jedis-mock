@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
+@MetaOperation("select")
 public class RO_select implements RedisOperation {
     private OperationExecutorState state;
     private List<Slice> params;
