@@ -1,42 +1,52 @@
 package com.github.fppt.jedismock.storage;
 
 import com.github.fppt.jedismock.Utils;
-import com.github.fppt.jedismock.server.Slice;
-import com.google.auto.value.AutoValue;
+import com.github.fppt.jedismock.datastructures.RMDataStructure;
+import com.github.fppt.jedismock.datastructures.RMSortedSet;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+public class ExpiringKeyValueStorage {
+    private final Map<Slice, RMDataStructure> values = new HashMap<>();
+    private final Map<Slice, Long> ttls = new HashMap<>();
 
-/**
- * Used to represent an expiring storage layer.
- */
-@AutoValue
-public abstract class ExpiringKeyValueStorage {
-    public abstract Table<Slice, Slice, Slice> values();
+    public Map<Slice, RMDataStructure> values() {
+        return values;
+    }
 
-    public abstract Map<Slice, Long> ttls();
-
-    public static ExpiringKeyValueStorage create() {
-        return new AutoValue_ExpiringKeyValueStorage(HashBasedTable.create(), Maps.newHashMap());
+    public Map<Slice, Long> ttls()  {
+        return ttls;
     }
 
     public void delete(Slice key) {
         ttls().remove(key);
-        values().row(key).clear();
+        values().remove(key);
     }
 
     public void delete(Slice key1, Slice key2) {
-        Preconditions.checkNotNull(key1);
         Preconditions.checkNotNull(key2);
-        values().remove(key1, key2);
 
-        if (!values().containsRow(key1)) {
+        if (!verifyKey(key1)) {
+            return;
+        }
+        RMSortedSet sortedSetByKey = getRMSortedSet(key1);
+        Map<Slice, Slice> storedData = sortedSetByKey.getStoredData();
+
+        if (!storedData.containsKey(key2)) {
+            return;
+        }
+        storedData.remove(key2);
+
+        if(storedData.isEmpty()) {
+            values.remove(key1);
+        }
+
+        if (!values().containsKey(key1)) {
             ttls().remove(key1);
         }
     }
@@ -46,24 +56,63 @@ public abstract class ExpiringKeyValueStorage {
         ttls().clear();
     }
 
-    public Slice get(Slice key) {
-        return get(key, Slice.reserved());
+    public RMDataStructure getValue(Slice key) {
+        if(!verifyKey(key)) {
+            return null;
+        }
+        return values().get(key);
+    }
+
+    public Slice getSlice(Slice key) {
+        if(!verifyKey(key)) {
+            return null;
+        }
+        RMDataStructure valueByKey = values.get(key);
+        if(!(valueByKey instanceof Slice)) {
+            valueByKey.raiseTypeCastException();
+        }
+
+        return (Slice) valueByKey;
     }
 
     public Map<Slice, Slice> getFieldsAndValues(Slice hash) {
-        return values().row(hash);
+        if(!verifyKey(hash)) {
+            return new HashMap<>();
+        }
+        return getRMSortedSet(hash).getStoredData();
     }
 
-    public Slice get(Slice key1, Slice key2) {
-        Preconditions.checkNotNull(key1);
+    public Slice getSlice(Slice key1, Slice key2) {
         Preconditions.checkNotNull(key2);
 
-        Long deadline = ttls().get(key1);
-        if (deadline != null && deadline != -1 && deadline <= System.currentTimeMillis()) {
-            delete(key1);
+        if(!verifyKey(key1)) {
+            return null;
+        };
+        RMSortedSet sortedSet = getRMSortedSet(key1);
+
+        if(!sortedSet.getStoredData().containsKey(key2)) {
             return null;
         }
-        return values().get(key1, key2);
+        return sortedSet.getStoredData().get(key2);
+    }
+
+    private boolean verifyKey(Slice key) {
+        Preconditions.checkNotNull(key);
+
+        if(!values().containsKey(key)) {
+            return false;
+        }
+
+        if (isKeyOutdated(key)) {
+            delete(key);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isKeyOutdated(Slice key) {
+        Long deadline = ttls().get(key);
+        return deadline != null && deadline != -1 && deadline <= System.currentTimeMillis();
     }
 
     public Long getTTL(Slice key) {
@@ -88,27 +137,56 @@ public abstract class ExpiringKeyValueStorage {
         return setDeadline(key, ttl + System.currentTimeMillis());
     }
 
-    public void put(Slice key, Slice value, Long ttl) {
-        put(key, Slice.reserved(), value, ttl);
+    public void put(Slice key, RMDataStructure value, Long ttl) {
+        values().put(key, value);
+        configureTTL(key, ttl);
     }
 
+        // Put inside
+    public void put(Slice key, Slice value, Long ttl) {
+        Preconditions.checkNotNull(key);
+        Preconditions.checkNotNull(value);
+        values().put(key, value);
+        configureTTL(key, ttl);
+    }
+
+    // Put into inner RMHMap
     public void put(Slice key1, Slice key2, Slice value, Long ttl) {
         Preconditions.checkNotNull(key1);
         Preconditions.checkNotNull(key2);
         Preconditions.checkNotNull(value);
+        RMSortedSet mapByKey = null;
+        if(!values.containsKey(key1)) {
+            mapByKey = new RMSortedSet(null);
+            values.put(key1, mapByKey);
+        } else {
+            mapByKey = getRMSortedSet(key1);
+        }
+        mapByKey.put(key2, value);
+        configureTTL(key1, ttl);
+    }
 
-        values().put(key1, key2, value);
+    private RMSortedSet getRMSortedSet(Slice key) {
+        RMDataStructure valueByKey = values.get(key);
+        if(!isSortedSetValue(valueByKey)) {
+            valueByKey.raiseTypeCastException();
+        }
+
+        return (RMSortedSet) valueByKey;
+    }
+
+    private void configureTTL(Slice key, Long ttl) {
         if (ttl == null) {
             // If a TTL hasn't been provided, we don't want to override the TTL. However, if no TTL is set for this key,
             // we should still set it to -1L
-            if (getTTL(key1) == null) {
-                setDeadline(key1, -1L);
+            if (getTTL(key) == null) {
+                setDeadline(key, -1L);
             }
         } else {
             if (ttl != -1) {
-                setTTL(key1, ttl);
+                setTTL(key, ttl);
             } else {
-                setDeadline(key1, -1L);
+                setDeadline(key, -1L);
             }
         }
     }
@@ -116,7 +194,7 @@ public abstract class ExpiringKeyValueStorage {
     public long setDeadline(Slice key, long deadline) {
         Preconditions.checkNotNull(key);
 
-        if (values().containsRow(key)) {
+        if (values().containsKey(key)) {
             ttls().put(key, deadline);
             return 1L;
         }
@@ -124,10 +202,10 @@ public abstract class ExpiringKeyValueStorage {
     }
 
     public boolean exists(Slice slice) {
-        if (values().containsRow(slice)) {
+        if (values().containsKey(slice)) {
             Long deadline = ttls().get(slice);
             if (deadline != null && deadline != -1 && deadline <= System.currentTimeMillis()) {
-                delete(slice, Slice.reserved());
+                delete(slice);
                 return false;
             } else {
                 return true;
@@ -136,16 +214,27 @@ public abstract class ExpiringKeyValueStorage {
         return false;
     }
 
-    public Slice type(Slice slice) {
+    private boolean isSortedSetValue(RMDataStructure value) {
+        return value instanceof RMSortedSet;
+    }
+
+    public Slice type(Slice key) {
         //We also check for ttl here
-        if (!exists(slice)) {
+        if (!verifyKey(key)) {
             return Slice.create("none");
         }
 
-        Slice value = get(slice, Slice.reserved());
-        if (value == null) {
+        RMDataStructure valueByKey = getValue(key);
+
+        if (valueByKey == null) {
             return Slice.create("hash");
         }
+
+        if(isSortedSetValue(valueByKey)) {
+            return Slice.create("hash");
+        }
+
+        Slice value = (Slice) valueByKey;
 
         //0xACED is a magic number denoting a serialized Java object
         if (value.data()[0] == (byte) 0xAC

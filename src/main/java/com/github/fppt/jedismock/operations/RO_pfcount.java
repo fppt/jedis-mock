@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.google.common.collect.Sets;
 
@@ -18,7 +18,7 @@ class RO_pfcount extends AbstractRedisOperation {
     Slice response() {
         Set<Slice> set = Sets.newHashSet();
         for (Slice key : params()) {
-            Slice data = base().getValue(key);
+            Slice data = base().getSlice(key);
             if (data == null) {
                 continue;
             }

@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.Iterator;
@@ -21,7 +21,7 @@ class RO_lrem extends AbstractRedisOperation {
         Slice key = params().get(0);
         int numRemove = convertToInteger(new String(params().get(1).data()));
         Slice target = params().get(2);
-        Slice data = base().getValue(key);
+        Slice data = base().getSlice(key);
 
         if(data == null){
             return Response.integer(0);
@@ -48,7 +48,7 @@ class RO_lrem extends AbstractRedisOperation {
             }
         }
 
-        base().putValue(key, serializeObject(list));
+        base().putSlice(key, serializeObject(list));
 
         return Response.integer(numRemoved);
     }

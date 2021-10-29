@@ -1,19 +1,52 @@
 package com.github.fppt.jedismock.server;
 
-import com.google.auto.value.AutoValue;
-
 /**
  * Created by Xiaolu on 2015/4/22.
  */
-@AutoValue
-public abstract class ServiceOptions {
-    public abstract int autoCloseOn();
+public class ServiceOptions {
+    private final int autoCloseOn;
+
+    private ServiceOptions(
+            int autoCloseOn) {
+        this.autoCloseOn = autoCloseOn;
+    }
+
+    public int autoCloseOn() {
+        return autoCloseOn;
+    }
+
+    @Override
+    public String toString() {
+        return "ServiceOptions{"
+                + "autoCloseOn=" + autoCloseOn
+                + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof ServiceOptions) {
+            ServiceOptions that = (ServiceOptions) o;
+            return (this.autoCloseOn == that.autoCloseOn());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int h$ = 1;
+        h$ *= 1000003;
+        h$ ^= autoCloseOn;
+        return h$;
+    }
 
     public static ServiceOptions defaultOptions() {
-        return new AutoValue_ServiceOptions(0);
+        return new ServiceOptions(0);
     }
 
     public static ServiceOptions create(int autoCloseOn) {
-        return new AutoValue_ServiceOptions(autoCloseOn);
+        return new ServiceOptions(autoCloseOn);
     }
 }

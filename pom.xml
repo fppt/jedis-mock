@@ -48,7 +48,6 @@
         <testcontainers.version>1.16.2</testcontainers.version>
         <spotbugs.version>4.2.3</spotbugs.version>
         <slf4j.version>1.7.20</slf4j.version>
-        <auto-value.version>1.6.2</auto-value.version>
     </properties>
 
     <distributionManagement>
@@ -111,18 +110,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
-        </dependency>
-        <!-- Used For immutable data objects -->
-        <dependency>
-            <groupId>com.google.auto.value</groupId>
-            <artifactId>auto-value-annotations</artifactId>
-            <version>${auto-value.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.auto.value</groupId>
-            <artifactId>auto-value</artifactId>
-            <version>${auto-value.version}</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -209,10 +196,6 @@
                 <version>3.7</version>
                 <configuration>
                     <verbose>true</verbose>
-                    <excludes>
-                        <!-- Skip generated classes, we only care about code we write -->
-                        <exclude>**/AutoValue_**.java</exclude>
-                    </excludes>
                     <rulesets>
                         <ruleset>${user.dir}/pmd-rules.xml</ruleset>
                     </rulesets>

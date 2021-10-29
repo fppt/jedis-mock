@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -18,7 +18,7 @@ class RO_smembers extends AbstractRedisOperation {
 
     Slice response() {
         Slice key = params().get(0);
-        Slice data = base().getValue(key);
+        Slice data = base().getSlice(key);
         //Has to be a list because Jedis can only deserialize lists
         LinkedList<Slice> set;
         if (data != null) {

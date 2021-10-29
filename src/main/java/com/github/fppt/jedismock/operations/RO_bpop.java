@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.server.SliceParser;
 import com.github.fppt.jedismock.storage.RedisBase;
 
@@ -20,6 +20,8 @@ abstract class RO_bpop extends AbstractRedisOperation {
     }
 
     abstract RO_pop popper(List<Slice> params);
+
+    abstract List<Slice> getDataFromBase(Slice key);
 
     void doOptionalWork() {
         source = null;

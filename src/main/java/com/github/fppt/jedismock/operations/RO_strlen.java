@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -12,7 +12,7 @@ class RO_strlen extends AbstractRedisOperation {
     }
 
     Slice response() {
-        Slice value = base().getValue(params().get(0));
+        Slice value = base().getSlice(params().get(0));
         if (value == null) {
             return Response.integer(0);
         }

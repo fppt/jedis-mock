@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.server;
 
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.EOFException;
 import com.github.fppt.jedismock.exception.ParseErrorException;
 import com.google.common.annotations.VisibleForTesting;

@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -15,11 +15,11 @@ class RO_hincrby extends AbstractRedisOperation {
 
     Slice hsetValue(Slice key1, Slice key2, Slice value) {
         long numericValue = convertToLong(String.valueOf(value));
-        Slice foundValue = base().getValue(key1, key2);
+        Slice foundValue = base().getSlice(key1, key2);
         if (foundValue != null) {
             numericValue = convertToLong(new String(foundValue.data())) + numericValue;
         }
-        base().putValue(key1, key2, Slice.create(String.valueOf(numericValue)), -1L);
+        base().putSlice(key1, key2, Slice.create(String.valueOf(numericValue)), -1L);
         return Response.integer(numericValue);
     }
 

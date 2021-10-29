@@ -1,11 +1,10 @@
 package com.github.fppt.jedismock.operations;
 
+import com.github.fppt.jedismock.datastructures.RMList;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.google.common.collect.Lists;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
@@ -17,7 +16,8 @@ class RO_lindex extends AbstractRedisOperation {
 
     Slice response() {
         Slice key = params().get(0);
-        LinkedList<Slice> list = getDataFromBase(key, Lists.newLinkedList());
+        RMList listDBObj = getListFromBase(key);
+        List<Slice> list = listDBObj.getStoredData();
         if(list.isEmpty()) return Response.NULL;
 
         int index = convertToInteger(params().get(1).toString());

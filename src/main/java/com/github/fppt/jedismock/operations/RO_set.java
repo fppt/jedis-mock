@@ -2,7 +2,7 @@ package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -22,7 +22,7 @@ class RO_set extends AbstractRedisOperation {
         Slice value = params().get(1);
 
         if (nx()) {
-            Slice old = base().getValue(key);
+            Slice old = base().getSlice(key);
             if (old == null) {
                 base().putValue(key, value, ttl());
                 return Response.OK;
@@ -30,7 +30,7 @@ class RO_set extends AbstractRedisOperation {
                 return Response.NULL;
             }
         } else if (xx()) {
-            Slice old = base().getValue(key);
+            Slice old = base().getSlice(key);
             if (old == null) {
                 return Response.NULL;
             } else {

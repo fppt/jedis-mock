@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.server;
 
 import com.github.fppt.jedismock.commands.RedisCommand;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.operations.OperationFactory;
 import com.github.fppt.jedismock.operations.RedisOperation;

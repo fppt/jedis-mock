@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.Collection;
@@ -16,12 +16,14 @@ abstract class RO_pop<V extends Collection<Slice>> extends AbstractRedisOperatio
 
     abstract Slice popper(V list);
 
+    abstract V getDataFromBase(Slice key);
+
     Slice response() {
         Slice key = params().get(0);
-        V list = getDataFromBase(key, null);
-        if(list == null || list.isEmpty()) return Response.NULL;
-        Slice v = popper(list);
-        base().putValue(key, serializeObject(list));
+        V collection = getDataFromBase(key);
+        if(collection == null || collection.isEmpty()) return Response.NULL;
+        Slice v = popper(collection);
+        base().putSlice(key, serializeObject(collection));
         return Response.bulkString(v);
     }
 }

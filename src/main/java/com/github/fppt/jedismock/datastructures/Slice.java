@@ -1,38 +1,32 @@
-package com.github.fppt.jedismock.server;
+package com.github.fppt.jedismock.datastructures;
 
-import com.google.auto.value.AutoValue;
+
+import com.github.fppt.jedismock.exception.WrongValueTypeException;
 
 import java.io.Serializable;
 import java.util.Arrays;
 
-/**
- * Created by Xiaolu on 2015/4/23.
- */
-@AutoValue
-public abstract class Slice implements Comparable<Slice>, Serializable {
-    private static final String RESERVED_SLICE_NAME = "Reserved String In Jedis Mock";
-    private static final byte[] RESERVED_SLICE_BYTES = RESERVED_SLICE_NAME.getBytes();
-    private static Slice RESERVED_SLICE = null;
-
+public class Slice implements RMDataStructure, Comparable<Slice>, Serializable {
     private static final long serialVersionUID = 247772234876073528L;
-    public abstract byte[] data();
+    private final byte[] data;
+
+    private Slice(byte[] data) {
+        if (data == null) {
+            throw new NullPointerException("Null data");
+        }
+        this.data = data;
+    }
 
     public static Slice create(byte[] data){
-        if(Arrays.equals(data, RESERVED_SLICE_BYTES)){
-           throw new RuntimeException("Cannot create key/value in mock due to [" + RESERVED_SLICE_NAME + "] being reserved");
-        }
-        return new AutoValue_Slice(data);
+        return new Slice(data);
     }
 
     public static Slice create(String data){
         return create(data.getBytes().clone());
     }
 
-    public static synchronized Slice reserved(){
-        if (RESERVED_SLICE == null){
-            RESERVED_SLICE = new AutoValue_Slice(RESERVED_SLICE_BYTES);
-        }
-        return RESERVED_SLICE;
+    public byte[] data() {
+        return Arrays.copyOf(data, data.length);
     }
 
     public int length(){
@@ -52,6 +46,11 @@ public abstract class Slice implements Comparable<Slice>, Serializable {
     @Override
     public int hashCode() {
         return Arrays.hashCode(data());
+    }
+
+    @Override
+    public void raiseTypeCastException() {
+        throw new WrongValueTypeException("WRONGTYPE Slice value is used in the wrong place");
     }
 
     public int compareTo(Slice b) {
