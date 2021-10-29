@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

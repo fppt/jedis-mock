@@ -1,10 +1,10 @@
 package com.github.fppt.jedismock.operations;
 
+import com.github.fppt.jedismock.datastructures.RMHMap;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +17,8 @@ class RO_zcard extends AbstractRedisOperation {
     @Override
     Slice response() {
         Slice key = params().get(0);
-        Map<Slice, Double> map = getDataFromBase(key, new LinkedHashMap<>());
+        final RMHMap mapDBObj = getHMapFromBase(key);
+        final Map<Slice, Double> map = mapDBObj.getStoredData();
         if (map == null || map.isEmpty()) return Response.integer(0);
         return Response.integer(map.size());
     }

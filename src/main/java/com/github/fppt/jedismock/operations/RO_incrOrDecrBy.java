@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -18,14 +18,14 @@ abstract class RO_incrOrDecrBy extends AbstractRedisOperation {
     Slice response() {
         Slice key = params().get(0);
         long d = incrementOrDecrementValue(params());
-        Slice v = base().getValue(key);
+        Slice v = base().getSlice(key);
         if (v == null) {
-            base().putValue(key, Slice.create(String.valueOf(d)));
+            base().putSlice(key, Slice.create(String.valueOf(d)));
             return Response.integer(d);
         }
 
         long r = convertToLong(new String(v.data())) + d;
-        base().putValueWithoutClearingTtl(key, Slice.create(String.valueOf(r)));
+        base().putSliceWithoutClearingTtl(key, Slice.create(String.valueOf(r)));
         return Response.integer(r);
     }
 }

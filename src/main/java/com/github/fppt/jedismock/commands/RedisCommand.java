@@ -1,23 +1,53 @@
 package com.github.fppt.jedismock.commands;
 
-import com.github.fppt.jedismock.server.Slice;
-import com.google.auto.value.AutoValue;
-import com.google.common.collect.Lists;
+import com.github.fppt.jedismock.datastructures.Slice;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@AutoValue
-public abstract class RedisCommand {
+public class RedisCommand {
 
-    public abstract List<Slice> parameters();
+    private final List<Slice> parameters;
 
-    public static RedisCommand create(){
-        return new AutoValue_RedisCommand(Lists.newArrayList());
+    private RedisCommand(
+            List<Slice> parameters) {
+        if (parameters == null) {
+            throw new NullPointerException("Null parameters");
+        }
+        this.parameters = parameters;
+    }
+
+    public List<Slice> parameters() {
+        return parameters;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof RedisCommand) {
+            RedisCommand that = (RedisCommand) o;
+            return (this.parameters.equals(that.parameters()));
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int h$ = 1;
+        h$ *= 1000003;
+        h$ ^= parameters.hashCode();
+        return h$;
     }
 
     @Override
     public String toString(){
         return parameters().stream().map(Slice::toString).collect(Collectors.joining(" "));
+    }
+
+    public static RedisCommand create(){
+        return new RedisCommand(new ArrayList<>());
     }
 }

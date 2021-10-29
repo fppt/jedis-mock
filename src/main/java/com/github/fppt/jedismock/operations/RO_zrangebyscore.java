@@ -1,11 +1,11 @@
 package com.github.fppt.jedismock.operations;
 
+import com.github.fppt.jedismock.datastructures.RMHMap;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -22,7 +22,8 @@ public class RO_zrangebyscore extends AbstractByScoreOperation {
     @Override
     Slice response() {
         final Slice key = params().get(0);
-        final LinkedHashMap<Slice, Double> map = getDataFromBase(key, new LinkedHashMap<>());
+        final RMHMap mapDBObj = getHMapFromBase(key);
+        final Map<Slice, Double> map = mapDBObj.getStoredData();
 
         if (map == null || map.isEmpty()) return
                 Response.array(Collections.emptyList());

@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.Arrays;
@@ -16,7 +16,7 @@ class RO_setbit extends AbstractRedisOperation {
     }
 
     Slice response() {
-        Slice value = base().getValue(params().get(0));
+        Slice value = base().getSlice(params().get(0));
 
         byte bit = convertToByte(params().get(2).toString());
         int pos = convertToNonNegativeInteger(params().get(1).toString());
@@ -25,7 +25,7 @@ class RO_setbit extends AbstractRedisOperation {
             byte[] data = new byte[pos / 8 + 1];
             Arrays.fill(data, (byte) 0);
             data[pos / 8] = (byte) (bit << (pos % 8));
-            base().putValue(params().get(0), Slice.create(data));
+            base().putSlice(params().get(0), Slice.create(data));
             return Response.integer(0L);
         }
 
@@ -38,7 +38,7 @@ class RO_setbit extends AbstractRedisOperation {
             }
             data[pos / 8] = (byte) (bit << (pos % 8));
             original = 0;
-            base().putValue(params().get(0), Slice.create(data));
+            base().putSlice(params().get(0), Slice.create(data));
         } else {
             byte[] data = value.data();
             if ((data[pos / 8] & (1 << (pos % 8))) != 0) {
@@ -48,7 +48,7 @@ class RO_setbit extends AbstractRedisOperation {
             }
             data[pos / 8] |= (byte) (1 << (pos % 8));
             data[pos / 8] &= (byte) (bit << (pos % 8));
-            base().putValue(params().get(0), Slice.create(data));
+            base().putSlice(params().get(0), Slice.create(data));
         }
         return Response.integer(original);
     }

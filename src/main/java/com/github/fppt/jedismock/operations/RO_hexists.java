@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public class RO_hexists extends AbstractRedisOperation {
     }
 
     Slice response() {
-        if (base().getValue(params().get(0), params().get(1)) == null){
+        if (base().getSlice(params().get(0), params().get(1)) == null){
             return Response.integer(0);
         }
         return Response.integer(1);

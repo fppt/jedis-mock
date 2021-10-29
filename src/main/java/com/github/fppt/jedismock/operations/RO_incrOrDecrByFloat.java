@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.math.BigDecimal;
@@ -16,7 +16,7 @@ abstract class RO_incrOrDecrByFloat extends AbstractRedisOperation {
         Slice key = params().get(0);
         BigDecimal numericValue = new BigDecimal(params().get(1).toString());
 
-        Slice foundValue = base().getValue(key);
+        Slice foundValue = base().getSlice(key);
         if (foundValue != null) {
             numericValue = numericValue.add(new BigDecimal((new String(foundValue.data()))));
         }
@@ -25,7 +25,7 @@ abstract class RO_incrOrDecrByFloat extends AbstractRedisOperation {
                 ? numericValue.intValue() : numericValue);
 
         Slice res = Slice.create(data);
-        base().putValue(key, res);
+        base().putSlice(key, res);
 
         return Response.bulkString(res);
     }

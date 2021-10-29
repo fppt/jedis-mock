@@ -1,11 +1,13 @@
 package com.github.fppt.jedismock.operations;
 
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.RMList;
+import com.github.fppt.jedismock.datastructures.RMHMap;
+import com.github.fppt.jedismock.datastructures.RMSet;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-import static com.github.fppt.jedismock.Utils.deserializeObject;
 
 abstract class AbstractRedisOperation implements RedisOperation {
     private final RedisBase base;
@@ -30,13 +32,19 @@ abstract class AbstractRedisOperation implements RedisOperation {
         return params;
     }
 
-    <V> V getDataFromBase(Slice key, V defaultResponse){
-        Slice data = base().getValue(key);
-        if (data != null) {
-            return deserializeObject(data);
-        } else {
-            return defaultResponse;
-        }
+    public RMList getListFromBase(Slice key) {
+        Slice data = base().getSlice(key);
+        return new RMList(data);
+    }
+
+    public RMSet getSetFromBase(Slice key) {
+        Slice data = base().getSlice(key);
+        return new RMSet(data);
+    }
+
+    public RMHMap getHMapFromBase(Slice key) {
+        Slice data = base.getSlice(key);
+        return new RMHMap(data);
     }
 
     @Override

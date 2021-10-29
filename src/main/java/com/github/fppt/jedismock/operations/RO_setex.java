@@ -2,7 +2,7 @@ package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ class RO_setex extends RO_set {
     }
 
     Slice response() {
-        base().putValue(params().get(0), params().get(2), valueToSet(params()));
+        base().putSlice(params().get(0), params().get(2), valueToSet(params()));
         return Response.OK;
     }
 }

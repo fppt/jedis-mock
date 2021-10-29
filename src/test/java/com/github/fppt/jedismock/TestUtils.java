@@ -1,6 +1,6 @@
 package com.github.fppt.jedismock;
 
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

@@ -1,7 +1,8 @@
 package com.github.fppt.jedismock.operations;
 
+import com.github.fppt.jedismock.datastructures.RMHMap;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.AbstractMap;
@@ -22,7 +23,9 @@ class RO_zadd extends AbstractRedisOperation {
     @Override
     Slice response() {
         Slice key = params().get(0);
-        LinkedHashMap<Slice, Double> map = getDataFromBase(key, new LinkedHashMap<>());
+
+        final RMHMap mapDBObj = getHMapFromBase(key);
+        final Map<Slice, Double> map = mapDBObj.getStoredData();
 
         int count = 0;
         for (int i = 1; i < params().size(); i += 2) {
@@ -45,7 +48,7 @@ class RO_zadd extends AbstractRedisOperation {
                 toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 
         try {
-            base().putValue(key, serializeObject(sortedMap));
+            base().putSlice(key, serializeObject(sortedMap));
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

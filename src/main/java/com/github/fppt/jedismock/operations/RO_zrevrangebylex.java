@@ -1,12 +1,12 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.Comparator;
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -17,7 +17,7 @@ class RO_zrevrangebylex extends RO_zrangebylex {
     }
 
     @Override
-    protected List<Slice> doProcess(LinkedHashMap<Slice, Double> map, String start, String end) {
+    protected List<Slice> doProcess(Map<Slice, Double> map, String start, String end) {
         return map.keySet().stream()
                 .filter(buildStartPredicate(start).and(buildEndPredicate(end)))
                 .sorted(Comparator.reverseOrder())

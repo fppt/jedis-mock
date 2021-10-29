@@ -1,7 +1,8 @@
 package com.github.fppt.jedismock.operations;
 
+import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -18,7 +19,8 @@ class RO_srem extends AbstractRedisOperation {
 
     Slice response() {
         Slice key = params().get(0);
-        Set<Slice> set = getDataFromBase(key, null);
+        RMSet setDBObj = getSetFromBase(key);
+        Set<Slice> set = setDBObj.getStoredData();
         if(set == null || set.isEmpty()) return Response.integer(0);
         int count = 0;
         for (int i = 1; i < params().size(); i++) {
@@ -27,7 +29,7 @@ class RO_srem extends AbstractRedisOperation {
             }
         }
         try {
-            base().putValue(key, serializeObject(set));
+            base().putSlice(key, serializeObject(set));
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

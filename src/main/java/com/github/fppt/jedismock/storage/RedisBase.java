@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.storage;
 
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.RMDataStructure;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.server.RedisClient;
 
 import java.util.ArrayList;
@@ -15,13 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by Xiaolu on 2015/4/20.
  */
 public class RedisBase {
-    private final ExpiringKeyValueStorage keyValueStorage = ExpiringKeyValueStorage.create();
+    private final ExpiringKeyValueStorage keyValueStorage = new ExpiringKeyValueStorage();
     private final Map<Slice, Set<RedisClient>> subscribers = new ConcurrentHashMap<>();
 
     public RedisBase() {}
 
     public Set<Slice> keys(){
-        Set<Slice> slices = keyValueStorage.values().rowMap().keySet();
+        Set<Slice> slices = keyValueStorage.values().keySet();
         Set<Slice> result = new HashSet<>();
         for (Slice key: slices){
             Long deadline = keyValueStorage.ttls().get(key);
@@ -34,16 +35,20 @@ public class RedisBase {
         return result;
     }
 
-    public Slice getValue(Slice key) {
-        return keyValueStorage.get(key);
+    public Slice getSlice(Slice key) {
+        return keyValueStorage.getSlice(key);
+    }
+
+    public RMDataStructure getValue(Slice key) {
+        return keyValueStorage.getValue(key);
     }
 
     public Map<Slice, Slice> getFieldsAndValues(Slice hash){
         return keyValueStorage.getFieldsAndValues(hash);
     }
 
-    public Slice getValue(Slice key1, Slice key2) {
-        return keyValueStorage.get(key1, key2);
+    public Slice getSlice(Slice key1, Slice key2) {
+        return keyValueStorage.getSlice(key1, key2);
     }
 
     public Long getTTL(Slice key) {
@@ -63,24 +68,28 @@ public class RedisBase {
         subscribers.clear();
     }
 
-    public void putValueWithoutClearingTtl(Slice key, Slice value) {
-        putValue(key, value, null);
+    public void putSliceWithoutClearingTtl(Slice key, Slice value) {
+        putSlice(key, value, null);
     }
 
-    public void putValueWithoutClearingTtl(Slice key1, Slice key2, Slice value) {
-        putValue(key1, key2, value, null);
+    public void putSliceWithoutClearingTtl(Slice key1, Slice key2, Slice value) {
+        putSlice(key1, key2, value, null);
     }
 
-    public void putValue(Slice key, Slice value){
-        putValue(key, value, -1L);
+    public void putSlice(Slice key, Slice value){
+        putSlice(key, value, -1L);
     }
 
-    public void putValue(Slice key, Slice value, Long ttl) {
+    public void putSlice(Slice key, Slice value, Long ttl) {
         keyValueStorage.put(key, value, ttl);
     }
 
-    public void putValue(Slice key1, Slice key2, Slice value, Long ttl) {
+    public void putSlice(Slice key1, Slice key2, Slice value, Long ttl) {
         keyValueStorage.put(key1, key2, value, ttl);
+    }
+
+    public void putValue(Slice key, RMDataStructure value, Long ttl) {
+        keyValueStorage.put(key, value, ttl);
     }
 
     public void deleteValue(Slice key) {

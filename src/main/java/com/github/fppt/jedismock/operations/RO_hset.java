@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -12,8 +12,8 @@ class RO_hset extends AbstractRedisOperation {
     }
 
     Slice hsetValue(Slice key1, Slice key2, Slice value){
-        Slice foundValue = base().getValue(key1, key2);
-        base().putValue(key1, key2, value, -1L);
+        Slice foundValue = base().getSlice(key1, key2);
+        base().putSlice(key1, key2, value, -1L);
         return foundValue;
     }
 

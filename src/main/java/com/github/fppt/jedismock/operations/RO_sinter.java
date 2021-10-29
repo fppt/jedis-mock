@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
@@ -35,7 +35,7 @@ class RO_sinter extends AbstractRedisOperation {
 
     private Set<Slice> getSet(Slice key){
         Set<Slice> set;
-        Slice data = base().getValue(key);
+        Slice data = base().getSlice(key);
         if (data != null) {
             set = new HashSet<>(deserializeObject(data));
         } else {

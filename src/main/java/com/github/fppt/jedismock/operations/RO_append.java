@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -14,9 +14,9 @@ class RO_append extends AbstractRedisOperation {
     Slice response() {
         Slice key = params().get(0);
         Slice value = params().get(1);
-        Slice s = base().getValue(key);
+        Slice s = base().getSlice(key);
         if (s == null) {
-            base().putValue(key, value);
+            base().putSlice(key, value);
             return Response.integer(value.length());
         }
         byte[] b = new byte[s.length() + value.length()];
@@ -26,7 +26,7 @@ class RO_append extends AbstractRedisOperation {
         for (int i = s.length(); i < s.length() + value.length(); i++) {
             b[i] = value.data()[i - s.length()];
         }
-        base().putValue(key, Slice.create(b));
+        base().putSlice(key, Slice.create(b));
         return Response.integer(b.length);
     }
 }

@@ -2,7 +2,7 @@ package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.HashMap;
 import java.util.List;

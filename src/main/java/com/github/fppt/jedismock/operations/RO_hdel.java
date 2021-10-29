@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.server.Slice;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -15,7 +15,7 @@ class RO_hdel extends AbstractRedisOperation {
         Slice key1 = params().get(0);
         Slice key2 = params().get(1);
 
-        Slice oldValue = base().getValue(key1, key2);
+        Slice oldValue = base().getSlice(key1, key2);
 
         base().deleteValue(key1, key2);
 

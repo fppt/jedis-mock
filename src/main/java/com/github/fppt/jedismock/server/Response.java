@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.server;
 
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import org.slf4j.LoggerFactory;
