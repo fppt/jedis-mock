@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Set;
 
+@RedisCommand("scard")
 class RO_scard extends AbstractRedisOperation {
 
     RO_scard(RedisBase base, List<Slice> params) {

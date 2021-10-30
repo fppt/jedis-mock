@@ -8,6 +8,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
+@RedisCommand("expireat")
 class RO_expireat extends AbstractRedisOperation {
     RO_expireat(RedisBase base, List<Slice> params) {
         super(base, params);

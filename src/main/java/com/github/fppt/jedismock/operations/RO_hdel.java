@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
+@RedisCommand("hdel")
 class RO_hdel extends AbstractRedisOperation {
     RO_hdel(RedisBase base, List<Slice> params) {
         super(base, params);

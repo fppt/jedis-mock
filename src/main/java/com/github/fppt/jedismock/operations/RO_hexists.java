@@ -6,7 +6,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-
+@RedisCommand("hexists")
 public class RO_hexists extends AbstractRedisOperation {
     RO_hexists(RedisBase base, List<Slice> params) {
         super(base, params);

@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
+@RedisCommand("hsetnx")
 class RO_hsetnx extends RO_hset {
     RO_hsetnx(RedisBase base, List<Slice> params) {
         super(base, params);

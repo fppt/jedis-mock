@@ -7,6 +7,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
+@RedisCommand("psetex")
 class RO_psetex extends RO_setex {
     RO_psetex(RedisBase base, List<Slice> params) {
         super(base, params);

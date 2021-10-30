@@ -1,14 +1,18 @@
 package com.github.fppt.jedismock;
 
+import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.server.RedisService;
 import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Created by Xiaolu on 2015/4/18.
@@ -16,17 +20,21 @@ import java.util.Map;
 public class RedisServer {
 
     private final int bindPort;
+    private final Map<Integer, RedisBase> redisBases;
+    private final ExecutorService threadPool;
+    private RedisService service;
     private ServiceOptions options = ServiceOptions.defaultOptions();
-    private ServerSocket server = null;
-    private Thread service = null;
-    private final Map<Integer, RedisBase> redisBases = new HashMap<>();
+    private Future<Void> serviceFinalization;
 
     public RedisServer() throws IOException {
         this(0);
     }
 
-    public RedisServer(int port) throws IOException {
+    public RedisServer(int port) {
         this.bindPort = port;
+        this.redisBases = new HashMap<>();
+        this.threadPool = Executors.newSingleThreadExecutor();
+        CommandFactory.initialize();
     }
 
     static public RedisServer newRedisServer() throws IOException {
@@ -43,47 +51,31 @@ public class RedisServer {
     }
 
     public void start() throws IOException {
-        Preconditions.checkState(server == null);
         Preconditions.checkState(service == null);
-
-        server = new ServerSocket(bindPort);
-        service = new Thread(new RedisService(server, redisBases, options));
-        service.start();
+        this.service = new RedisService(bindPort, redisBases, options);
+        serviceFinalization = threadPool.submit(service);
     }
 
-    public void stop() {
+    public void stop() throws IOException {
         Preconditions.checkNotNull(service);
-        Preconditions.checkState(service.isAlive());
-
-
+        service.stop();
         try {
-            server.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            // do nothing
+            serviceFinalization.get();
+        } catch (ExecutionException e) {
+            //Do nothing: it's a normal behaviour when the service was stopped
+        } catch (InterruptedException e){
+            System.err.println("Jedis-mock interrupted while stopping");
+            Thread.currentThread().interrupt();
         }
-
-        try {
-            service.join(100);
-            if (service.isAlive()) {
-                service.stop();
-            }
-        } catch (InterruptedException e) {
-            service.stop();
-        }
-
-        server = null;
-        service = null;
     }
 
     public String getHost() {
-        Preconditions.checkNotNull(server);
-
-        return server.getInetAddress().getHostAddress();
+        Preconditions.checkNotNull(service);
+        return service.getServer().getInetAddress().getHostAddress();
     }
 
     public int getBindPort() {
-        Preconditions.checkNotNull(server);
-        return server.getLocalPort();
+        Preconditions.checkNotNull(service);
+        return service.getServer().getLocalPort();
     }
 }

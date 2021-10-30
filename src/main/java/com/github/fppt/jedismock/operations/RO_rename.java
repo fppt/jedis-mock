@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
+@RedisCommand("rename")
 class RO_rename extends AbstractRedisOperation {
 
     RO_rename(RedisBase base, List<Slice> params) {

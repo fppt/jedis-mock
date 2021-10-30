@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@RedisCommand("hscan")
 public class RO_hscan extends RO_scan {
     private Slice keySlice;
 

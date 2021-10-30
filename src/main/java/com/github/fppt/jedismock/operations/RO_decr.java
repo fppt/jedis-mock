@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
+@RedisCommand("decr")
 class RO_decr extends RO_decrby {
     RO_decr(RedisBase base, List<Slice> params) {
         super(base, params);

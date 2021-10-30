@@ -1,14 +1,15 @@
 package com.github.fppt.jedismock.operations;
 
-import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
+@RedisCommand("lpushx")
 class RO_lpushx extends RO_lpush {
-    RO_lpushx(RedisBase base, List<Slice> params) {
-        super(base, params);
+    RO_lpushx(OperationExecutorState state, List<Slice> params) {
+        super(state, params);
     }
 
     Slice response(){

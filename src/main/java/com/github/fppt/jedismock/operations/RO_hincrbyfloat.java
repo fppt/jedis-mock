@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.math.BigDecimal;
 import java.util.List;
 
+@RedisCommand("hincrbyfloat")
 class RO_hincrbyfloat extends RO_hincrby {
     RO_hincrbyfloat(RedisBase base, List<Slice> params) {
         super(base, params);

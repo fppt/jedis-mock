@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.*;
 import org.testcontainers.containers.GenericContainer;
 import redis.clients.jedis.Jedis;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -38,7 +39,6 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
         fakeServer.stop();
     }
 
-
     @Override
     public boolean supportsTestTemplate(ExtensionContext context) {
         return true;
@@ -70,7 +70,7 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
 
         @Override
         public List<Extension> getAdditionalExtensions() {
-            return Collections.singletonList(new ParameterResolver() {
+            return Arrays.asList(new ParameterResolver() {
                 @Override
                 public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
                     return parameterContext.getParameter().getType() == Jedis.class;
@@ -80,6 +80,11 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
                 public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
                     return jedis;
                 }
+            }, (AfterEachCallback) context ->
+            {
+                jedis.resetState();
+                jedis.quit();
+                jedis.close();
             });
         }
     }

@@ -6,6 +6,7 @@ import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -147,7 +148,7 @@ public class SimpleOperationsTest {
 
     @TestTemplate
     public void whenConcurrentlyIncrementingAndDecrementingCount_EnsureFinalCountIsCorrect(
-            Jedis jedis) throws ExecutionException, InterruptedException {
+            final Jedis jedis) throws InterruptedException {
         String key = "my-count-tracker";
         int[] count = new int[]{1, 5, 6, 2, -9, -2, 10, 11, 5, -2, -2};
 
@@ -155,20 +156,19 @@ public class SimpleOperationsTest {
         assertEquals(0, Integer.parseInt(jedis.get(key)));
 
         //Increase counts concurrently
-        ExecutorService pool = Executors.newCachedThreadPool();
-        Set<Future<?>> futures = new HashSet<>();
+
+        List<Callable<Void>> callables = new ArrayList<>();
         for (int i : count) {
-            futures.add(pool.submit(() -> {
-                Jedis client = new Jedis(jedis.getClient().getHost(), jedis.getClient().getPort());
-                client.incrBy(key, i);
-                client.close();
-            }));
+            callables.add(() -> {
+                try (Jedis client = new Jedis(jedis.getClient().getHost(), jedis.getClient().getPort())) {
+                    client.incrBy(key, i);
+                }
+                return null;
+            });
         }
-
-        for (Future<?> future : futures) {
-            future.get();
-        }
-
+        ExecutorService pool = Executors.newCachedThreadPool();
+        pool.invokeAll(callables);
+        pool.shutdownNow();
         //Check final count
         assertEquals(25, Integer.parseInt(jedis.get(key)));
     }

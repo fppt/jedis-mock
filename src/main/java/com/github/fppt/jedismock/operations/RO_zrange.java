@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
+@RedisCommand("zrange")
 class RO_zrange extends AbstractRedisOperation {
 
     private static final String WITH_SCORES = "WITHSCORES";

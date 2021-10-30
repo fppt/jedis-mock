@@ -11,6 +11,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.deserializeObject;
 
+@RedisCommand("smembers")
 class RO_smembers extends AbstractRedisOperation {
     RO_smembers(RedisBase base, List<Slice> params) {
         super(base, params);

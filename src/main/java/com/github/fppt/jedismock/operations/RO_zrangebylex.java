@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@RedisCommand("zrangebylex")
 class RO_zrangebylex extends AbstractRedisOperation {
 
     static final String NEGATIVELY_INFINITE = "-";
