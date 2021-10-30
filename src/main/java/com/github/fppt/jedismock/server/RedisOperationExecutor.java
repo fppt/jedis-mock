@@ -9,7 +9,6 @@ import com.google.common.base.Preconditions;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Created by Xiaolu on 2015/4/20.
@@ -29,10 +28,6 @@ public class RedisOperationExecutor {
 
         //No parallel execution
         synchronized (state.lock()){
-            System.out.printf("(%s)>%s %s%n",
-                    Thread.currentThread().getName(),
-                    name,
-                    params.stream().map(Slice::toString).collect(Collectors.joining(" ")));
             try {
                 //Checking if we are affecting the server or client state.
                 //This is done outside the context of a transaction which is why it's a separate check
