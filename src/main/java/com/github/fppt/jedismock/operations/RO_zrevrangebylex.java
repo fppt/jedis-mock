@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@RedisCommand("zrevrangebylex")
 class RO_zrevrangebylex extends RO_zrangebylex {
 
     RO_zrevrangebylex(RedisBase base, List<Slice> params) {

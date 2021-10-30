@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class OperationExecutorState {
     private final RedisClient owner;
     private final Map<Integer, RedisBase> redisBases;
-    private AtomicBoolean isTransactionModeOn = new AtomicBoolean(false);
-    private List<RedisOperation> tx = new ArrayList<>();
+    private final AtomicBoolean isTransactionModeOn = new AtomicBoolean(false);
+    private final List<RedisOperation> tx = new ArrayList<>();
     private int selectedRedisBase = 0;
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases){
@@ -53,5 +53,9 @@ public class OperationExecutorState {
         for (RedisBase redisBase : redisBases.values()) {
             redisBase.clear();
         }
+    }
+
+    public Object lock() {
+        return redisBases;
     }
 }

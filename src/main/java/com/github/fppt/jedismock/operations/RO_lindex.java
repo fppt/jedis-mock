@@ -9,6 +9,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
+@RedisCommand("lindex")
 class RO_lindex extends AbstractRedisOperation {
     RO_lindex(RedisBase base, List<Slice> params) {
         super(base, params);

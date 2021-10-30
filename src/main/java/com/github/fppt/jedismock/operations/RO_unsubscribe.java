@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+@RedisCommand(value = "unsubscribe", transactional = false)
 public class RO_unsubscribe extends AbstractRedisOperation {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RO_unsubscribe.class);
     private OperationExecutorState state;

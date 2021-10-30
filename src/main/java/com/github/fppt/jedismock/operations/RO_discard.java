@@ -1,20 +1,21 @@
 package com.github.fppt.jedismock.operations;
 
-import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
-@RedisCommand(value = "flushall", transactional = false)
-class RO_flushall implements RedisOperation {
+@RedisCommand(value = "discard", transactional = false)
+public class RO_discard implements RedisOperation {
     private OperationExecutorState state;
 
-    RO_flushall(OperationExecutorState state) {
+    RO_discard(OperationExecutorState state){
         this.state = state;
     }
 
     @Override
     public Slice execute() {
-        state.clearAll();
+        state.transactionMode(false);
+        state.tx().clear();
         return Response.OK;
     }
 }

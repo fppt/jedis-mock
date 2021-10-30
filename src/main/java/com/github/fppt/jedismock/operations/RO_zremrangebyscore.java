@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import static com.github.fppt.jedismock.Utils.serializeObject;
 
-
+@RedisCommand("zremrangebyscore")
 public class RO_zremrangebyscore extends AbstractByScoreOperation {
 
     RO_zremrangebyscore(RedisBase base, List<Slice> params) {

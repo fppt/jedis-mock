@@ -2,7 +2,7 @@ package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.server.SliceParser;
-import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,9 +10,12 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.server.Response.NULL;
 
+@RedisCommand("rpoplpush")
 class RO_rpoplpush extends AbstractRedisOperation {
-    RO_rpoplpush(RedisBase base, List<Slice> params) {
-        super(base, params);
+    private final OperationExecutorState state;
+    RO_rpoplpush(OperationExecutorState state, List<Slice> params) {
+        super(state.base(), params);
+        this.state = state;
     }
 
     Slice response() {
@@ -26,7 +29,7 @@ class RO_rpoplpush extends AbstractRedisOperation {
         Slice valueToPush = SliceParser.consumeParameter(result.data());
 
         //Push it into the other list
-        new RO_lpush(base(), Arrays.asList(target, valueToPush)).execute();
+        new RO_lpush(state, Arrays.asList(target, valueToPush)).execute();
 
         return result;
     }

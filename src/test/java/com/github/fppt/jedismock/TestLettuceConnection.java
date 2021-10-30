@@ -1,20 +1,16 @@
 package com.github.fppt.jedismock;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.protocol.ProtocolVersion;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestLettuceConnection {
 
     @Test
-    void lettuceClientCanConnectAndWork() throws IOException {
+    void lettuceClientCanConnectAndWork() throws Exception {
         RedisServer server = RedisServer.newRedisServer();
         server.start();
         try {

@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
+@RedisCommand("lpop")
 class RO_lpop extends RO_pop<List<Slice>> {
     RO_lpop(RedisBase base,List<Slice> params ) {
         super(base, params);

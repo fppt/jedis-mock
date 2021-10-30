@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+@RedisCommand("hkeys")
 public class RO_hkeys extends AbstractRedisOperation {
     public RO_hkeys(RedisBase base, List<Slice> params) {
         super(base, params);

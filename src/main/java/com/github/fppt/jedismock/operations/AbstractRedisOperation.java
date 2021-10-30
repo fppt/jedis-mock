@@ -51,9 +51,7 @@ abstract class AbstractRedisOperation implements RedisOperation {
     public Slice execute(){
         try {
             doOptionalWork();
-            synchronized (base) {
-                return response();
-            }
+            return response();
         } catch (IndexOutOfBoundsException e){
             throw new IllegalArgumentException("Invalid number of arguments when executing command [" + getClass().getSimpleName() + "]", e);
         }

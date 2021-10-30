@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Map;
 
+@RedisCommand("zcard")
 class RO_zcard extends AbstractRedisOperation {
 
     RO_zcard(RedisBase base, List<Slice> params) {

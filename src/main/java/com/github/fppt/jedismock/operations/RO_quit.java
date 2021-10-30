@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
+@RedisCommand(value = "quit", transactional = false)
 public class RO_quit implements RedisOperation {
     private OperationExecutorState state;
 

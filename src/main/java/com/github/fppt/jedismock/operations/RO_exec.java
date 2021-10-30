@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RedisCommand(value = "exec", transactional = false)
 public class RO_exec implements RedisOperation {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RO_exec.class);
     private OperationExecutorState state;

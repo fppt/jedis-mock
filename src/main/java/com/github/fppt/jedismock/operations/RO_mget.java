@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
+@RedisCommand("mget")
 class RO_mget extends AbstractRedisOperation {
     RO_mget(RedisBase base, List<Slice> params) {
         super(base, params);

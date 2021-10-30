@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Set;
 
+@RedisCommand("publish")
 class RO_publish extends AbstractRedisOperation {
 
     RO_publish(RedisBase base, List<Slice> params) {

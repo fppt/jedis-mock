@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Map;
 
+@RedisCommand("hlen")
 public class RO_hlen extends AbstractRedisOperation {
     public RO_hlen(RedisBase base, List<Slice> params) {
         super(base, params);
