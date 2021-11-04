@@ -42,7 +42,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <guava.version>19.0</guava.version>
         <junit.version>5.5.2</junit.version>
         <jedis.version>3.6.0</jedis.version>
         <testcontainers.version>1.16.2</testcontainers.version>
@@ -62,11 +61,6 @@
     </distributionManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

@@ -7,7 +7,6 @@ import com.github.fppt.jedismock.commands.RedisCommand;
 import com.github.fppt.jedismock.commands.RedisCommandParser;
 import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.exception.ParseErrorException;
-import com.google.common.base.Preconditions;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -15,6 +14,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,9 +31,9 @@ public class RedisClient implements Runnable {
     private final OutputStream out;
 
     RedisClient(Map<Integer, RedisBase> redisBases, Socket socket, ServiceOptions options) throws IOException {
-        Preconditions.checkNotNull(redisBases);
-        Preconditions.checkNotNull(socket);
-        Preconditions.checkNotNull(options);
+        Objects.requireNonNull(redisBases);
+        Objects.requireNonNull(socket);
+        Objects.requireNonNull(options);
         OperationExecutorState state = new OperationExecutorState(this, redisBases);
         this.executor = new RedisOperationExecutor(state);
         this.socket = socket;

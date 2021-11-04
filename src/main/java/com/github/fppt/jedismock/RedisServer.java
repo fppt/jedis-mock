@@ -4,11 +4,11 @@ import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.server.RedisService;
 import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,18 +46,20 @@ public class RedisServer {
     }
 
     public void setOptions(ServiceOptions options) {
-        Preconditions.checkNotNull(options);
+        Objects.requireNonNull(options);
         this.options = options;
     }
 
     public void start() throws IOException {
-        Preconditions.checkState(service == null);
+        if (!(service == null)) {
+            throw new IllegalStateException();
+        }
         this.service = new RedisService(bindPort, redisBases, options);
         serviceFinalization = threadPool.submit(service);
     }
 
     public void stop() throws IOException {
-        Preconditions.checkNotNull(service);
+        Objects.requireNonNull(service);
         service.stop();
         try {
             serviceFinalization.get();
@@ -70,12 +72,12 @@ public class RedisServer {
     }
 
     public String getHost() {
-        Preconditions.checkNotNull(service);
+        Objects.requireNonNull(service);
         return service.getServer().getInetAddress().getHostAddress();
     }
 
     public int getBindPort() {
-        Preconditions.checkNotNull(service);
+        Objects.requireNonNull(service);
         return service.getServer().getLocalPort();
     }
 }

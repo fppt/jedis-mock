@@ -5,7 +5,6 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
-import com.google.common.base.Preconditions;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
@@ -21,7 +20,9 @@ public class RedisOperationExecutor {
     }
 
     public Slice execCommand(RedisCommand command) {
-        Preconditions.checkArgument(command.parameters().size() > 0);
+        if (!(command.parameters().size() > 0)) {
+            throw new IllegalStateException();
+        }
         List<Slice> params = command.parameters();
         List<Slice> commandParams = params.subList(1, params.size());
         String name = new String(params.get(0).data()).toLowerCase();

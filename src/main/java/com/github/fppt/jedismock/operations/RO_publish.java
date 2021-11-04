@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +23,8 @@ class RO_publish extends AbstractRedisOperation {
         Set<RedisClient> subscibers = base().getSubscribers(channel);
 
         subscibers.forEach(subscriber -> {
-            Slice response = Response.publishedMessage(channel, message);
+            Slice response = null;
+            response = Response.publishedMessage(channel, message);
             subscriber.sendResponse(response, "contacting subscriber");
         });
 

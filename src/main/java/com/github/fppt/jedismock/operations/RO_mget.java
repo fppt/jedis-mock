@@ -3,8 +3,10 @@ package com.github.fppt.jedismock.operations;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.google.common.collect.ImmutableList;
 
+import static java.util.stream.Collectors.toList;
+
+import java.util.Collections;
 import java.util.List;
 
 @RedisCommand("mget")
@@ -13,12 +15,7 @@ class RO_mget extends AbstractRedisOperation {
         super(base, params);
     }
 
-    Slice response(){
-        ImmutableList.Builder<Slice> builder = new ImmutableList.Builder<Slice>();
-        for (Slice key : params()) {
-            builder.add(Response.bulkString(base().getSlice(key)));
-
-        }
-        return Response.array(builder.build());
+    Slice response() {
+        return Response.array(Collections.unmodifiableList(params().stream().map(key -> Response.bulkString(base().getSlice(key))).collect(toList())));
     }
 }

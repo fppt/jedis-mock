@@ -4,12 +4,8 @@ import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.RMDataStructure;
 import com.github.fppt.jedismock.datastructures.RMSortedSet;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.google.common.base.Preconditions;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ExpiringKeyValueStorage {
     private final Map<Slice, RMDataStructure> values = new HashMap<>();
@@ -29,7 +25,7 @@ public class ExpiringKeyValueStorage {
     }
 
     public void delete(Slice key1, Slice key2) {
-        Preconditions.checkNotNull(key2);
+        Objects.requireNonNull(key2);
 
         if (!verifyKey(key1)) {
             return;
@@ -83,8 +79,7 @@ public class ExpiringKeyValueStorage {
     }
 
     public Slice getSlice(Slice key1, Slice key2) {
-        Preconditions.checkNotNull(key2);
-
+        Objects.requireNonNull(key2);
         if(!verifyKey(key1)) {
             return null;
         };
@@ -97,8 +92,7 @@ public class ExpiringKeyValueStorage {
     }
 
     private boolean verifyKey(Slice key) {
-        Preconditions.checkNotNull(key);
-
+        Objects.requireNonNull(key);
         if(!values().containsKey(key)) {
             return false;
         }
@@ -116,8 +110,7 @@ public class ExpiringKeyValueStorage {
     }
 
     public Long getTTL(Slice key) {
-        Preconditions.checkNotNull(key);
-
+        Objects.requireNonNull(key);
         Long deadline = ttls().get(key);
         if (deadline == null) {
             return null;
@@ -144,17 +137,17 @@ public class ExpiringKeyValueStorage {
 
         // Put inside
     public void put(Slice key, Slice value, Long ttl) {
-        Preconditions.checkNotNull(key);
-        Preconditions.checkNotNull(value);
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
         values().put(key, value);
         configureTTL(key, ttl);
     }
 
     // Put into inner RMHMap
     public void put(Slice key1, Slice key2, Slice value, Long ttl) {
-        Preconditions.checkNotNull(key1);
-        Preconditions.checkNotNull(key2);
-        Preconditions.checkNotNull(value);
+        Objects.requireNonNull(key1);
+        Objects.requireNonNull(key2);
+        Objects.requireNonNull(value);
         RMSortedSet mapByKey = null;
         if(!values.containsKey(key1)) {
             mapByKey = new RMSortedSet(null);
@@ -192,8 +185,7 @@ public class ExpiringKeyValueStorage {
     }
 
     public long setDeadline(Slice key, long deadline) {
-        Preconditions.checkNotNull(key);
-
+        Objects.requireNonNull(key);
         if (values().containsKey(key)) {
             ttls().put(key, deadline);
             return 1L;
