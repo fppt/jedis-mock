@@ -28,6 +28,3 @@ jobs:
       - name: Build with Maven
         run: mvn -B -V verify -Dmaven.javadoc.skip
 
-      - name: Publish Test Report
-        if: ${{ always() }}
-        uses: scacap/action-surefire-report@v1
