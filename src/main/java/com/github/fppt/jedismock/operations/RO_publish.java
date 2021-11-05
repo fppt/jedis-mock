@@ -22,7 +22,8 @@ class RO_publish extends AbstractRedisOperation {
         Set<RedisClient> subscibers = base().getSubscribers(channel);
 
         subscibers.forEach(subscriber -> {
-            Slice response = Response.publishedMessage(channel, message);
+            Slice response = null;
+            response = Response.publishedMessage(channel, message);
             subscriber.sendResponse(response, "contacting subscriber");
         });
 

@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 @RedisCommand(value = "unsubscribe", transactional = false)
@@ -17,7 +18,7 @@ public class RO_unsubscribe extends AbstractRedisOperation {
         this.state = state;
     }
 
-    Slice response() {
+    Slice response() throws IOException {
         List<Slice> channelsToUbsubscribeFrom;
         if(params().isEmpty()){
             LOG.debug("No channels specified therefore unsubscribing from all channels");

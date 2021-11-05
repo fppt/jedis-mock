@@ -4,8 +4,8 @@ import com.github.fppt.jedismock.datastructures.RMList;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.google.common.collect.ImmutableList;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
@@ -36,10 +36,10 @@ class RO_lrange extends AbstractRedisOperation {
                 end = 0;
             }
         }
-        ImmutableList.Builder<Slice> builder = new ImmutableList.Builder<Slice>();
+        List<Slice> result = new ArrayList<>();
         for (int i = start; i <= end && i < list.size(); i++) {
-            builder.add(Response.bulkString(list.get(i)));
+            result.add(Response.bulkString(list.get(i)));
         }
-        return Response.array(builder.build());
+        return Response.array(result);
     }
 }

@@ -4,8 +4,9 @@ import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -49,7 +50,8 @@ class RO_scan extends AbstractRedisOperation {
             cursor = CURSOR_START;
         }
 
-        List<Slice> response = Lists.newArrayList(Response.bulkString(Slice.create(String.valueOf(cursor))), Response.array(matchingValues));
+        List<Slice> response = new ArrayList<>();
+        Collections.addAll(response, Response.bulkString(Slice.create(String.valueOf(cursor))), Response.array(matchingValues));
         return Response.array(response);
     }
 
