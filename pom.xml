@@ -46,7 +46,7 @@
         <jedis.version>3.6.0</jedis.version>
         <testcontainers.version>1.16.2</testcontainers.version>
         <spotbugs.version>4.2.3</spotbugs.version>
-        <slf4j.version>1.7.20</slf4j.version>
+        <slf4j.version>1.7.32</slf4j.version>
     </properties>
 
     <distributionManagement>
