@@ -3,17 +3,14 @@ package com.github.fppt.jedismock.server;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.EOFException;
 import com.github.fppt.jedismock.exception.ParseErrorException;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 public class SliceParser {
 
-    @VisibleForTesting
     public static byte consumeByte(InputStream messageInput) throws EOFException {
         int b;
         try {
@@ -27,14 +24,12 @@ public class SliceParser {
         return (byte) b;
     }
 
-    @VisibleForTesting
     public static void expectByte(InputStream messageInput, byte c) throws ParseErrorException, EOFException {
         if (consumeByte(messageInput) != c) {
             throw new ParseErrorException();
         }
     }
 
-    @VisibleForTesting
     public static long consumeLong(InputStream messageInput) throws ParseErrorException {
         byte c;
         long ret = 0;
@@ -60,9 +55,8 @@ public class SliceParser {
         return ret;
     }
 
-    @VisibleForTesting
     public static Slice consumeSlice(InputStream messageInput, long len) throws ParseErrorException {
-        ByteArrayDataOutput bo = ByteStreams.newDataOutput();
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
         for (long i = 0; i < len; i++) {
             try {
                 bo.write(consumeByte(messageInput));
@@ -73,7 +67,6 @@ public class SliceParser {
         return Slice.create(bo.toByteArray());
     }
 
-    @VisibleForTesting
     public static long consumeCount(InputStream messageInput) throws ParseErrorException {
         try {
             expectByte(messageInput, (byte) '*');

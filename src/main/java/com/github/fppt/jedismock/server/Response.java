@@ -1,10 +1,10 @@
 package com.github.fppt.jedismock.server;
 
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,10 +25,15 @@ public class Response {
         if (slice == null) {
             return NULL;
         }
-        ByteArrayDataOutput bo = ByteStreams.newDataOutput();
-        bo.write(String.format("$%d%s", slice.data().length, LINE_SEPARATOR).getBytes());
-        bo.write(slice.data());
-        bo.write(LINE_SEPARATOR.getBytes());
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+
+        try {
+            bo.write(String.format("$%d%s", slice.data().length, LINE_SEPARATOR).getBytes());
+            bo.write(slice.data());
+            bo.write(LINE_SEPARATOR.getBytes());
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
         return Slice.create(bo.toByteArray());
     }
 
@@ -45,10 +50,14 @@ public class Response {
     }
 
     public static Slice array(List<Slice> values) {
-        ByteArrayDataOutput bo = ByteStreams.newDataOutput();
-        bo.write(String.format("*%d%s", values.size(), LINE_SEPARATOR).getBytes());
-        for (Slice value : values) {
-            bo.write(value.data());
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+        try {
+            bo.write(String.format("*%d%s", values.size(), LINE_SEPARATOR).getBytes());
+            for (Slice value : values) {
+                bo.write(value.data());
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
         return Slice.create(bo.toByteArray());
     }

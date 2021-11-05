@@ -4,11 +4,11 @@ import com.github.fppt.jedismock.datastructures.RMHMap;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.google.common.collect.Lists;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
@@ -49,13 +49,12 @@ class RO_zrange extends AbstractRedisOperation {
         }
 
         final boolean withScores = params().size() == 4 && WITH_SCORES.equalsIgnoreCase(params().get(3).toString());
-
         List<Slice> values = map.entrySet().stream()
             .skip(start)
             .limit(end - start + 1)
             .flatMap(e -> withScores
-                    ? Lists.newArrayList(e.getKey(), Slice.create(e.getValue().toString())).stream()
-                    : Lists.newArrayList(e.getKey()).stream())
+                    ? Stream.of(e.getKey(), Slice.create(e.getValue().toString()))
+                    : Stream.of(e.getKey()))
             .map(Response::bulkString)
             .collect(Collectors.toList());
 

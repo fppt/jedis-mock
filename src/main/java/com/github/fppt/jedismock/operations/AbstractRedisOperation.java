@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -22,7 +23,7 @@ abstract class AbstractRedisOperation implements RedisOperation {
         //Place Holder For Ops which need to so some operational work
     }
 
-    abstract Slice response();
+    abstract Slice response() throws IOException;
 
     RedisBase base(){
         return base;
@@ -52,7 +53,7 @@ abstract class AbstractRedisOperation implements RedisOperation {
         try {
             doOptionalWork();
             return response();
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException | IOException e){
             throw new IllegalArgumentException("Invalid number of arguments when executing command [" + getClass().getSimpleName() + "]", e);
         }
     }

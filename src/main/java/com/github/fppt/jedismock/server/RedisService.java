@@ -1,12 +1,12 @@
 package com.github.fppt.jedismock.server;
 
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,8 +22,8 @@ public class RedisService implements Callable<Void> {
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     public RedisService(int bindPort, Map<Integer, RedisBase> redisBases, ServiceOptions options) throws IOException {
-        Preconditions.checkNotNull(redisBases);
-        Preconditions.checkNotNull(options);
+        Objects.requireNonNull(redisBases);
+        Objects.requireNonNull(options);
 
         this.server = new ServerSocket(bindPort);
         this.redisBases = redisBases;

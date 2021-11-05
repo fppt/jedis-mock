@@ -3,8 +3,8 @@ package com.github.fppt.jedismock.operations;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.google.common.collect.Sets;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +25,7 @@ class RO_pfadd extends AbstractRedisOperation {
         Set<Slice> set;
         int prev;
         if (data == null) {
-            set = Sets.newHashSet();
+            set = new HashSet<>();
             first = true;
             prev = 0;
         } else {
