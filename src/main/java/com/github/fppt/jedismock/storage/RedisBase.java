@@ -6,18 +6,18 @@ import com.github.fppt.jedismock.server.RedisClient;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Xiaolu on 2015/4/20.
  */
 public class RedisBase {
     private final ExpiringKeyValueStorage keyValueStorage = new ExpiringKeyValueStorage();
-    private final Map<Slice, Set<RedisClient>> subscribers = new ConcurrentHashMap<>();
+    private final Map<Slice, Set<RedisClient>> subscribers = new HashMap<>();
 
     public RedisBase() {}
 
@@ -109,26 +109,34 @@ public class RedisBase {
         });
     }
 
-    public boolean removeSubscriber(Slice channel, RedisClient client){
-        if(subscribers.containsKey(channel)){
-            subscribers.get(channel).remove(client);
+    public boolean removeSubscriber(Slice channel, RedisClient client) {
+        if (subscribers.containsKey(channel)) {
+            Set<RedisClient> redisClients = subscribers.get(channel);
+            redisClients.remove(client);
+            if (redisClients.isEmpty()) {
+                subscribers.remove(channel);
+            }
             return true;
         }
         return false;
     }
 
-    public Set<RedisClient> getSubscribers(Slice channel){
+    public Set<RedisClient> getSubscribers(Slice channel) {
         if (subscribers.containsKey(channel)) {
             return subscribers.get(channel);
         }
         return Collections.emptySet();
     }
 
-    public List<Slice> getSubscriptions(RedisClient client){
+    public Set<Slice> getChannels() {
+        return subscribers.keySet();
+    }
+
+    public List<Slice> getSubscriptions(RedisClient client) {
         List<Slice> subscriptions = new ArrayList<>();
 
         subscribers.forEach((channel, subscribers) -> {
-            if(subscribers.contains(client)){
+            if (subscribers.contains(client)) {
                 subscriptions.add(channel);
             }
         });
