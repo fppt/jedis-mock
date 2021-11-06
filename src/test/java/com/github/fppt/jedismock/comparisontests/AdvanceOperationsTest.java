@@ -1,20 +1,23 @@
 package com.github.fppt.jedismock.comparisontests;
 
-
-import com.github.fppt.jedismock.util.MockSubscriber;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Client;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(ComparisonBase.class)
 public class AdvanceOperationsTest {
@@ -43,37 +46,6 @@ public class AdvanceOperationsTest {
         assertEquals("Cannot use Jedis when in Multi. Please use Transaction or reset jedis state.",
                 assertThrows(JedisDataException.class, () ->
                         jedis.get("oobity-oobity-boo")).getMessage());
-    }
-
-    @Disabled("fix multithreading")
-    @TestTemplate
-    public void whenSubscribingToAChannel_EnsurePublishedMessagesAreReceived(Jedis jedis) throws InterruptedException, ExecutionException {
-        String channel = "normalbob";
-        String message = "SUPERBOB";
-
-        //Create subscriber
-        ExecutorService subsciberThread = Executors.newSingleThreadExecutor();
-        MockSubscriber mockSubscriber = new MockSubscriber();
-
-        Client client = jedis.getClient();
-        Jedis subscriber = new Jedis(client.getHost(), client.getPort());
-        CountDownLatch subscribeLatch = new CountDownLatch(1);
-        Future<?> submit = subsciberThread.submit(() -> {
-            subscribeLatch.countDown();
-            subscriber.subscribe(mockSubscriber, channel);
-
-        });
-        subscribeLatch.await();
-        //Give some time to subscribe
-        Thread.sleep(1000);
-
-        //publish message
-        jedis.publish(channel, message);
-        //Getters block until message goes through
-        assertEquals(channel, mockSubscriber.latestChannel());
-        assertEquals(message, mockSubscriber.latestMessage());
-        mockSubscriber.unsubscribe();
-        submit.get();
     }
 
     @TestTemplate
@@ -142,52 +114,6 @@ public class AdvanceOperationsTest {
         assertEquals("v3", jedis.get("k3"));
         assertEquals("v4", jedis.get("k4"));
         assertEquals("v5", jedis.get("k5"));
-    }
-
-    @Disabled("This test fails with the embedded redis sometimes so I am at a loss")
-    @TestTemplate
-    public void whenSubscribingToAChannelAndThenUnsubscribing_EnsureAllChannelsAreUbSubScribed(Jedis jedis) throws InterruptedException {
-        String channel1 = "normaltim1";
-        String channel2 = "normaltim2";
-        //String channel3 = "normaltim3";
-        String message = "SUPERTIM";
-
-        //Create Subscriber
-        ExecutorService subsciberThread = Executors.newCachedThreadPool();
-        Client client = jedis.getClient();
-        Jedis subscriber = new Jedis(client.getHost(), client.getPort());
-
-        subscriber.set("thing", "a-thing");
-        assertEquals("a-thing", subscriber.get("thing"));
-
-        //Subscribe to Channels
-        subsciberThread.submit(() -> subscribeToChannel(subscriber, channel1));
-        subsciberThread.submit(() -> subscribeToChannel(subscriber, channel2));
-        //subsciberThread.submit(() -> subscribeToChannel(subscriber, channel3));
-
-        //Give some time to subscribe
-        Thread.sleep(5000);
-
-        //publish messages which trigger the unsubcription
-        jedis.publish(channel1, message);
-        jedis.publish(channel2, message);
-        //jedis.publish(channel3, message);
-
-        //Give some time for publications to go through
-        Thread.sleep(2000);
-
-        subscriber.set("thing", "a-new-thing");
-    }
-
-    private static void subscribeToChannel(Jedis subscriber, String channel) {
-        System.out.println("Subscribing to :" + channel);
-        subscriber.subscribe(new JedisPubSub() {
-            @Override
-            public void onMessage(String channel, String message) {
-                System.out.println("Unsubscribing from :" + channel);
-                unsubscribe(channel);
-            }
-        }, channel);
     }
 
     @TestTemplate

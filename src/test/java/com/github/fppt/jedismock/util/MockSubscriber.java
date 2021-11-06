@@ -3,12 +3,13 @@ package com.github.fppt.jedismock.util;
 import redis.clients.jedis.JedisPubSub;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class MockSubscriber extends JedisPubSub {
 
     private String latestReceivedFromChannel;
     private String latestReceivedMessage;
-    private CountDownLatch latch = new CountDownLatch(1);
+    private final CountDownLatch latch = new CountDownLatch(1);
 
     @Override
     public void onMessage(String channel, String message) {
@@ -18,12 +19,12 @@ public class MockSubscriber extends JedisPubSub {
     }
 
     public String latestChannel() throws InterruptedException {
-        latch.await();
+        latch.await(10, TimeUnit.SECONDS);
         return latestReceivedFromChannel;
     }
 
-    public synchronized String latestMessage() throws InterruptedException {
-        latch.await();
+    public String latestMessage() throws InterruptedException {
+        latch.await(10, TimeUnit.SECONDS);
         return latestReceivedMessage;
     }
 
