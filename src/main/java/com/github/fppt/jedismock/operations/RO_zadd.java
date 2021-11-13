@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.fppt.jedismock.Utils.convertToDouble;
-import static com.github.fppt.jedismock.Utils.serializeObject;
 import static java.util.stream.Collectors.toMap;
 
 @RedisCommand("zadd")
@@ -25,7 +24,7 @@ class RO_zadd extends AbstractRedisOperation {
     Slice response() {
         Slice key = params().get(0);
 
-        final RMHMap mapDBObj = getHMapFromBase(key);
+        final RMHMap mapDBObj = getHMapFromBaseOrCreateEmpty(key);
         final Map<Slice, Double> map = mapDBObj.getStoredData();
 
         int count = 0;
@@ -49,7 +48,7 @@ class RO_zadd extends AbstractRedisOperation {
                 toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 
         try {
-            base().putSlice(key, serializeObject(sortedMap));
+            base().putValue(key, new RMHMap(sortedMap));
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

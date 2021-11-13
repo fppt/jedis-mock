@@ -1,6 +1,5 @@
 package com.github.fppt.jedismock.operations;
 
-import com.github.fppt.jedismock.datastructures.RMList;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
@@ -14,13 +13,7 @@ class RO_brpop extends RO_bpop {
     }
 
     @Override
-    RO_pop popper(List<Slice> params) {
+    AbstractRedisOperation popper(List<Slice> params) {
         return new RO_rpop(base(), params);
-    }
-
-    @Override
-    List<Slice> getDataFromBase(Slice key) {
-        final RMList listDBObj = getListFromBase(key);
-        return listDBObj.getStoredData();
     }
 }

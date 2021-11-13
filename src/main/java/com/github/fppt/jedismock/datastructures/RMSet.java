@@ -5,29 +5,28 @@ import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.github.fppt.jedismock.Utils.deserializeObject;
-
 public class RMSet implements RMDataStructure {
-    protected Set<Slice> storedData;
+    private final Set<Slice> storedData;
 
     public Set<Slice> getStoredData() {
         return storedData;
     }
 
-    public RMSet(Slice data) {
-        if (data == null) {
-            storedData = new HashSet<>();
-            return;
-        }
-        try {
-            storedData = deserializeObject(data);
-        } catch (WrongValueTypeException e) {
-            throw new WrongValueTypeException("WRONGTYPE Failed to deserialize HashSet<Slice> value");
-        }
+    public RMSet() {
+        storedData = new HashSet<>();
+    }
+
+    public RMSet(Set<Slice> data) {
+        storedData = data;
     }
 
     @Override
     public void raiseTypeCastException() {
         throw new WrongValueTypeException("WRONGTYPE RMSet value is used in the wrong place");
+    }
+
+    @Override
+    public String getTypeName() {
+        return "set";
     }
 }

@@ -7,8 +7,6 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-import static com.github.fppt.jedismock.Utils.serializeObject;
-
 abstract class RO_add extends AbstractRedisOperation {
     private final Object lock;
     RO_add(OperationExecutorState state, List<Slice> params) {
@@ -20,7 +18,7 @@ abstract class RO_add extends AbstractRedisOperation {
 
     Slice response() {
         Slice key = params().get(0);
-        final RMList listDBObj = getListFromBase(key);
+        final RMList listDBObj = getListFromBaseOrCreateEmpty(key);
         final List<Slice> list = listDBObj.getStoredData();
 
         for (int i = 1; i < params().size(); i++) {
@@ -28,7 +26,7 @@ abstract class RO_add extends AbstractRedisOperation {
         }
 
         try {
-            base().putSlice(key, serializeObject(list));
+            base().putValue(key, listDBObj);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

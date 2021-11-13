@@ -8,8 +8,6 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Set;
 
-import static com.github.fppt.jedismock.Utils.serializeObject;
-
 @RedisCommand("srem")
 class RO_srem extends AbstractRedisOperation {
 
@@ -20,7 +18,7 @@ class RO_srem extends AbstractRedisOperation {
 
     Slice response() {
         Slice key = params().get(0);
-        RMSet setDBObj = getSetFromBase(key);
+        RMSet setDBObj = getSetFromBaseOrCreateEmpty(key);
         Set<Slice> set = setDBObj.getStoredData();
         if(set == null || set.isEmpty()) return Response.integer(0);
         int count = 0;
@@ -28,11 +26,6 @@ class RO_srem extends AbstractRedisOperation {
             if (set.remove(params().get(i))) {
                 count++;
             }
-        }
-        try {
-            base().putSlice(key, serializeObject(set));
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
         }
         return Response.integer(count);
     }

@@ -20,7 +20,7 @@ class RO_zscore extends AbstractRedisOperation {
         Slice key = params().get(0);
         Slice val = params().get(1);
 
-        final RMHMap mapDBObj = getHMapFromBase(key);
+        final RMHMap mapDBObj = getHMapFromBaseOrCreateEmpty(key);
         final Map<Slice, Double> map = mapDBObj.getStoredData();
         
         if(val == null || val.toString().isEmpty()) {

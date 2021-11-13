@@ -15,7 +15,7 @@ class RO_llen extends AbstractRedisOperation {
 
     Slice response() {
         Slice key = params().get(0);
-        RMList listDBObj = getListFromBase(key);
+        RMList listDBObj = getListFromBaseOrCreateEmpty(key);
         List<Slice> list = listDBObj.getStoredData();
         return Response.integer(list.size());
     }

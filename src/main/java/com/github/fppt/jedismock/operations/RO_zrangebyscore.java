@@ -23,7 +23,7 @@ public class RO_zrangebyscore extends AbstractByScoreOperation {
     @Override
     Slice response() {
         final Slice key = params().get(0);
-        final RMHMap mapDBObj = getHMapFromBase(key);
+        final RMHMap mapDBObj = getHMapFromBaseOrCreateEmpty(key);
         final Map<Slice, Double> map = mapDBObj.getStoredData();
 
         if (map == null || map.isEmpty()) return

@@ -8,8 +8,6 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import java.util.List;
 import java.util.Set;
 
-import static com.github.fppt.jedismock.Utils.serializeObject;
-
 @RedisCommand("sadd")
 class RO_sadd extends AbstractRedisOperation {
     RO_sadd(RedisBase base, List<Slice> params) {
@@ -19,7 +17,7 @@ class RO_sadd extends AbstractRedisOperation {
     @Override
     Slice response() {
         Slice key = params().get(0);
-        RMSet setDBObj = getSetFromBase(key);
+        RMSet setDBObj = getSetFromBaseOrCreateEmpty(key);
         Set<Slice> set = setDBObj.getStoredData();
 
         int count = 0;
@@ -28,8 +26,9 @@ class RO_sadd extends AbstractRedisOperation {
                 count++;
             }
         }
+
         try {
-            base().putSlice(key, serializeObject(set));
+            base().putValue(key, setDBObj);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

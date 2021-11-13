@@ -1,14 +1,7 @@
 package com.github.fppt.jedismock;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
-import com.github.fppt.jedismock.datastructures.Slice;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 /**
  * Created by Xiaolu on 2015/4/21.
@@ -20,33 +13,6 @@ public class Utils {
             closeable.close();
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    public static Slice serializeObject(Object o){
-        try {
-            ByteArrayOutputStream bo = new ByteArrayOutputStream();
-            ObjectOutputStream oo = new ObjectOutputStream(bo);
-            oo.writeObject(o);
-            Slice encode = Slice.create(bo.toByteArray());
-            oo.close();
-            bo.close();
-            return encode;
-        } catch (IOException e){
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    public static <T> T deserializeObject(Slice data){
-        try {
-            ByteArrayInputStream bi = new ByteArrayInputStream(data.data());
-            ObjectInputStream oi = new ObjectInputStream(bi);
-            T ret = (T) oi.readObject();
-            oi.close();
-            bi.close();
-            return ret;
-        } catch (IOException | ClassNotFoundException e){
-            throw new WrongValueTypeException("WRONGTYPE Key is not a valid HyperLogLog string value.");
         }
     }
 

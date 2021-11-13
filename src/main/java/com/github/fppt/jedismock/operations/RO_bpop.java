@@ -20,9 +20,7 @@ abstract class RO_bpop extends AbstractRedisOperation {
         this.lock = state.lock();
     }
 
-    abstract RO_pop popper(List<Slice> params);
-
-    abstract List<Slice> getDataFromBase(Slice key);
+    abstract AbstractRedisOperation popper(List<Slice> params);
 
     Slice response() {
         int size = params().size();

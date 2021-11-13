@@ -1,20 +1,17 @@
 package com.github.fppt.jedismock.datastructures;
 
-
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 
-import java.io.Serializable;
 import java.util.Arrays;
 
-public class Slice implements RMDataStructure, Comparable<Slice>, Serializable {
-    private static final long serialVersionUID = 247772234876073528L;
-    private final byte[] data;
+public class Slice implements RMDataStructure, Comparable<Slice> {
+    private final byte[] storedData;
 
-    private Slice(byte[] data) {
-        if (data == null) {
+    private Slice(byte[] storedData) {
+        if (storedData == null) {
             throw new NullPointerException("Null data");
         }
-        this.data = data;
+        this.storedData = storedData;
     }
 
     public static Slice create(byte[] data){
@@ -26,7 +23,7 @@ public class Slice implements RMDataStructure, Comparable<Slice>, Serializable {
     }
 
     public byte[] data() {
-        return Arrays.copyOf(data, data.length);
+        return Arrays.copyOf(storedData, storedData.length);
     }
 
     public int length(){
@@ -51,6 +48,11 @@ public class Slice implements RMDataStructure, Comparable<Slice>, Serializable {
     @Override
     public void raiseTypeCastException() {
         throw new WrongValueTypeException("WRONGTYPE Slice value is used in the wrong place");
+    }
+
+    @Override
+    public String getTypeName() {
+        return "string";
     }
 
     public int compareTo(Slice b) {

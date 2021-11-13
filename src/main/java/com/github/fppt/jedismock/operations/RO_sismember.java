@@ -19,7 +19,7 @@ public class RO_sismember extends AbstractRedisOperation {
     Slice response() {
         Slice key = params().get(0);
         Slice member = params().get(1);
-        RMSet setDBObj = getSetFromBase(key);
+        RMSet setDBObj = getSetFromBaseOrCreateEmpty(key);
         Set<Slice> set = setDBObj.getStoredData();
         if (set == null || set.isEmpty()) return Response.integer(0);
         return Response.integer(set.contains(member) ? 1 : 0);
