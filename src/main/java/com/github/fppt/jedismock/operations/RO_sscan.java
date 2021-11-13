@@ -26,7 +26,7 @@ class RO_sscan extends RO_scan {
 
     @Override
     protected List<Slice> getMatchingValues(String regex, long cursor, long count) {
-        RMSet setDBObj = getSetFromBase(keySlice);
+        RMSet setDBObj = getSetFromBaseOrCreateEmpty(keySlice);
         Set<Slice> set = setDBObj.getStoredData();
         this.size = set.size();
         return set.stream().skip(cursor)

@@ -25,7 +25,7 @@ class RO_zrangebylex extends AbstractRedisOperation {
     @Override
     Slice response() {
         Slice key = params().get(0);
-        final RMHMap mapDBObj = getHMapFromBase(key);
+        final RMHMap mapDBObj = getHMapFromBaseOrCreateEmpty(key);
         final Map<Slice, Double> map = mapDBObj.getStoredData();
 
         String start = params().get(1).toString();

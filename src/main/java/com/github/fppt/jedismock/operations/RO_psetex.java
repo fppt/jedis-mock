@@ -14,7 +14,7 @@ class RO_psetex extends RO_setex {
     }
 
     @Override
-    long valueToSet(List<Slice> params){
+    long timeoutToSet(List<Slice> params){
         return convertToLong(new String(params.get(1).data()));
     }
 }

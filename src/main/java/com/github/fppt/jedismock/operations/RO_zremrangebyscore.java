@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.github.fppt.jedismock.Utils.serializeObject;
-
 @RedisCommand("zremrangebyscore")
 public class RO_zremrangebyscore extends AbstractByScoreOperation {
 
@@ -23,7 +21,7 @@ public class RO_zremrangebyscore extends AbstractByScoreOperation {
     @Override
     Slice response() {
         final Slice key = params().get(0);
-        final RMHMap mapDBObj = getHMapFromBase(key);
+        final RMHMap mapDBObj = getHMapFromBaseOrCreateEmpty(key);
         final Map<Slice, Double> map = mapDBObj.getStoredData();
 
         if (map == null || map.isEmpty()) return Response.integer(0);
@@ -45,7 +43,7 @@ public class RO_zremrangebyscore extends AbstractByScoreOperation {
                         }, LinkedHashMap::new));
 
         try {
-            base().putSlice(key, serializeObject(result));
+            base().putValue(key, new RMHMap(result));
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

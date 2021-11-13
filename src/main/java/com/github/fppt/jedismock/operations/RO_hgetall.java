@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,10 @@ public class RO_hgetall extends AbstractRedisOperation {
         Slice hash = params().get(0);
 
         Map<Slice, Slice> fieldAndValueMap = base().getFieldsAndValues(hash);
+
+        if(fieldAndValueMap == null) {
+            fieldAndValueMap = new HashMap<>();
+        }
         int arraySize = fieldAndValueMap.size() * 2;
         Slice [] fieldAndValueList = new Slice[arraySize];
 

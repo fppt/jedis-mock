@@ -1,7 +1,11 @@
 package com.github.fppt.jedismock.storage;
 
 import com.github.fppt.jedismock.datastructures.RMDataStructure;
+import com.github.fppt.jedismock.datastructures.RMHMap;
+import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.datastructures.RMList;
+import com.github.fppt.jedismock.datastructures.RMSortedSet;
 import com.github.fppt.jedismock.server.RedisClient;
 
 import java.util.ArrayList;
@@ -35,20 +39,103 @@ public class RedisBase {
         return result;
     }
 
-    public Slice getSlice(Slice key) {
-        return keyValueStorage.getSlice(key);
-    }
-
     public RMDataStructure getValue(Slice key) {
         return keyValueStorage.getValue(key);
     }
 
-    public Map<Slice, Slice> getFieldsAndValues(Slice hash){
-        return keyValueStorage.getFieldsAndValues(hash);
+    public RMSet getSet(Slice key) {
+        RMDataStructure value = getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        if(!(value instanceof RMSet)) {
+            value.raiseTypeCastException();
+        }
+
+        return (RMSet) value;
+    }
+
+    public RMHMap getMap(Slice key) {
+        RMDataStructure value = getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        if(!(value instanceof RMHMap)) {
+            value.raiseTypeCastException();
+        }
+
+        return (RMHMap) value;
+    }
+
+
+    public RMList getList(Slice key) {
+        RMDataStructure value = getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        if(!(value instanceof RMList)) {
+            value.raiseTypeCastException();
+        }
+
+        return (RMList) value;
+    }
+
+    public Slice getSlice(Slice key) {
+        RMDataStructure value = getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        if(!(value instanceof Slice)) {
+            value.raiseTypeCastException();
+        }
+
+        return (Slice) value;
     }
 
     public Slice getSlice(Slice key1, Slice key2) {
-        return keyValueStorage.getSlice(key1, key2);
+        RMSortedSet value = getSortedSet(key1);
+
+        if (value == null) {
+            return null;
+        }
+
+        Map<Slice, Slice> innerMap = value.getStoredData();
+        if(innerMap == null) {
+            return null;
+        }
+
+        return innerMap.get(key2);
+    }
+
+
+    private RMSortedSet getSortedSet(Slice key) {
+        RMDataStructure value = getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        if(!(value instanceof RMSortedSet)) {
+            value.raiseTypeCastException();
+        }
+
+        return (RMSortedSet) value;
+    }
+
+    public Map<Slice, Slice> getFieldsAndValues(Slice hash){
+        RMSortedSet sortedSet = getSortedSet(hash);
+        if(sortedSet == null) {
+            return null;
+        }
+        return sortedSet.getStoredData();
     }
 
     public Long getTTL(Slice key) {
@@ -90,6 +177,10 @@ public class RedisBase {
 
     public void putValue(Slice key, RMDataStructure value, Long ttl) {
         keyValueStorage.put(key, value, ttl);
+    }
+
+    public void putValue(Slice key, RMDataStructure value) {
+        keyValueStorage.put(key, value, -1L);
     }
 
     public void deleteValue(Slice key) {

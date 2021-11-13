@@ -29,11 +29,4 @@ public class TestUtils {
         });
     }
 
-
-    @Test
-    public void testSerializeAndDeserialize() {
-        Slice a = Slice.create("abcdef");
-        Slice b = Utils.deserializeObject(Utils.serializeObject(a));
-        assertArrayEquals(a.data(), b.data());
-    }
 }

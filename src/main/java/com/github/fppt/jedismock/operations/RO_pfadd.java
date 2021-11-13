@@ -1,5 +1,7 @@
 package com.github.fppt.jedismock.operations;
 
+import com.github.fppt.jedismock.datastructures.RMDataStructure;
+import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
@@ -7,9 +9,6 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.github.fppt.jedismock.Utils.deserializeObject;
-import static com.github.fppt.jedismock.Utils.serializeObject;
 
 @RedisCommand("pfadd")
 class RO_pfadd extends AbstractRedisOperation {
@@ -19,30 +18,29 @@ class RO_pfadd extends AbstractRedisOperation {
 
     Slice response(){
         Slice key = params().get(0);
-        Slice data = base().getSlice(key);
+
+        RMSet dataSet = base().getSet(key);
         boolean first;
 
         Set<Slice> set;
         int prev;
-        if (data == null) {
+        if (dataSet == null) {
             set = new HashSet<>();
             first = true;
             prev = 0;
         } else {
-            set = deserializeObject(data);
+            set = dataSet.getStoredData();
             first = false;
             prev = set.size();
         }
 
-        for (Slice v : params().subList(1, params().size())) {
-            set.add(v);
-        }
+        set.addAll(params().subList(1, params().size()));
+        RMDataStructure outData = new RMSet(set);
 
-        Slice out = serializeObject(set);
         if (first) {
-            base().putSlice(key, out);
+            base().putValue(key, outData);
         } else {
-            base().putSlice(key, out, null);
+            base().putValue(key, outData, null);
         }
 
         if (prev != set.size()) {

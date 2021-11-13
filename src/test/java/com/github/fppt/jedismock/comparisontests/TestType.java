@@ -3,8 +3,6 @@ package com.github.fppt.jedismock.comparisontests;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import redis.clients.jedis.Jedis;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
