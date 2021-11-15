@@ -3,7 +3,7 @@ package com.github.fppt.jedismock;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.operations.RedisOperation;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
