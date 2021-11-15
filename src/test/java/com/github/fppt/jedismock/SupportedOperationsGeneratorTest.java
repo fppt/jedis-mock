@@ -27,6 +27,7 @@ import static org.reflections.util.ReflectionUtilsPredicates.withAnnotation;
 @Testcontainers
 public class SupportedOperationsGeneratorTest {
     private static final String SEPARATOR = " ";
+    private static final String LINE_SEPARATOR = " ";
     private static final String HEADING = "# Supported operations:";
     private static final String SYMBOL_SUPPORTED = ":heavy_check_mark:";
     private static final String SYMBOL_UNSUPPORTED = ":x:";
@@ -70,11 +71,11 @@ public class SupportedOperationsGeneratorTest {
         List<String> lines = allOperations.stream()
                 .sorted()
                 .map(op -> implementedOperations.contains(op) ?
-                        SYMBOL_SUPPORTED + SEPARATOR + op:
-                        SYMBOL_UNSUPPORTED + SEPARATOR + op
+                        SYMBOL_SUPPORTED + SEPARATOR + op + LINE_SEPARATOR:
+                        SYMBOL_UNSUPPORTED + SEPARATOR + op + LINE_SEPARATOR
                 )
                 .collect(Collectors.toList());
-        lines.add(0, HEADING);
+        lines.add(0, HEADING + LINE_SEPARATOR);
 
         writeToFile(lines);
     }
