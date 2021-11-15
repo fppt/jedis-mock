@@ -60,7 +60,7 @@ server.start();
 
 ## Supported Operations
 
-All currently supported operations are listed [here](https://github.com/fppt/jedis-mock/blob/master/src/main/java/com/github/fppt/jedismock/operations/OperationFactory.java)
+All currently supported operations are listed [here](supported_operations.md)
 
 ## Missing Operations
 
