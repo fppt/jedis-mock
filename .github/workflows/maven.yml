@@ -30,10 +30,6 @@ jobs:
 
       - name: Update list of supported operations
         if: success() && github.ref == 'refs/heads/master'
-        run: |-
-            git add supported_operations.md
-            git diff
-            git config --global user.email "github-action-bot@example.com"
-            git config --global user.name "GitHub Action Bot"
-            git commit -m "Update supported_operations.md" -a || echo "No changes to commit"
-            git push
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update list of supported operations
