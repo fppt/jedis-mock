@@ -447,6 +447,15 @@ public class TestRedisOperationExecutor {
     }
 
     @Test
+    public void testPersist() throws ParseErrorException {
+        assertCommandOK(array("set", "a", "v"));
+        assertCommandEquals(1, array("expire", "a", "1500"));
+        assertCommandEquals(1500, array("ttl", "a"));
+        assertCommandEquals(1, array("persist", "a"));
+        assertCommandEquals(-1, array("ttl", "a"));
+    }
+
+    @Test
     public void testLpush() throws ParseErrorException {
         assertCommandEquals(1, array("lpush", "mylist", "!"));
         assertCommandEquals(3, array("lpush", "mylist", "world", "hello"));
