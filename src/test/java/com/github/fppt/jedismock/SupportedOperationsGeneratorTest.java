@@ -34,7 +34,7 @@ public class SupportedOperationsGeneratorTest {
     private static final String REGEX = "\"([^\"]+)\"";
 
     @Container
-    private final GenericContainer redis = new GenericContainer<>(DockerImageName.parse("redis:5.0-alpine"));
+    private final GenericContainer redis = new GenericContainer<>(DockerImageName.parse("redis:6.2-alpine"));
 
     private final static Set<String> implementedOperations;
 
