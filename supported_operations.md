@@ -1,4 +1,5 @@
 # Supported operations:
+:x: acl\
 :heavy_check_mark: append\
 :x: asking\
 :heavy_check_mark: auth\
@@ -6,8 +7,10 @@
 :x: bgsave\
 :x: bitcount\
 :x: bitfield\
+:x: bitfield_ro\
 :x: bitop\
 :x: bitpos\
+:x: blmove\
 :heavy_check_mark: blpop\
 :heavy_check_mark: brpop\
 :heavy_check_mark: brpoplpush\
@@ -17,6 +20,7 @@
 :x: cluster\
 :x: command\
 :x: config\
+:x: copy\
 :heavy_check_mark: dbsize\
 :x: debug\
 :heavy_check_mark: decr\
@@ -31,6 +35,7 @@
 :heavy_check_mark: exists\
 :heavy_check_mark: expire\
 :heavy_check_mark: expireat\
+:x: failover\
 :heavy_check_mark: flushall\
 :heavy_check_mark: flushdb\
 :x: geoadd\
@@ -41,11 +46,16 @@
 :x: georadius_ro\
 :x: georadiusbymember\
 :x: georadiusbymember_ro\
+:x: geosearch\
+:x: geosearchstore\
 :heavy_check_mark: get\
 :heavy_check_mark: getbit\
+:x: getdel\
+:x: getex\
 :x: getrange\
 :heavy_check_mark: getset\
 :heavy_check_mark: hdel\
+:heavy_check_mark: hello\
 :heavy_check_mark: hexists\
 :heavy_check_mark: hget\
 :heavy_check_mark: hgetall\
@@ -56,6 +66,7 @@
 :heavy_check_mark: hmget\
 :heavy_check_mark: hmset\
 :x: host:\
+:x: hrandfield\
 :heavy_check_mark: hscan\
 :heavy_check_mark: hset\
 :heavy_check_mark: hsetnx\
@@ -71,8 +82,10 @@
 :heavy_check_mark: lindex\
 :x: linsert\
 :heavy_check_mark: llen\
+:x: lmove\
 :x: lolwut\
 :heavy_check_mark: lpop\
+:x: lpos\
 :heavy_check_mark: lpush\
 :heavy_check_mark: lpushx\
 :heavy_check_mark: lrange\
@@ -113,6 +126,7 @@
 :x: renamenx\
 :x: replconf\
 :x: replicaof\
+:x: reset\
 :x: restore\
 :x: restore-asking\
 :x: role\
@@ -140,12 +154,14 @@
 :x: slaveof\
 :x: slowlog\
 :heavy_check_mark: smembers\
+:x: smismember\
 :x: smove\
 :x: sort\
 :heavy_check_mark: spop\
 :x: srandmember\
 :heavy_check_mark: srem\
 :heavy_check_mark: sscan\
+:x: stralgo\
 :heavy_check_mark: strlen\
 :heavy_check_mark: subscribe\
 :x: substr\
@@ -164,6 +180,7 @@
 :x: watch\
 :x: xack\
 :x: xadd\
+:x: xautoclaim\
 :x: xclaim\
 :x: xdel\
 :x: xgroup\
@@ -179,14 +196,20 @@
 :heavy_check_mark: zadd\
 :heavy_check_mark: zcard\
 :x: zcount\
+:x: zdiff\
+:x: zdiffstore\
 :x: zincrby\
+:x: zinter\
 :x: zinterstore\
 :x: zlexcount\
+:x: zmscore\
 :x: zpopmax\
 :x: zpopmin\
+:x: zrandmember\
 :heavy_check_mark: zrange\
 :heavy_check_mark: zrangebylex\
 :heavy_check_mark: zrangebyscore\
+:x: zrangestore\
 :x: zrank\
 :heavy_check_mark: zrem\
 :x: zremrangebylex\
@@ -198,4 +221,5 @@
 :x: zrevrank\
 :x: zscan\
 :heavy_check_mark: zscore\
+:x: zunion\
 :x: zunionstore\
