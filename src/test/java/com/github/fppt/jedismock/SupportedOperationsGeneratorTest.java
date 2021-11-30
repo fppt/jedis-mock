@@ -3,6 +3,7 @@ package com.github.fppt.jedismock;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.operations.RedisOperation;
+import com.github.fppt.jedismock.util.OperationCategory;
 import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
 import org.testcontainers.containers.GenericContainer;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -27,11 +29,12 @@ import static org.reflections.util.ReflectionUtilsPredicates.withAnnotation;
 @Testcontainers
 public class SupportedOperationsGeneratorTest {
     private static final String SEPARATOR = " ";
-    private static final String LINE_SEPARATOR = "\\";
-    private static final String HEADING = "# Supported operations:";
+    private static final String LINE_SEPARATOR = "<br>";
+    private static final String HEADING_LEVEL1 = "# ";
+    private static final String HEADING_LEVEL2 = "## ";
     private static final String SYMBOL_SUPPORTED = ":heavy_check_mark:";
     private static final String SYMBOL_UNSUPPORTED = ":x:";
-    private static final String REGEX = "\"([^\"]+)\"";
+    private static final String REGEX = "\\n\\s*([A-Z][^a-z\\s]+)";
 
     @Container
     private final GenericContainer redis = new GenericContainer<>(DockerImageName.parse("redis:6.2-alpine"));
@@ -59,23 +62,35 @@ public class SupportedOperationsGeneratorTest {
     @Test
     public void generate() throws IOException, InterruptedException {
         redis.start();
-        final GenericContainer.ExecResult result = redis.execInContainer("redis-cli", "--no-raw", "command");
 
         Pattern pattern = Pattern.compile(REGEX);
-        Matcher matcher = pattern.matcher(result.getStdout());
-        List<String> allOperations = new ArrayList<>();
-        while (matcher.find()) {
-            allOperations.add(matcher.group(1));
-        }
+        List<String> lines = new ArrayList<>();
+        lines.add(HEADING_LEVEL1 + "Supported operations:");
+        for (OperationCategory category : OperationCategory.values()) {
+            String command = String.format("echo help @%s | redis-cli", category.getAnnotationName());
+            final GenericContainer.ExecResult result = redis.execInContainer(
+                    "sh", "-c", command);
 
-        List<String> lines = allOperations.stream()
-                .sorted()
-                .map(op -> implementedOperations.contains(op) ?
-                        SYMBOL_SUPPORTED + SEPARATOR + op + LINE_SEPARATOR:
-                        SYMBOL_UNSUPPORTED + SEPARATOR + op + LINE_SEPARATOR
-                )
-                .collect(Collectors.toList());
-        lines.add(0, HEADING);
+            Matcher matcher = pattern.matcher(result.getStdout());
+            Set<String> categoryOperations = new HashSet<>();
+            while (matcher.find()) {
+                categoryOperations.add(matcher.group(1).toLowerCase());
+            }
+            if (categoryOperations.isEmpty()) {
+                continue;
+            }
+
+            lines.add("");
+            lines.add(HEADING_LEVEL2 + category);
+            lines.add("");
+            lines.addAll(categoryOperations.stream()
+                    .sorted()
+                    .map(op -> implementedOperations.contains(op) ?
+                            SYMBOL_SUPPORTED + SEPARATOR + op + LINE_SEPARATOR :
+                            SYMBOL_UNSUPPORTED + SEPARATOR + op + LINE_SEPARATOR
+                    )
+                    .collect(Collectors.toList()));
+        }
 
         writeToFile(lines);
     }

@@ -36,6 +36,7 @@ public class CommandFactory {
                 Constructor<?> declaredConstructor = commandClass.getDeclaredConstructors()[0];
                 Class<?>[] parameterTypes = declaredConstructor.getParameterTypes();
                 Constructor<? extends RedisOperation> constructor = commandClass.getDeclaredConstructor(parameterTypes);
+                constructor.setAccessible(true);
                 Object[] parameters = new Object[parameterTypes.length];
                 for (int i = 0; i < parameterTypes.length; i++) {
                     if (parameterTypes[i].isAssignableFrom(List.class)) {
