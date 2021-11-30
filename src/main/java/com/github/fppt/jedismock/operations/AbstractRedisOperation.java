@@ -10,26 +10,26 @@ import java.io.IOException;
 import java.util.List;
 
 
-abstract class AbstractRedisOperation implements RedisOperation {
+public abstract class AbstractRedisOperation implements RedisOperation {
     private final RedisBase base;
     private final List<Slice> params;
 
-    AbstractRedisOperation(RedisBase base, List<Slice> params) {
+    public AbstractRedisOperation(RedisBase base, List<Slice> params) {
         this.base = base;
         this.params = params;
     }
 
-    void doOptionalWork(){
+    protected void doOptionalWork(){
         //Place Holder For Ops which need to so some operational work
     }
 
-    abstract Slice response() throws IOException;
+    protected abstract Slice response() throws IOException;
 
-    RedisBase base(){
+    protected RedisBase base(){
         return base;
     }
 
-    List<Slice> params(){
+    protected List<Slice> params(){
         return params;
     }
 
