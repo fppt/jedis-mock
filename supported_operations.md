@@ -70,7 +70,7 @@
 :x: migrate<br>
 :x: move<br>
 :x: object<br>
-:x: persist<br>
+:heavy_check_mark: persist<br>
 :heavy_check_mark: pexpire<br>
 :heavy_check_mark: pexpireat<br>
 :x: pfdebug<br>
@@ -156,7 +156,6 @@
 :x: save<br>
 :x: shutdown<br>
 :x: slaveof<br>
-:x: slowlog<br>
 :x: swapdb<br>
 :x: sync<br>
 :heavy_check_mark: time<br>
