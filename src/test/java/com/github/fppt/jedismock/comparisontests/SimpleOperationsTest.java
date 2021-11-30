@@ -7,10 +7,8 @@ import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -919,5 +917,16 @@ public class SimpleOperationsTest {
         assertEquals(1d, jedis.zscore(key, "ddd"));
         assertNull(jedis.zscore(key, "ccc"));
     }
-    
+
+
+    @TestTemplate
+    public void testPersist(Jedis jedis) throws Exception {
+        jedis.psetex("a", 300, "v");
+        assertTrue(jedis.ttl("a") <= 300);
+        jedis.persist("a");
+        assertEquals(-1, jedis.ttl("a"));
+        Thread.sleep(500);
+        //Check that the value is still there
+        assertEquals("v", jedis.get("a"));
+    }
 }
