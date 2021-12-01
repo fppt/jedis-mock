@@ -29,7 +29,7 @@ public abstract class AbstractRedisOperation implements RedisOperation {
         return base;
     }
 
-    protected List<Slice> params(){
+    protected final List<Slice> params() {
         return params;
     }
 
