@@ -177,7 +177,7 @@
 :heavy_check_mark: srem<br>
 :heavy_check_mark: sscan<br>
 :x: sunion<br>
-:x: sunionstore[0<br>
+:x: sunionstore<br>
 
 ## Sorted Sets
 
