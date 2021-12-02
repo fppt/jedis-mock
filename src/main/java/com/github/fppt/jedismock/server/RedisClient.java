@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 
 /**
  * Created by Xiaolu on 2015/4/18.
@@ -36,6 +37,20 @@ public class RedisClient implements Runnable {
         Objects.requireNonNull(options);
         OperationExecutorState state = new OperationExecutorState(this, redisBases);
         this.executor = new RedisOperationExecutor(state);
+        this.socket = socket;
+        this.options = options;
+        this.in = socket.getInputStream();
+        this.out = socket.getOutputStream();
+        this.running = new AtomicBoolean(true);
+    }
+
+    RedisClient(Map<Integer, RedisBase> redisBases, Socket socket,
+                ServiceOptions options, BiFunction<String, Slice, Slice> mockedOperationsHandler) throws IOException {
+        Objects.requireNonNull(redisBases);
+        Objects.requireNonNull(socket);
+        Objects.requireNonNull(options);
+        OperationExecutorState state = new OperationExecutorState(this, redisBases);
+        this.executor = new RedisOperationExecutor(state, mockedOperationsHandler);
         this.socket = socket;
         this.options = options;
         this.in = socket.getInputStream();
@@ -97,5 +112,9 @@ public class RedisClient implements Runnable {
         Utils.closeQuietly(socket);
         Utils.closeQuietly(in);
         Utils.closeQuietly(out);
+    }
+
+    public void setMockedOperationsHandler(BiFunction<String, Slice, Slice> mockedOperationsHandler) {
+        executor.setMockedOperationsHandler(mockedOperationsHandler);
     }
 }

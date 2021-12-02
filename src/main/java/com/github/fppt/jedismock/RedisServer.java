@@ -1,7 +1,9 @@
 package com.github.fppt.jedismock;
 
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.server.RedisService;
+import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.RedisBase;
 
@@ -13,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 
 /**
  * Created by Xiaolu on 2015/4/18.
@@ -25,15 +28,20 @@ public class RedisServer {
     private RedisService service;
     private ServiceOptions options = ServiceOptions.defaultOptions();
     private Future<Void> serviceFinalization;
+    private BiFunction<String, Slice, Slice> mockedOperationsHandler;
 
     public RedisServer() throws IOException {
         this(0);
+        mockedOperationsHandler =
+            (cmd, params) -> Response.error(String.format("Unsupported operation: pubsub %s", cmd));
     }
 
     public RedisServer(int port) {
         this.bindPort = port;
         this.redisBases = new HashMap<>();
         this.threadPool = Executors.newSingleThreadExecutor();
+        mockedOperationsHandler =
+                (cmd, params) -> Response.error(String.format("Unsupported operation: pubsub %s", cmd));
         CommandFactory.initialize();
     }
 
@@ -50,11 +58,21 @@ public class RedisServer {
         this.options = options;
     }
 
+    /**
+     * Set mockedOperationsHandler which handles operations are not supported or overrides standard behaviour.
+     * @param mockedOperationsHandler - functor, which takes RedisOperation and overrides
+     *                               behavior of RedisOperationExecutor.
+     */
+    public void setMockedCommands(BiFunction<String, Slice, Slice> mockedOperationsHandler) {
+        this.mockedOperationsHandler = mockedOperationsHandler;
+    }
+
     public void start() throws IOException {
         if (!(service == null)) {
             throw new IllegalStateException();
         }
         this.service = new RedisService(bindPort, redisBases, options);
+        this.service.setMockedOperationHandler(mockedOperationsHandler);
         serviceFinalization = threadPool.submit(service);
     }
 

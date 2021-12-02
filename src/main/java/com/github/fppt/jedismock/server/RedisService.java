@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.server;
 
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiFunction;
 
 /**
  * Created by Xiaolu on 2015/4/21.
@@ -20,6 +22,8 @@ public class RedisService implements Callable<Void> {
     private final Map<Integer, RedisBase> redisBases;
     private final ServiceOptions options;
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
+    private BiFunction<String, Slice, Slice> mockedOperationsHandler =
+            (cmd, params) -> Response.error(String.format("Unsupported operation: pubsub %s", cmd));
 
     public RedisService(int bindPort, Map<Integer, RedisBase> redisBases, ServiceOptions options) throws IOException {
         Objects.requireNonNull(redisBases);
@@ -33,7 +37,8 @@ public class RedisService implements Callable<Void> {
     public Void call() throws IOException {
         while (!server.isClosed()) {
             Socket socket = server.accept();
-            threadPool.submit(new RedisClient(redisBases, socket, options));
+            RedisClient rc = new RedisClient(redisBases, socket, options, mockedOperationsHandler);
+            threadPool.submit(rc);
         }
         return null;
     }
@@ -44,5 +49,9 @@ public class RedisService implements Callable<Void> {
 
     public void stop() throws IOException {
         server.close();
+    }
+
+    public void setMockedOperationHandler(BiFunction<String, Slice, Slice> mockedOperationsHandler) {
+        this.mockedOperationsHandler = mockedOperationsHandler;
     }
 }

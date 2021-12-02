@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock;
 
+import com.github.fppt.jedismock.server.ServiceOptions;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
@@ -40,6 +41,20 @@ public class TestJedisConnect {
         assertEquals(jedis2.get("a"), "b");
         jedis1.disconnect();
         jedis2.disconnect();
+        server.stop();
+    }
+
+    @Test
+    public void testMockedOperations() throws IOException {
+        RedisServer server = RedisServer.newRedisServer();
+        ServiceOptions options = ServiceOptions.create(3);
+        server.setOptions(options);
+        server.setMockedCommands((roName, params) -> { return null; } /*Does nothing for unknown commands.*/);
+        server.start();
+        Jedis jedis = new Jedis(server.getHost(), server.getBindPort());
+
+        //assertEquals(jedis.);
+
         server.stop();
     }
 

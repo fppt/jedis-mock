@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
  * Created by Xiaolu on 2015/4/20.
@@ -15,8 +16,16 @@ import java.util.List;
 public class RedisOperationExecutor {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisOperationExecutor.class);
     private final OperationExecutorState state;
+    private BiFunction<String, Slice, Slice> mockedOperationsHandler;
+
     public RedisOperationExecutor(OperationExecutorState state) {
         this.state = state;
+        this.mockedOperationsHandler = (cmd, params) -> Response.error("TODO: think what to write there");
+    }
+
+    public RedisOperationExecutor(OperationExecutorState state, BiFunction<String, Slice, Slice> mockedOperationsHandler) {
+        this.state = state;
+        this.mockedOperationsHandler = mockedOperationsHandler;
     }
 
     public Slice execCommand(RedisCommand command) {
@@ -37,7 +46,7 @@ public class RedisOperationExecutor {
                     return operation.execute();
                 }
 
-                //Checking if we mutating the transaction or the redisBases
+                //Checking if we are mutating the transaction or the redisBases
                 operation = CommandFactory.buildOperation(name, true, state, commandParams);
                 if (operation != null) {
                     if (state.isTransactionModeOn()) {
@@ -54,5 +63,9 @@ public class RedisOperationExecutor {
                 return Response.error(e.getMessage());
             }
         }
+    }
+
+    public void setMockedOperationsHandler(BiFunction<String, Slice, Slice> mockedOperationsHandler) {
+        this.mockedOperationsHandler = mockedOperationsHandler;
     }
 }
