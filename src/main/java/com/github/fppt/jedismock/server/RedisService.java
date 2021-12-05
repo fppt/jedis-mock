@@ -1,11 +1,13 @@
 package com.github.fppt.jedismock.server;
 
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.operations.server.RedisCommandInterceptor;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -22,8 +24,7 @@ public class RedisService implements Callable<Void> {
     private final Map<Integer, RedisBase> redisBases;
     private final ServiceOptions options;
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
-    private BiFunction<String, Slice, Slice> mockedOperationsHandler =
-            (cmd, params) -> Response.error(String.format("Unsupported operation: pubsub %s", cmd));
+    private RedisCommandInterceptor mockedOperationsHandler;
 
     public RedisService(int bindPort, Map<Integer, RedisBase> redisBases, ServiceOptions options) throws IOException {
         Objects.requireNonNull(redisBases);
@@ -37,7 +38,14 @@ public class RedisService implements Callable<Void> {
     public Void call() throws IOException {
         while (!server.isClosed()) {
             Socket socket = server.accept();
-            RedisClient rc = new RedisClient(redisBases, socket, options, mockedOperationsHandler);
+
+            RedisClient rc;
+
+            if (mockedOperationsHandler != null) {
+                rc = new RedisClient(redisBases, socket, options, mockedOperationsHandler);
+            } else {
+                rc = new RedisClient(redisBases, socket, options);
+            }
             threadPool.submit(rc);
         }
         return null;
@@ -51,7 +59,7 @@ public class RedisService implements Callable<Void> {
         server.close();
     }
 
-    public void setMockedOperationHandler(BiFunction<String, Slice, Slice> mockedOperationsHandler) {
+    public void setMockedOperationHandler(RedisCommandInterceptor mockedOperationsHandler) {
         this.mockedOperationsHandler = mockedOperationsHandler;
     }
 }

@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.server;
 
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.operations.server.RedisCommandInterceptor;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.commands.RedisCommand;
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiFunction;
 
 /**
  * Created by Xiaolu on 2015/4/18.
@@ -45,7 +45,7 @@ public class RedisClient implements Runnable {
     }
 
     RedisClient(Map<Integer, RedisBase> redisBases, Socket socket,
-                ServiceOptions options, BiFunction<String, Slice, Slice> mockedOperationsHandler) throws IOException {
+                ServiceOptions options, RedisCommandInterceptor mockedOperationsHandler) throws IOException {
         Objects.requireNonNull(redisBases);
         Objects.requireNonNull(socket);
         Objects.requireNonNull(options);
@@ -114,7 +114,7 @@ public class RedisClient implements Runnable {
         Utils.closeQuietly(out);
     }
 
-    public void setMockedOperationsHandler(BiFunction<String, Slice, Slice> mockedOperationsHandler) {
+    public void setMockedOperationsHandler(RedisCommandInterceptor mockedOperationsHandler) {
         executor.setMockedOperationsHandler(mockedOperationsHandler);
     }
 }

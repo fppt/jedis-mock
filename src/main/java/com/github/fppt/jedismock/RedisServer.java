@@ -2,12 +2,14 @@ package com.github.fppt.jedismock;
 
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.CommandFactory;
+import com.github.fppt.jedismock.operations.server.RedisCommandInterceptor;
 import com.github.fppt.jedismock.server.RedisService;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,20 +30,16 @@ public class RedisServer {
     private RedisService service;
     private ServiceOptions options = ServiceOptions.defaultOptions();
     private Future<Void> serviceFinalization;
-    private BiFunction<String, Slice, Slice> mockedOperationsHandler;
+    private RedisCommandInterceptor mockedOperationsHandler;
 
     public RedisServer() throws IOException {
         this(0);
-        mockedOperationsHandler =
-            (cmd, params) -> Response.error(String.format("Unsupported operation: pubsub %s", cmd));
     }
 
     public RedisServer(int port) {
         this.bindPort = port;
         this.redisBases = new HashMap<>();
         this.threadPool = Executors.newSingleThreadExecutor();
-        mockedOperationsHandler =
-                (cmd, params) -> Response.error(String.format("Unsupported operation: pubsub %s", cmd));
         CommandFactory.initialize();
     }
 
@@ -63,7 +61,7 @@ public class RedisServer {
      * @param mockedOperationsHandler - functor, which takes RedisOperation and overrides
      *                               behavior of RedisOperationExecutor.
      */
-    public void setMockedCommands(BiFunction<String, Slice, Slice> mockedOperationsHandler) {
+    public void setMockedCommands(RedisCommandInterceptor mockedOperationsHandler) {
         this.mockedOperationsHandler = mockedOperationsHandler;
     }
 

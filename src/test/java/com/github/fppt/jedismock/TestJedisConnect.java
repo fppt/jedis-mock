@@ -49,7 +49,7 @@ public class TestJedisConnect {
         RedisServer server = RedisServer.newRedisServer();
         ServiceOptions options = ServiceOptions.create(3);
         server.setOptions(options);
-        server.setMockedCommands((roName, params) -> { return null; } /*Does nothing for unknown commands.*/);
+        server.setMockedCommands((state, roName, params) -> { return null; } /*Does nothing for unknown commands.*/);
         server.start();
         Jedis jedis = new Jedis(server.getHost(), server.getBindPort());
 
