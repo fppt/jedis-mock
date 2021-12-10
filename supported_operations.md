@@ -156,6 +156,7 @@
 :x: save<br>
 :x: shutdown<br>
 :x: slaveof<br>
+:x: slowlog<br>
 :x: swapdb<br>
 :x: sync<br>
 :heavy_check_mark: time<br>
@@ -240,6 +241,7 @@
 :x: bitpos<br>
 :heavy_check_mark: decr<br>
 :heavy_check_mark: decrby<br>
+:heavy_check_mark: get<br>
 :heavy_check_mark: getbit<br>
 :x: getdel<br>
 :x: getex<br>
