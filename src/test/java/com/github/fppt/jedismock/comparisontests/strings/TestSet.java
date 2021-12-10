@@ -1,5 +1,6 @@
-package com.github.fppt.jedismock.comparisontests;
+package com.github.fppt.jedismock.comparisontests.strings;
 
+import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +35,7 @@ public class TestSet {
     }
 
     @TestTemplate
-    void testSetXXKey(Jedis jedis){
+    void testSetXXKey(Jedis jedis) {
         jedis.set("xx", "foo");
         assertEquals("foo", jedis.get("xx"));
     }

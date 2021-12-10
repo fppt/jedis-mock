@@ -1,5 +1,6 @@
-package com.github.fppt.jedismock.comparisontests;
+package com.github.fppt.jedismock.comparisontests.sortedsets;
 
+import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +19,7 @@ public class TestZRemRangeByScore {
     private static final String ZSET_KEY = "myzset";
 
     @BeforeEach
-    public void clearKey(Jedis jedis){
+    public void clearKey(Jedis jedis) {
         jedis.del(ZSET_KEY);
     }
 

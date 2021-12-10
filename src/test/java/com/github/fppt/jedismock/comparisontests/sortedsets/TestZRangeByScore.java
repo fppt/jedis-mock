@@ -1,5 +1,6 @@
-package com.github.fppt.jedismock.comparisontests;
+package com.github.fppt.jedismock.comparisontests.sortedsets;
 
+import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,7 +13,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRangeByScore {
@@ -38,7 +40,7 @@ public class TestZRangeByScore {
         assertEquals(new HashSet(asList("one", "two", "three")),
                 jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf"));
         assertEquals(new HashSet(asList(new Tuple("one", 1.),
-                new Tuple("two", 1.), new Tuple("three", 1.))),
+                        new Tuple("two", 1.), new Tuple("three", 1.))),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf"));
     }
 
@@ -57,7 +59,7 @@ public class TestZRangeByScore {
         // then
         assertEquals(new HashSet(asList("one", "two", "three")), zrangeByScoreResult);
         assertEquals(new HashSet(asList(new Tuple("one", 1.),
-                new Tuple("two", 2.), new Tuple("three", 3.))),
+                        new Tuple("two", 2.), new Tuple("three", 3.))),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf"));
 
     }
@@ -111,10 +113,10 @@ public class TestZRangeByScore {
         assertEquals(new HashSet(asList("five", "six", "seven", "eight")),
                 jedis.zrangeByScore(ZSET_KEY, 5, 8));
         assertEquals(new HashSet(asList(
-                new Tuple("five", 5.),
-                new Tuple("six", 6.),
-                new Tuple("seven", 7.),
-                new Tuple("eight", 8.))),
+                        new Tuple("five", 5.),
+                        new Tuple("six", 6.),
+                        new Tuple("seven", 7.),
+                        new Tuple("eight", 8.))),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, 5, 8));
     }
 
@@ -132,9 +134,9 @@ public class TestZRangeByScore {
         assertEquals(new HashSet(asList("minusone", "zero", "one")),
                 jedis.zrangeByScore(ZSET_KEY, -1, 1));
         assertEquals(new HashSet(asList(
-                new Tuple("minusone", -1.),
-                new Tuple("zero", 0.),
-                new Tuple("one", 1.))),
+                        new Tuple("minusone", -1.),
+                        new Tuple("zero", 0.),
+                        new Tuple("one", 1.))),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, -1, 1));
     }
 
@@ -154,11 +156,11 @@ public class TestZRangeByScore {
         assertEquals(10, jedis.zrange(ZSET_KEY, 0, -1).size());
 
         //then
-      //  assertEquals(new HashSet(asList("three", "four")),
-      //          jedis.zrangeByScore(ZSET_KEY, 2, 5, 1, 2));
+        //  assertEquals(new HashSet(asList("three", "four")),
+        //          jedis.zrangeByScore(ZSET_KEY, 2, 5, 1, 2));
         assertEquals(new HashSet(asList(
-                new Tuple("three", 3.),
-                new Tuple("four", 4.))),
+                        new Tuple("three", 3.),
+                        new Tuple("four", 4.))),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, 2, 5, 1, 2));
     }
 

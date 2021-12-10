@@ -34,7 +34,8 @@ public class SupportedOperationsGeneratorTest {
     private static final String HEADING_LEVEL2 = "## ";
     private static final String SYMBOL_SUPPORTED = ":heavy_check_mark:";
     private static final String SYMBOL_UNSUPPORTED = ":x:";
-    private static final String REGEX = "\\n\\s*([A-Z][^a-z\\s]+)";
+    private static final String OPERATION_NAME_REGEX = "\\r\\n\\s*([^a-z\\s]+)";
+    private static final String ANSI_ESCAPE_CODE_REGEX = "\\x1b\\[[0-9;]*[a-zA-Z]";
 
     @Container
     private final GenericContainer redis = new GenericContainer<>(DockerImageName.parse("redis:6.2-alpine"));
@@ -63,11 +64,12 @@ public class SupportedOperationsGeneratorTest {
     public void generate() throws IOException, InterruptedException {
         redis.start();
 
-        Pattern pattern = Pattern.compile(REGEX);
+        Pattern pattern = Pattern.compile(OPERATION_NAME_REGEX);
         List<String> lines = new ArrayList<>();
         lines.add(HEADING_LEVEL1 + "Supported operations:");
         for (OperationCategory category : OperationCategory.values()) {
-            String command = String.format("echo help @%s | redis-cli", category.getAnnotationName());
+            String command = String.format("echo help @%s | redis-cli | sed 's/%s//g'",
+                    category.getAnnotationName(), ANSI_ESCAPE_CODE_REGEX);
             final GenericContainer.ExecResult result = redis.execInContainer(
                     "sh", "-c", command);
 

@@ -1,51 +1,24 @@
-package com.github.fppt.jedismock.comparisontests;
+package com.github.fppt.jedismock.comparisontests.lists;
 
+import com.github.fppt.jedismock.comparisontests.ComparisonBase;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Client;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Transaction;
-import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(ComparisonBase.class)
-public class AdvanceOperationsTest {
+public class AdvanceListOperationsTest {
 
-    @TestTemplate
-    public void whenTransactionWithMultiplePushesIsExecuted_EnsureResultsAreSaved(Jedis jedis) {
-        String key = "my-list";
-        assertEquals(new Long(0), jedis.llen(key));
-
-        Transaction transaction = jedis.multi();
-        transaction.lpush(key, "1");
-        transaction.lpush(key, "2");
-        transaction.lpush(key, "3");
-        transaction.exec();
-
-        assertEquals(new Long(3), jedis.llen(key));
-    }
-
-    @TestTemplate
-    public void whenUsingTransactionAndTryingToAccessJedis_Throw(Jedis jedis) {
-        //Do Something random with Jedis
-        assertNull(jedis.get("oobity-oobity-boo"));
-
-        //Start transaction
-        jedis.multi();
-        assertEquals("Cannot use Jedis when in Multi. Please use Transaction or reset jedis state.",
-                assertThrows(JedisDataException.class, () ->
-                        jedis.get("oobity-oobity-boo")).getMessage());
+    @BeforeEach
+    public void setUp(Jedis jedis) {
+        jedis.flushAll();
     }
 
     @TestTemplate
@@ -117,38 +90,6 @@ public class AdvanceOperationsTest {
     }
 
     @TestTemplate
-    public void whenChangingBetweenRedisDBS_EnsureChangesAreMutuallyExclusive(Jedis jedis) {
-        String key1 = "k1";
-        String key2 = "k2";
-
-        String val1 = "v1";
-        String val2 = "v2";
-        String val3 = "v3";
-
-        //Mess With Default Cluster
-        jedis.set(key1, val1);
-        jedis.set(key2, val2);
-        assertEquals(val1, jedis.get(key1));
-        assertEquals(val2, jedis.get(key2));
-
-        //Change to new DB
-        jedis.select(2);
-        assertNull(jedis.get(key1));
-        assertNull(jedis.get(key2));
-
-        jedis.set(key1, val3);
-        jedis.set(key2, val3);
-        assertEquals(val3, jedis.get(key1));
-        assertEquals(val3, jedis.get(key2));
-
-        //Change back and make sure original is unchanged
-        jedis.select(0);
-        assertEquals(val1, jedis.get(key1));
-        assertEquals(val2, jedis.get(key2));
-    }
-
-
-    @TestTemplate
     public void whenUsingBlpop_EnsureItBlocksAndCorrectResultsAreReturned(Jedis jedis) throws ExecutionException, InterruptedException {
         String key = "list1_kfubdjkfnv";
         jedis.rpush(key, "d", "e", "f");
@@ -167,7 +108,6 @@ public class AdvanceOperationsTest {
         List<String> results = jedis.lrange(key, 0, -1);
         assertEquals(2, results.size());
     }
-
 
     @TestTemplate
     public void whenUsingBlpop_EnsureItBlocksAndCorrectResultsAreReturnedOnMultipleList(Jedis jedis) throws ExecutionException, InterruptedException {
