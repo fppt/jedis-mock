@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock;
 
+import com.github.fppt.jedismock.server.ServiceOptions;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;

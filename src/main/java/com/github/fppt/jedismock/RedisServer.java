@@ -26,7 +26,7 @@ public class RedisServer {
     private ServiceOptions options = ServiceOptions.defaultOptions();
     private Future<Void> serviceFinalization;
 
-    public RedisServer() throws IOException {
+    public RedisServer() {
         this(0);
     }
 
@@ -37,25 +37,27 @@ public class RedisServer {
         CommandFactory.initialize();
     }
 
-    static public RedisServer newRedisServer() throws IOException {
+    static public RedisServer newRedisServer() {
         return new RedisServer();
     }
 
-    static public RedisServer newRedisServer(int port) throws IOException {
+    static public RedisServer newRedisServer(int port) {
         return new RedisServer(port);
     }
 
-    public void setOptions(ServiceOptions options) {
+    public RedisServer setOptions(ServiceOptions options) {
         Objects.requireNonNull(options);
         this.options = options;
+        return this;
     }
 
-    public void start() throws IOException {
+    public RedisServer start() throws IOException {
         if (!(service == null)) {
             throw new IllegalStateException();
         }
         this.service = new RedisService(bindPort, redisBases, options);
         serviceFinalization = threadPool.submit(service);
+        return this;
     }
 
     public void stop() throws IOException {

@@ -60,7 +60,6 @@ public class CommandFactory {
         }
     }
 
-
     public static void initialize() {
         //This method does nothing, only required for eager static initialization
     }

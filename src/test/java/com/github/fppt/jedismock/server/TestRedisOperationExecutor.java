@@ -1,15 +1,20 @@
-package com.github.fppt.jedismock;
+package com.github.fppt.jedismock.server;
 
 import com.github.fppt.jedismock.commands.RedisCommandParser;
 import com.github.fppt.jedismock.exception.ParseErrorException;
+import com.github.fppt.jedismock.server.RedisClient;
 import com.github.fppt.jedismock.server.RedisOperationExecutor;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -23,7 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestRedisOperationExecutor {
 
     private static final String CRLF = "\r\n";
-    private static RedisOperationExecutor executor;
+    private static final Socket mockSocket = Mockito.mock(Socket.class);
+
+    private RedisOperationExecutor executor;
 
     private static String bulkString(CharSequence param) {
         return "$" + param.length() + CRLF + param.toString() + CRLF;
@@ -78,11 +85,12 @@ public class TestRedisOperationExecutor {
     private String set(String key, String value){ return executor.execCommand(RedisCommandParser.parse(array("SET", key, value))).toString(); }
 
     @BeforeEach
-    public void initCommandExecutor() {
-        //TODO: Mock out the client here
+    public void initCommandExecutor() throws IOException {
         Map<Integer, RedisBase> redisBases = new HashMap<>();
         redisBases.put(0, new RedisBase());
-        OperationExecutorState state = new OperationExecutorState(null, redisBases);
+        RedisClient redisClient = new RedisClient(redisBases,
+                mockSocket, ServiceOptions.defaultOptions());
+        OperationExecutorState state = new OperationExecutorState(redisClient, redisBases);
         executor = new RedisOperationExecutor(state);
     }
 

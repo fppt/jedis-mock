@@ -60,7 +60,6 @@ public class TestCommandParser {
         }
     }
 
-
     @Test
     public void testConsumeParameter() throws ParseErrorException {
         InputStream stream = new ByteArrayInputStream("$5\r\nabcde\r\n".getBytes());

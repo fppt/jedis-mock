@@ -10,8 +10,7 @@ public class RedisCommand {
 
     private final List<Slice> parameters;
 
-    private RedisCommand(
-            List<Slice> parameters) {
+    private RedisCommand(List<Slice> parameters) {
         if (parameters == null) {
             throw new NullPointerException("Null parameters");
         }

@@ -1,9 +1,7 @@
 package com.github.fppt.jedismock;
 
-import com.github.fppt.jedismock.server.ServiceOptions;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -50,24 +48,6 @@ public class TestRedisServer {
             server2.start();
             fail();
         } catch (BindException e) {
-            // OK
-        }
-    }
-
-    @Test
-    public void testCloseSocket() throws IOException {
-        RedisServer server = RedisServer.newRedisServer();
-        ServiceOptions options = ServiceOptions.create(3);
-        server.setOptions(options);
-        server.start();
-        Jedis jedis = new Jedis(server.getHost(), server.getBindPort());
-        assertEquals(jedis.set("ab", "cd"), "OK");
-        assertEquals(jedis.set("ab", "cd"), "OK");
-        assertEquals(jedis.set("ab", "cd"), "OK");
-        try {
-            assertEquals(jedis.set("ab", "cd"), "OK");
-            fail();
-        } catch (JedisConnectionException e) {
             // OK
         }
     }

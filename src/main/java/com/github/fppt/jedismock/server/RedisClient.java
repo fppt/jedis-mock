@@ -44,16 +44,11 @@ public class RedisClient implements Runnable {
     }
 
     public void run() {
-        int count = 0;
         while (running.get() && !socket.isClosed()) {
             Optional<RedisCommand> command = nextCommand();
             if (command.isPresent()) {
                 Slice response = executor.execCommand(command.get());
                 sendResponse(response, command.toString());
-                count++;
-                if (options.autoCloseOn() != 0 && options.autoCloseOn() <= count) {
-                    break;
-                }
             }
         }
         LOG.debug("Mock redis connection shut down.");
@@ -97,5 +92,9 @@ public class RedisClient implements Runnable {
         Utils.closeQuietly(socket);
         Utils.closeQuietly(in);
         Utils.closeQuietly(out);
+    }
+
+    ServiceOptions options() {
+        return options;
     }
 }
