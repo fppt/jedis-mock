@@ -2,23 +2,26 @@ package com.github.fppt.jedismock.operations.transactions;
 
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
+
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
-@RedisCommand(value = "discard", transactional = false)
-public class Discard implements RedisOperation {
-    private OperationExecutorState state;
+import java.util.List;
 
-    Discard(OperationExecutorState state){
+@RedisCommand(value = "watch", transactional = false)
+public class Watch implements RedisOperation {
+    private OperationExecutorState state;
+    private List<Slice> keys;
+
+    Watch(OperationExecutorState state, List<Slice> keys) {
         this.state = state;
+        this.keys = keys;
     }
 
     @Override
     public Slice execute() {
-        state.transactionMode(false);
-        state.tx().clear();
-        state.unwatch();
+        state.watch(keys);
         return Response.OK;
     }
 }

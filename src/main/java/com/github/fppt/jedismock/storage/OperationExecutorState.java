@@ -1,11 +1,14 @@
 package com.github.fppt.jedismock.storage;
 
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.RedisClient;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OperationExecutorState {
@@ -13,6 +16,8 @@ public class OperationExecutorState {
     private final Map<Integer, RedisBase> redisBases;
     private final AtomicBoolean isTransactionModeOn = new AtomicBoolean(false);
     private final List<RedisOperation> tx = new ArrayList<>();
+    public final Set<Slice> watchedKeys = new HashSet<>();
+    private boolean watchedKeysAffected = false;
     private int selectedRedisBase = 0;
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases){
@@ -57,5 +62,35 @@ public class OperationExecutorState {
 
     public Object lock() {
         return redisBases;
+    }
+
+    public void checkWatchedKeysNotExpired() {
+        for (Slice key : watchedKeys) {
+            base().exists(key);
+        }
+    }
+
+    public boolean isValid() {
+        return !watchedKeysAffected;
+    }
+
+    public void watchedKeyIsAffected() {
+        watchedKeysAffected = true;
+    }
+
+    public void watch(List<Slice> keys) {
+        RedisBase redisBase = base();
+        for (Slice key : keys) {
+            watchedKeys.add(key);
+            redisBase.watch(this, key);
+        }
+    }
+
+    public void unwatch() {
+        RedisBase redisBase = base();
+        for (Slice key : watchedKeys) {
+            redisBase.unwatchSingleKey(this, key);
+        }
+        watchedKeysAffected = false;
     }
 }

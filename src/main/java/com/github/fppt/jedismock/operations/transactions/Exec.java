@@ -22,7 +22,13 @@ public class Exec implements RedisOperation {
     @Override
     public Slice execute() {
         try {
+            state.checkWatchedKeysNotExpired();
+            boolean validTransaction = state.isValid();
+            state.unwatch();
             state.transactionMode(false);
+            if (!validTransaction) {
+                return Response.NULL;
+            }
             List<Slice> results = state.tx().stream().
                     map(RedisOperation::execute).
                     collect(Collectors.toList());

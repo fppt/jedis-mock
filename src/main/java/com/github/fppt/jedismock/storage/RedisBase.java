@@ -20,12 +20,12 @@ import java.util.Set;
  * Created by Xiaolu on 2015/4/20.
  */
 public class RedisBase {
-    private final ExpiringKeyValueStorage keyValueStorage = new ExpiringKeyValueStorage();
+    private final ExpiringKeyValueStorage keyValueStorage =
+            new ExpiringKeyValueStorage(this::notifyClientsAboutKeyAffection);
     private final Map<Slice, Set<RedisClient>> subscribers = new HashMap<>();
+    private final HashMap<Object, Set<OperationExecutorState>> watchedKeys = new HashMap<>();
 
-    public RedisBase() {}
-
-    public Set<Slice> keys(){
+    public Set<Slice> keys() {
         Set<Slice> slices = keyValueStorage.values().keySet();
         Set<Slice> result = new HashSet<>();
         for (Slice key: slices){
@@ -142,6 +142,12 @@ public class RedisBase {
         return keyValueStorage.getTTL(key);
     }
 
+    public final void notifyClientsAboutKeyAffection(Slice key) {
+        for (OperationExecutorState state : watchedKeys.getOrDefault(key, Collections.emptySet())) {
+            state.watchedKeyIsAffected();
+        }
+    }
+
     public long setTTL(Slice key, long ttl) {
         return keyValueStorage.setTTL(key, ttl);
     }
@@ -150,7 +156,7 @@ public class RedisBase {
         return keyValueStorage.setDeadline(key, deadline);
     }
 
-    public void clear(){
+    public void clear() {
         keyValueStorage.clear();
         subscribers.clear();
     }
@@ -163,7 +169,7 @@ public class RedisBase {
         putSlice(key1, key2, value, null);
     }
 
-    public void putSlice(Slice key, Slice value){
+    public void putSlice(Slice key, Slice value) {
         putSlice(key, value, -1L);
     }
 
@@ -241,5 +247,16 @@ public class RedisBase {
 
     public Slice type(Slice slice) {
         return keyValueStorage.type(slice);
+    }
+
+    public void watch(OperationExecutorState state, Slice key) {
+        watchedKeys.computeIfAbsent(key, k -> new HashSet<>()).add(state);
+    }
+
+    public void unwatchSingleKey(OperationExecutorState state, Slice key) {
+        Set<OperationExecutorState> states = watchedKeys.get(key);
+        if (states != null) {
+            states.remove(state);
+        }
     }
 }
