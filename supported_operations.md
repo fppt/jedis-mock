@@ -267,5 +267,5 @@
 :heavy_check_mark: discard<br>
 :heavy_check_mark: exec<br>
 :heavy_check_mark: multi<br>
-:x: unwatch<br>
-:x: watch<br>
+:heavy_check_mark: unwatch<br>
+:heavy_check_mark: watch<br>
