@@ -118,10 +118,10 @@
 
 ## Pub/Sub
 
-:x: psubscribe<br>
+:heavy_check_mark: psubscribe<br>
 :heavy_check_mark: publish<br>
 :heavy_check_mark: pubsub<br>
-:x: punsubscribe<br>
+:heavy_check_mark: punsubscribe<br>
 :heavy_check_mark: subscribe<br>
 :heavy_check_mark: unsubscribe<br>
 
