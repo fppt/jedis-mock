@@ -27,6 +27,8 @@ public class PubSub extends AbstractRedisOperation {
             return Response.array(base().getChannels().stream().filter(
                     s -> s.toString().matches(pattern)
             ).map(Response::bulkString).collect(Collectors.toList()));
+        } else if ("numpat".equalsIgnoreCase(subcommand.toString())) {
+            return Response.integer(base().getNumpat());
         } else {
             return Response.error(String.format("Unsupported operation: pubsub %s", subcommand.toString()));
         }

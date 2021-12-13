@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.storage;
 
+import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.RMDataStructure;
 import com.github.fppt.jedismock.datastructures.RMHMap;
 import com.github.fppt.jedismock.datastructures.RMSet;
@@ -20,15 +21,18 @@ import java.util.Set;
  * Created by Xiaolu on 2015/4/20.
  */
 public class RedisBase {
-    private final ExpiringKeyValueStorage keyValueStorage =
-            new ExpiringKeyValueStorage(this::notifyClientsAboutKeyAffection);
     private final Map<Slice, Set<RedisClient>> subscribers = new HashMap<>();
-    private final HashMap<Object, Set<OperationExecutorState>> watchedKeys = new HashMap<>();
+    private final Map<Slice, Set<RedisClient>> psubscribers = new HashMap<>();
+    private final Map<Slice, Set<OperationExecutorState>> watchedKeys = new HashMap<>();
+    private final ExpiringKeyValueStorage keyValueStorage =
+            new ExpiringKeyValueStorage(key -> watchedKeys
+                    .getOrDefault(key, Collections.emptySet())
+                    .forEach(OperationExecutorState::watchedKeyIsAffected));
 
     public Set<Slice> keys() {
         Set<Slice> slices = keyValueStorage.values().keySet();
         Set<Slice> result = new HashSet<>();
-        for (Slice key: slices){
+        for (Slice key : slices) {
             Long deadline = keyValueStorage.ttls().get(key);
             if (deadline != null && deadline != -1 && deadline <= System.currentTimeMillis()) {
                 keyValueStorage.delete(key);
@@ -50,7 +54,7 @@ public class RedisBase {
             return null;
         }
 
-        if(!(value instanceof RMSet)) {
+        if (!(value instanceof RMSet)) {
             value.raiseTypeCastException();
         }
 
@@ -64,7 +68,7 @@ public class RedisBase {
             return null;
         }
 
-        if(!(value instanceof RMHMap)) {
+        if (!(value instanceof RMHMap)) {
             value.raiseTypeCastException();
         }
 
@@ -79,7 +83,7 @@ public class RedisBase {
             return null;
         }
 
-        if(!(value instanceof RMList)) {
+        if (!(value instanceof RMList)) {
             value.raiseTypeCastException();
         }
 
@@ -93,7 +97,7 @@ public class RedisBase {
             return null;
         }
 
-        if(!(value instanceof Slice)) {
+        if (!(value instanceof Slice)) {
             value.raiseTypeCastException();
         }
 
@@ -108,7 +112,7 @@ public class RedisBase {
         }
 
         Map<Slice, Slice> innerMap = value.getStoredData();
-        if(innerMap == null) {
+        if (innerMap == null) {
             return null;
         }
 
@@ -123,16 +127,16 @@ public class RedisBase {
             return null;
         }
 
-        if(!(value instanceof RMSortedSet)) {
+        if (!(value instanceof RMSortedSet)) {
             value.raiseTypeCastException();
         }
 
         return (RMSortedSet) value;
     }
 
-    public Map<Slice, Slice> getFieldsAndValues(Slice hash){
+    public Map<Slice, Slice> getFieldsAndValues(Slice hash) {
         RMSortedSet sortedSet = getSortedSet(hash);
-        if(sortedSet == null) {
+        if (sortedSet == null) {
             return null;
         }
         return sortedSet.getStoredData();
@@ -140,12 +144,6 @@ public class RedisBase {
 
     public Long getTTL(Slice key) {
         return keyValueStorage.getTTL(key);
-    }
-
-    public final void notifyClientsAboutKeyAffection(Slice key) {
-        for (OperationExecutorState state : watchedKeys.getOrDefault(key, Collections.emptySet())) {
-            state.watchedKeyIsAffected();
-        }
     }
 
     public long setTTL(Slice key, long ttl) {
@@ -197,7 +195,7 @@ public class RedisBase {
         keyValueStorage.delete(key1, key2);
     }
 
-    public void addSubscriber(Slice channel, RedisClient client){
+    public void addSubscriber(Slice channel, RedisClient client) {
         Set<RedisClient> newClient = new HashSet<>();
         newClient.add(client);
         subscribers.merge(channel, newClient, (currentSubscribers, newSubscribers) -> {
@@ -206,7 +204,24 @@ public class RedisBase {
         });
     }
 
+    public void subscribeByPattern(Slice pattern, RedisClient client) {
+        Set<RedisClient> newClient = new HashSet<>();
+        newClient.add(client);
+        psubscribers.merge(pattern, newClient, (currentSubscribers, newSubscribers) -> {
+            currentSubscribers.addAll(newSubscribers);
+            return currentSubscribers;
+        });
+    }
+
     public boolean removeSubscriber(Slice channel, RedisClient client) {
+        return removeSubscriber(channel, client, subscribers);
+    }
+
+    public boolean removePSubscriber(Slice channel, RedisClient client) {
+        return removeSubscriber(channel, client, psubscribers);
+    }
+
+    private boolean removeSubscriber(Slice channel, RedisClient client, Map<Slice, Set<RedisClient>> subscribers) {
         if (subscribers.containsKey(channel)) {
             Set<RedisClient> redisClients = subscribers.get(channel);
             redisClients.remove(client);
@@ -219,10 +234,37 @@ public class RedisBase {
     }
 
     public Set<RedisClient> getSubscribers(Slice channel) {
+        Set<RedisClient> subs = new HashSet<>(Collections.emptySet());
         if (subscribers.containsKey(channel)) {
-            return subscribers.get(channel);
+            subs.addAll(subscribers.get(channel));
         }
-        return Collections.emptySet();
+        return subs;
+    }
+
+    public Map<Slice, Set<RedisClient>> getPsubscribers(Slice channel) {
+        Map<Slice, Set<RedisClient>> matchingPatterns = new HashMap<>();
+        String channelStr = channel.toString();
+        for (Map.Entry<Slice, Set<RedisClient>> patternSubscribedClients : psubscribers.entrySet()) {
+            Slice jedisPattern = patternSubscribedClients.getKey();
+            String regexpPattern = getRegexpFromPattern(jedisPattern);
+            if (!channelStr.matches(regexpPattern)) {
+                continue;
+            }
+            matchingPatterns.put(jedisPattern, patternSubscribedClients.getValue());
+        }
+        return matchingPatterns;
+    }
+
+    private static String getRegexpFromPattern(Slice pattern) {
+        String patternStr = pattern.toString();
+        if (patternStr.isEmpty()) {
+            return ".*";
+        }
+        return Utils.createRegexFromGlob(patternStr);
+    }
+
+    public int getNumpat() {
+        return psubscribers.size();
     }
 
     public Set<Slice> getChannels() {
@@ -233,6 +275,18 @@ public class RedisBase {
         List<Slice> subscriptions = new ArrayList<>();
 
         subscribers.forEach((channel, subscribers) -> {
+            if (subscribers.contains(client)) {
+                subscriptions.add(channel);
+            }
+        });
+
+        return subscriptions;
+    }
+
+    public List<Slice> getPSubscriptions(RedisClient client) {
+        List<Slice> subscriptions = new ArrayList<>();
+
+        psubscribers.forEach((channel, subscribers) -> {
             if (subscribers.contains(client)) {
                 subscriptions.add(channel);
             }
@@ -257,6 +311,9 @@ public class RedisBase {
         Set<OperationExecutorState> states = watchedKeys.get(key);
         if (states != null) {
             states.remove(state);
+            if (states.isEmpty()) {
+                watchedKeys.remove(key);
+            }
         }
     }
 }

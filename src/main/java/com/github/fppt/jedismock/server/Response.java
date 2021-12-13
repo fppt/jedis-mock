@@ -73,6 +73,18 @@ public class Response {
         return array(slices);
     }
 
+    public static Slice publishedPMessage(Slice pattern, Slice channel, Slice message){
+        Slice operation = SliceParser.consumeParameter("$8\r\npmessage\r\n".getBytes());
+
+        List<Slice> slices = new ArrayList<>();
+        slices.add(Response.bulkString(operation));
+        slices.add(Response.bulkString(pattern));
+        slices.add(Response.bulkString(channel));
+        slices.add(Response.bulkString(message));
+
+        return array(slices);
+    }
+
     public static Slice subscribedToChannel(List<Slice> channels){
         Slice operation = SliceParser.consumeParameter("$9\r\nsubscribe\r\n".getBytes());
         List<Slice> slices = new ArrayList<>();
@@ -85,8 +97,31 @@ public class Response {
         return array(slices);
     }
 
+    public static Slice psubscribedToChannel(List<Slice> patterns){
+        Slice operation = SliceParser.consumeParameter("$10\r\npsubscribe\r\n".getBytes());
+        List<Slice> slices = new ArrayList<>();
+        int i = 0;
+        for (Slice pattern : patterns) {
+            slices.add(Response.bulkString(operation));
+            slices.add(bulkString(pattern));
+            slices.add(Response.integer(++i));
+        }
+        return array(slices);
+    }
+
     public static Slice unsubscribe(Slice channel, int remainingSubscriptions){
         Slice operation = SliceParser.consumeParameter("$11\r\nunsubscribe\r\n".getBytes());
+
+        List<Slice> slices = new ArrayList<>();
+        slices.add(Response.bulkString(operation));
+        slices.add(Response.bulkString(channel));
+        slices.add(Response.integer(remainingSubscriptions));
+
+        return array(slices);
+    }
+
+    public static Slice punsubscribe(Slice channel, int remainingSubscriptions){
+        Slice operation = SliceParser.consumeParameter("$12\r\npunsubscribe\r\n".getBytes());
 
         List<Slice> slices = new ArrayList<>();
         slices.add(Response.bulkString(operation));
