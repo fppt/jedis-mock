@@ -89,7 +89,7 @@ server.stop();
 ```
 
 WARNING: if you are going to mutate the shared state, synchronize on `state.lock()` first!
-(See how it's done in `MockExecutor#proceed`). 
+(See how it's done in [`MockExecutor#proceed`](src/main/java/com/github/fppt/jedismock/operations/server/MockExecutor.java#L23)). 
 
 ## Fault tolerance testing
 
