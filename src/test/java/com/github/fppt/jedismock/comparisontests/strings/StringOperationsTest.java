@@ -61,6 +61,23 @@ public class StringOperationsTest {
     }
 
     @TestTemplate
+    void concurrentIncrementOfOriginallyEmptyKey(final Jedis jedis) throws InterruptedException {
+        List<Callable<Void>> callables = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            callables.add(() -> {
+                try (Jedis client = new Jedis(jedis.getClient().getHost(), jedis.getClient().getPort())) {
+                    client.incr("testKey");
+                }
+                return null;
+            });
+        }
+        ExecutorService pool = Executors.newCachedThreadPool();
+        pool.invokeAll(callables);
+        pool.shutdownNow();
+        assertEquals(5, Integer.parseInt(jedis.get("testKey")));
+    }
+
+    @TestTemplate
     public void incrDoesNotClearTtl(Jedis jedis) {
         String key = "mykey";
         jedis.set(key, "0");
