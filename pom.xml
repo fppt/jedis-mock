@@ -77,7 +77,7 @@
         <dependency>
             <groupId>io.lettuce</groupId>
             <artifactId>lettuce-core</artifactId>
-            <version>6.1.5.RELEASE</version>
+            <version>6.1.6.RELEASE</version>
             <scope>test</scope>
         </dependency>
         <!-- Used for creating an testcontainer of Redis for testing and comparing behaviour-->
