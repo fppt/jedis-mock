@@ -5,7 +5,7 @@ import com.github.fppt.jedismock.util.MockPSubscriber;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
-import redis.clients.jedis.Client;
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 
 import java.util.concurrent.ExecutorService;
@@ -42,13 +42,12 @@ public class PSubscribeTest {
     }
 
     @TestTemplate
-    public void whenSubscribingToAChannelPublishedMessagesAreReceived(Jedis jedis) throws Exception {
+    public void whenSubscribingToAChannelPublishedMessagesAreReceived(Jedis jedis, HostAndPort hostAndPort) throws Exception {
         String pattern = "n[eo]rm*l?ob";
         String channel = "normaaalbob";
         String message = "SUPERBOB";
 
-        Client client = jedis.getClient();
-        try (TestPSubscription subscription = new TestPSubscription(client.getHost(), client.getPort(), pattern)) {
+        try (TestPSubscription subscription = new TestPSubscription(hostAndPort.getHost(), hostAndPort.getPort(), pattern)) {
             Awaitility.await().until(() -> jedis.pubsubNumPat() > 0);
             jedis.publish(channel, message);
             assertEquals(pattern, subscription.getSubscriber().latestPattern());

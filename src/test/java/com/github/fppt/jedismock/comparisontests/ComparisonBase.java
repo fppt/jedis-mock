@@ -3,10 +3,10 @@ package com.github.fppt.jedismock.comparisontests;
 import com.github.fppt.jedismock.RedisServer;
 import org.junit.jupiter.api.extension.*;
 import org.testcontainers.containers.GenericContainer;
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -48,19 +48,23 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
         return Stream.of(
                 new JedisTestTemplateInvocationContext("mock",
-                        new Jedis(fakeServer.getHost(), fakeServer.getBindPort(), 1000000)),
+                        new Jedis(fakeServer.getHost(), fakeServer.getBindPort(), 1000000),
+                        new HostAndPort(fakeServer.getHost(), fakeServer.getBindPort())),
                 new JedisTestTemplateInvocationContext("real",
-                        new Jedis(redis.getContainerIpAddress(), redis.getFirstMappedPort())));
+                        new Jedis(redis.getContainerIpAddress(), redis.getFirstMappedPort()),
+                        new HostAndPort(redis.getContainerIpAddress(), redis.getFirstMappedPort())));
     }
 
     private class JedisTestTemplateInvocationContext implements TestTemplateInvocationContext {
 
         private final String displayName;
         private final Jedis jedis;
+        private final HostAndPort hostAndPort;
 
-        private JedisTestTemplateInvocationContext(String displayName, Jedis jedis) {
+        private JedisTestTemplateInvocationContext(String displayName, Jedis jedis, HostAndPort hostAndPort) {
             this.displayName = displayName;
             this.jedis = jedis;
+            this.hostAndPort = hostAndPort;
         }
 
         @Override
@@ -73,12 +77,13 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
             return Arrays.asList(new ParameterResolver() {
                 @Override
                 public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-                    return parameterContext.getParameter().getType() == Jedis.class;
+                    return parameterContext.getParameter().getType() == Jedis.class
+                            || parameterContext.getParameter().getType() == HostAndPort.class;
                 }
 
                 @Override
                 public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-                    return jedis;
+                    return parameterContext.getParameter().getType() == Jedis.class ? jedis : hostAndPort;
                 }
             }, (AfterEachCallback) context ->
             {

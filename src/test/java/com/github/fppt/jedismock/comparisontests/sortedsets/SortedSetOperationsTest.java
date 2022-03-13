@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Tuple;
+import redis.clients.jedis.resps.Tuple;
 
 import java.util.*;
 
@@ -139,7 +139,7 @@ public class SortedSetOperationsTest {
 
         assertEquals(4L, result);
 
-        Set<String> results = jedis.zrange(key, 0, -6);
+        List<String> results = jedis.zrange(key, 0, -6);
 
         assertEquals(0, results.size());
     }

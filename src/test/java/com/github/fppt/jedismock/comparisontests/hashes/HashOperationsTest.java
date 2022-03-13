@@ -35,7 +35,7 @@ public class HashOperationsTest {
         jedis.hset(key, "E", "3.14e1");
         jedis.hset(key, "F", "not-a-number");
 
-        assertEquals(3, jedis.hincrBy(key, "A", 3).intValue());
+        assertEquals(3, jedis.hincrBy(key, "A", 3));
         assertEquals(4.5, jedis.hincrByFloat(key, "A", 1.5), 0.00001);
         assertEquals(-1.5, jedis.hincrByFloat(key, "B", -1.5), 0.00001);
 

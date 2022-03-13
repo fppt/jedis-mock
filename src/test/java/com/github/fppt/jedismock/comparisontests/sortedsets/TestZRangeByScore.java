@@ -5,16 +5,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Tuple;
+import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRangeByScore {
@@ -28,8 +28,8 @@ public class TestZRangeByScore {
 
     @TestTemplate
     public void whenUsingZrangeByScore_EnsureItReturnsEmptySetForNonDefinedKey(Jedis jedis) {
-        assertEquals(Collections.emptySet(), jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf"));
-        assertEquals(Collections.emptySet(), jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf"));
     }
 
     @TestTemplate
@@ -37,11 +37,11 @@ public class TestZRangeByScore {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 1, "two");
         jedis.zadd(ZSET_KEY, 1, "three");
-        assertEquals(new HashSet(asList("one", "two", "three")),
-                jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf"));
-        assertEquals(new HashSet(asList(new Tuple("one", 1.),
-                        new Tuple("two", 1.), new Tuple("three", 1.))),
-                jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf"));
+        assertTrue(asList("one", "two", "three").containsAll(
+                jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf")));
+        assertTrue(asList(new Tuple("one", 1.),
+                        new Tuple("two", 1.), new Tuple("three", 1.)).containsAll(
+                jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf")));
     }
 
 
@@ -54,12 +54,12 @@ public class TestZRangeByScore {
         assertEquals(3, jedis.zrange(ZSET_KEY, 0, -1).size());
 
         // when
-        final Set<String> zrangeByScoreResult = jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf");
+        final List<String> zrangeByScoreResult = jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf");
 
         // then
-        assertEquals(new HashSet(asList("one", "two", "three")), zrangeByScoreResult);
-        assertEquals(new HashSet(asList(new Tuple("one", 1.),
-                        new Tuple("two", 2.), new Tuple("three", 3.))),
+        assertEquals(asList("one", "two", "three"), zrangeByScoreResult);
+        assertEquals(asList(new Tuple("one", 1.),
+                        new Tuple("two", 2.), new Tuple("three", 3.)),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf"));
 
     }
@@ -73,10 +73,10 @@ public class TestZRangeByScore {
         assertEquals(3, jedis.zrange(ZSET_KEY, 0, -1).size());
 
         // when
-        final Set<String> zrangeByScoreResult = jedis.zrangeByScore(ZSET_KEY, "-inf", "2");
+        final List<String> zrangeByScoreResult = jedis.zrangeByScore(ZSET_KEY, "-inf", "2");
 
         // then
-        assertEquals(new HashSet(asList("one", "two")), zrangeByScoreResult);
+        assertEquals(asList("one", "two"), zrangeByScoreResult);
 
     }
 
@@ -89,8 +89,8 @@ public class TestZRangeByScore {
         assertEquals(3, jedis.zrange(ZSET_KEY, 0, -1).size());
 
         // then
-        assertEquals(Collections.singleton("one"), jedis.zrangeByScore(ZSET_KEY, "-inf", "(2"));
-        assertEquals(Collections.singleton(new Tuple("one", 1.)),
+        assertEquals(Collections.singletonList("one"), jedis.zrangeByScore(ZSET_KEY, "-inf", "(2"));
+        assertEquals(Collections.singletonList(new Tuple("one", 1.)),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "(2"));
     }
 
@@ -110,13 +110,13 @@ public class TestZRangeByScore {
         assertEquals(10, jedis.zrange(ZSET_KEY, 0, -1).size());
 
         //then
-        assertEquals(new HashSet(asList("five", "six", "seven", "eight")),
+        assertEquals(asList("five", "six", "seven", "eight"),
                 jedis.zrangeByScore(ZSET_KEY, 5, 8));
-        assertEquals(new HashSet(asList(
+        assertEquals(asList(
                         new Tuple("five", 5.),
                         new Tuple("six", 6.),
                         new Tuple("seven", 7.),
-                        new Tuple("eight", 8.))),
+                        new Tuple("eight", 8.)),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, 5, 8));
     }
 
@@ -131,12 +131,12 @@ public class TestZRangeByScore {
         jedis.zadd(ZSET_KEY, 2, "two");
 
         //then
-        assertEquals(new HashSet(asList("minusone", "zero", "one")),
+        assertEquals(asList("minusone", "zero", "one"),
                 jedis.zrangeByScore(ZSET_KEY, -1, 1));
-        assertEquals(new HashSet(asList(
+        assertEquals(asList(
                         new Tuple("minusone", -1.),
                         new Tuple("zero", 0.),
-                        new Tuple("one", 1.))),
+                        new Tuple("one", 1.)),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, -1, 1));
     }
 
@@ -158,9 +158,9 @@ public class TestZRangeByScore {
         //then
         //  assertEquals(new HashSet(asList("three", "four")),
         //          jedis.zrangeByScore(ZSET_KEY, 2, 5, 1, 2));
-        assertEquals(new HashSet(asList(
+        assertEquals(asList(
                         new Tuple("three", 3.),
-                        new Tuple("four", 4.))),
+                        new Tuple("four", 4.)),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, 2, 5, 1, 2));
     }
 

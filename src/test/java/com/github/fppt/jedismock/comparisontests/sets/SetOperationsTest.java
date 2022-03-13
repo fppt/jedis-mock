@@ -36,8 +36,8 @@ public class SetOperationsTest {
     @TestTemplate
     public void whenDuplicateValuesAddedToSet_ReturnsAddedValuesCountOnly(Jedis jedis) {
         String key = "my-set-key-sadd";
-        assertEquals(3, jedis.sadd(key, "A", "B", "C", "B").intValue());
-        assertEquals(1, jedis.sadd(key, "A", "C", "E", "B").intValue());
+        assertEquals(3, jedis.sadd(key, "A", "B", "C", "B"));
+        assertEquals(1, jedis.sadd(key, "A", "C", "E", "B"));
     }
 
     @TestTemplate
@@ -49,13 +49,13 @@ public class SetOperationsTest {
         mySet.forEach(value -> jedis.sadd(key, value));
 
         //Get it all back
-        assertEquals(mySet.size(), jedis.scard(key).intValue());
+        assertEquals(mySet.size(), jedis.scard(key));
     }
 
     @TestTemplate
     public void whenCalledForNonExistentSet_ensureScardReturnsZero(Jedis jedis) {
         String key = "non-existent";
-        assertEquals(0, jedis.scard(key).intValue());
+        assertEquals(0, jedis.scard(key));
     }
 
     @TestTemplate
@@ -70,7 +70,7 @@ public class SetOperationsTest {
         mySet.remove("c");
         mySet.remove("d");
         mySet.remove("f");
-        int removed = jedis.srem(key, "c", "d", "f").intValue();
+        long removed = jedis.srem(key, "c", "d", "f");
 
         //Get it all back
         assertEquals(mySet, jedis.smembers(key));

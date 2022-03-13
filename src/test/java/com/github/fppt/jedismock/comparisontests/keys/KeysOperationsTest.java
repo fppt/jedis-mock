@@ -68,7 +68,7 @@ public class KeysOperationsTest {
         jedis.hset(key2, "field", "value");
         assertTrue(jedis.exists(key1));
         assertTrue(jedis.exists(key2));
-        int count = jedis.del(key1, key2).intValue();
+        long count = jedis.del(key1, key2);
         assertEquals(2, count);
         assertFalse(jedis.exists(key1));
         assertFalse(jedis.exists(key2));

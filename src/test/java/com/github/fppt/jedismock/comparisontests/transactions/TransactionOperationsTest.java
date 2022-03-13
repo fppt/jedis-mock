@@ -54,7 +54,7 @@ public class TransactionOperationsTest {
         //Start transaction
         jedis.multi();
         assertEquals("Cannot use Jedis when in Multi. Please use Transaction or reset jedis state.",
-                assertThrows(JedisDataException.class, () ->
+                assertThrows(IllegalStateException.class, () ->
                         jedis.get("oobity-oobity-boo")).getMessage());
     }
 }

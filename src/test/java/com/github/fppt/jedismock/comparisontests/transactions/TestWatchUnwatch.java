@@ -4,7 +4,7 @@ import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
-import redis.clients.jedis.Client;
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisDataException;
@@ -38,12 +38,11 @@ public class TestWatchUnwatch {
     private Jedis anotherJedis;
 
     @BeforeEach
-    public void setup(Jedis jedis) {
+    public void setup(Jedis jedis, HostAndPort hostAndPort) {
         jedis.del(FIRST_KEY);
         jedis.del(ANOTHER_KEY);
 
-        Client client = jedis.getClient();
-        anotherJedis = new Jedis(client.getHost(), client.getPort());
+        anotherJedis = new Jedis(hostAndPort.getHost(), hostAndPort.getPort());
     }
 
     @TestTemplate

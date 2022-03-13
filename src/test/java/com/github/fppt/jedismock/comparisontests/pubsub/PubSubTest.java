@@ -5,7 +5,7 @@ import com.github.fppt.jedismock.util.MockSubscriber;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
-import redis.clients.jedis.Client;
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 
 import java.time.Duration;
@@ -47,10 +47,9 @@ public class PubSubTest {
     }
 
     @TestTemplate
-    void pubSubChannelsReturnsChannels(Jedis jedis) throws Exception {
-        Client client = jedis.getClient();
-        try (TestSubscription foo = new TestSubscription(client.getHost(), client.getPort(), "foo");
-             TestSubscription bar = new TestSubscription(client.getHost(), client.getPort(), "bar")) {
+    void pubSubChannelsReturnsChannels(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        try (TestSubscription foo = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "foo");
+             TestSubscription bar = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "bar")) {
             Set<String> expected = new HashSet<>(Arrays.asList("foo", "bar"));
             Awaitility.await().until(
                     () -> expected.equals(new HashSet<>(jedis.pubsubChannels("*"))));
@@ -58,10 +57,9 @@ public class PubSubTest {
     }
 
     @TestTemplate
-    void channelsWithNoSubscriptionDisappear(Jedis jedis) throws Exception {
-        Client client = jedis.getClient();
+    void channelsWithNoSubscriptionDisappear(Jedis jedis, HostAndPort hostAndPort) throws Exception {
         try (TestSubscription ignore =
-                     new TestSubscription(client.getHost(), client.getPort(), "foo")) {
+                     new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "foo")) {
             Awaitility.await().until(
                     () -> Collections.singleton("foo").equals(new HashSet<>(jedis.pubsubChannels("*"))));
         }
@@ -71,22 +69,20 @@ public class PubSubTest {
 
 
     @TestTemplate
-    void pubSubChannelsRespectsPattern(Jedis jedis) throws Exception {
-        Client client = jedis.getClient();
-        try (TestSubscription foo = new TestSubscription(client.getHost(), client.getPort(), "foo");
-             TestSubscription bar = new TestSubscription(client.getHost(), client.getPort(), "bar")) {
+    void pubSubChannelsRespectsPattern(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        try (TestSubscription foo = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "foo");
+             TestSubscription bar = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "bar")) {
             Awaitility.await().until(
                     () -> Collections.singleton("bar").equals(new HashSet<>(jedis.pubsubChannels("b*"))));
         }
     }
 
     @TestTemplate
-    public void whenSubscribingToAChannelPublishedMessagesAreReceived(Jedis jedis) throws Exception {
+    public void whenSubscribingToAChannelPublishedMessagesAreReceived(Jedis jedis, HostAndPort hostAndPort) throws Exception {
         String channel = "normalbob";
         String message = "SUPERBOB";
 
-        Client client = jedis.getClient();
-        try (TestSubscription subscription = new TestSubscription(client.getHost(), client.getPort(), channel)) {
+        try (TestSubscription subscription = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), channel)) {
             Awaitility.await().until(() -> jedis.pubsubChannels("*").contains(channel));
             jedis.publish(channel, message);
             assertEquals(channel, subscription.getSubscriber().latestChannel());
@@ -97,12 +93,11 @@ public class PubSubTest {
     }
 
     @TestTemplate
-    public void whenSubscribingToMultipleChannelsPublishedMessagesAreReceived(Jedis jedis) throws Exception {
+    public void whenSubscribingToMultipleChannelsPublishedMessagesAreReceived(Jedis jedis, HostAndPort hostAndPort) throws Exception {
         String message = "SUPERBOB";
 
-        Client client = jedis.getClient();
-        try (TestSubscription s1 = new TestSubscription(client.getHost(), client.getPort(), "foo", "bar");
-             TestSubscription s2 = new TestSubscription(client.getHost(), client.getPort(), "bar")) {
+        try (TestSubscription s1 = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "foo", "bar");
+             TestSubscription s2 = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "bar")) {
             Awaitility.await().until(() -> jedis.pubsubChannels("*").contains("bar"));
             assertEquals(2, jedis.publish("bar", message));
             assertEquals("bar", s1.getSubscriber().latestChannel());

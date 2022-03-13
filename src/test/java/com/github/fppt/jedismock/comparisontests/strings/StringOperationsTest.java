@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
@@ -35,7 +36,7 @@ public class StringOperationsTest {
 
     @TestTemplate
     public void whenConcurrentlyIncrementingAndDecrementingCount_EnsureFinalCountIsCorrect(
-            final Jedis jedis) throws InterruptedException {
+            final Jedis jedis, HostAndPort hostAndPort) throws InterruptedException {
         String key = "my-count-tracker";
         int[] count = new int[]{1, 5, 6, 2, -9, -2, 10, 11, 5, -2, -2};
 
@@ -47,7 +48,7 @@ public class StringOperationsTest {
         List<Callable<Void>> callables = new ArrayList<>();
         for (int i : count) {
             callables.add(() -> {
-                try (Jedis client = new Jedis(jedis.getClient().getHost(), jedis.getClient().getPort())) {
+                try (Jedis client = new Jedis(hostAndPort.getHost(), hostAndPort.getPort())) {
                     client.incrBy(key, i);
                 }
                 return null;
@@ -61,11 +62,11 @@ public class StringOperationsTest {
     }
 
     @TestTemplate
-    void concurrentIncrementOfOriginallyEmptyKey(final Jedis jedis) throws InterruptedException {
+    void concurrentIncrementOfOriginallyEmptyKey(final Jedis jedis, HostAndPort hostAndPort) throws InterruptedException {
         List<Callable<Void>> callables = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             callables.add(() -> {
-                try (Jedis client = new Jedis(jedis.getClient().getHost(), jedis.getClient().getPort())) {
+                try (Jedis client = new Jedis(hostAndPort.getHost(), hostAndPort.getPort())) {
                     client.incr("testKey");
                 }
                 return null;
