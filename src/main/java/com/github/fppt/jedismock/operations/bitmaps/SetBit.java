@@ -50,7 +50,10 @@ class SetBit extends AbstractRedisOperation {
                 original = 0;
             }
             data[pos / 8] |= (byte) (1 << (pos % 8));
-            data[pos / 8] &= (byte) (bit << (pos % 8));
+
+            if (bit == 0) {
+                data[pos / 8] -= (byte) (1 << (pos % 8));
+            }
             base().putSlice(params().get(0), Slice.create(data));
         }
         return Response.integer(original);
