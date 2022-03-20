@@ -7,6 +7,11 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,30 +22,43 @@ class PFMerge extends AbstractRedisOperation {
         super(base, params);
     }
 
-    protected Slice response() {
+    protected Slice response() throws IOException, ClassNotFoundException {
         Slice key = params().get(0);
-        RMSet rmData = base().getSet(key);
-        boolean first;
+        Slice dataSlice = base().getSlice(key);
+
         Set<Slice> set;
-        if (rmData == null) {
+        if (dataSlice == null) {
             set = new HashSet<>();
-            first = true;
         } else {
+            ObjectInputStream setBytesIn = new ObjectInputStream(
+                    new ByteArrayInputStream(dataSlice.data()));
+            RMSet rmData = (RMSet) setBytesIn.readObject();
+            setBytesIn.close();
+
             set = rmData.getStoredData();
-            first = false;
         }
 
         for (Slice v : params().subList(1, params().size())) {
-            RMSet valueToMerge = base().getSet(v);
-            if (valueToMerge != null) {
+            Slice sliceToMerge = base().getSlice(v);
+
+            if (sliceToMerge != null) {
+                ObjectInputStream currInput = new ObjectInputStream(
+                        new ByteArrayInputStream(sliceToMerge.data()));
+                RMSet valueToMerge = (RMSet) currInput.readObject();
+                currInput.close();
+
                 Set<Slice> s = valueToMerge.getStoredData();
                 set.addAll(s);
             }
         }
 
-        if (first) {
-            base().putValue(key, new RMSet(set));
-        }
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream setBytesOut = new ObjectOutputStream(byteArrayOutputStream);
+        setBytesOut.writeObject(new RMSet(set));
+        setBytesOut.flush();
+        Slice outData = Slice.create(byteArrayOutputStream.toByteArray());
+        base().putSlice(key, outData);
+
         return Response.OK;
     }
 }

@@ -149,4 +149,12 @@ public class StringOperationsTest {
 
         assertTrue(ttl > 0);
     }
+
+    @TestTemplate
+    public void getSetHyperLogLog(Jedis jedis) {
+        jedis.pfadd("foo", "bar");
+        jedis.get("foo");
+        jedis.set("foo", "value");
+        assertEquals(jedis.get("foo"), "value");
+    }
 }

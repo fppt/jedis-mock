@@ -23,7 +23,7 @@ public abstract class AbstractRedisOperation implements RedisOperation {
         //Place Holder For Ops which need to so some operational work
     }
 
-    protected abstract Slice response() throws IOException;
+    protected abstract Slice response() throws IOException, ClassNotFoundException;
 
     protected RedisBase base(){
         return base;
@@ -67,6 +67,8 @@ public abstract class AbstractRedisOperation implements RedisOperation {
             return response();
         } catch (IndexOutOfBoundsException | IOException e){
             throw new IllegalArgumentException("Invalid number of arguments when executing command [" + getClass().getSimpleName() + "]", e);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException();
         }
     }
 }

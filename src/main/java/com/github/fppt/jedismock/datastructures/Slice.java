@@ -2,10 +2,12 @@ package com.github.fppt.jedismock.datastructures;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class Slice implements RMDataStructure, Comparable<Slice> {
+public class Slice implements RMDataStructure, Comparable<Slice>, Serializable {
     private final byte[] storedData;
+    static final long serialVersionUID = 1L;
 
     private Slice(byte[] storedData) {
         if (storedData == null) {

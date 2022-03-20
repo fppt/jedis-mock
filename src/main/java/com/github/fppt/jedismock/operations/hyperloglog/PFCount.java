@@ -7,6 +7,9 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,17 +20,23 @@ class PFCount extends AbstractRedisOperation {
         super(base, params);
     }
 
-    protected Slice response() {
+    protected Slice response() throws IOException, ClassNotFoundException {
         Set<Slice> set = new HashSet<>();
         for (Slice key : params()) {
-            RMSet data = base().getSet(key);
-            if (data == null) {
+            Slice dataSlice = base().getSlice(key);
+
+            if (dataSlice == null) {
                 continue;
             }
+
+            ObjectInputStream objectInputStream1 = new ObjectInputStream(
+                    new ByteArrayInputStream(dataSlice.data()));
+            RMSet data = (RMSet) objectInputStream1.readObject();
+            objectInputStream1.close();
 
             Set<Slice> s = data.getStoredData();
             set.addAll(s);
         }
-        return Response.integer((long) set.size());
+        return Response.integer(set.size());
     }
 }
