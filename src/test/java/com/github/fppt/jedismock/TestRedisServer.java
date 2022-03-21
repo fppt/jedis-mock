@@ -2,6 +2,7 @@ package com.github.fppt.jedismock;
 
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -62,6 +63,22 @@ public class TestRedisServer {
             assertEquals("PONG", jedis.ping());
 
             server.stop();
+            assertThrows(JedisConnectionException.class, () -> {
+                jedis.ping();
+            });
+        }
+
+        RedisServer server = RedisServer.newRedisServer();
+        for (int i = 0; i < 20; i ++){
+            server.start();
+
+            Jedis jedis = new Jedis(server.getHost(), server.getBindPort());
+            assertEquals("PONG", jedis.ping());
+
+            server.stop();
+            assertThrows(JedisConnectionException.class, () -> {
+                jedis.ping();
+            });
         }
     }
 }

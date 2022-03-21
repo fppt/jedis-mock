@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -20,6 +21,7 @@ public class RedisService implements Callable<Void> {
     private final Map<Integer, RedisBase> redisBases;
     private final ServiceOptions options;
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
+    private ArrayList<RedisClient> clients = new ArrayList<>();
 
     public RedisService(int bindPort, Map<Integer, RedisBase> redisBases, ServiceOptions options) throws IOException {
         Objects.requireNonNull(redisBases);
@@ -33,8 +35,8 @@ public class RedisService implements Callable<Void> {
     public Void call() throws IOException {
         while (!server.isClosed()) {
             Socket socket = server.accept();
-            RedisClient rc;
-            rc = new RedisClient(redisBases, socket, options);
+            RedisClient rc = new RedisClient(redisBases, socket, options);
+            clients.add(rc);
             threadPool.submit(rc);
         }
         return null;
@@ -45,6 +47,9 @@ public class RedisService implements Callable<Void> {
     }
 
     public void stop() throws IOException {
+        clients.forEach(client -> {
+            client.close();
+        });
         server.close();
     }
 }

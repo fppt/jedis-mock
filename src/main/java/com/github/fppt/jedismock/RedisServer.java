@@ -63,6 +63,7 @@ public class RedisServer {
     public void stop() throws IOException {
         Objects.requireNonNull(service);
         service.stop();
+        service = null;
         try {
             serviceFinalization.get();
         } catch (ExecutionException e) {
