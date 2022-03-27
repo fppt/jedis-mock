@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.comparisontests.bitmaps;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
+import com.github.fppt.jedismock.datastructures.Slice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,5 +28,9 @@ public class BitMapsOperationsTest {
         assertEquals(jedis.getbit("foo", 0L), true);
         jedis.setbit("foo", 1L, true);
         assertEquals(jedis.getbit("foo", 0L), true);
+        String str = jedis.get("foo");
+        jedis.set("hi", str);
+        assertEquals(jedis.getbit("hi", 0L), true);
+        assertEquals(jedis.getbit("hi", 1L), true);
     }
 }
