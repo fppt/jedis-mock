@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.util.BitSet;
 import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToNonNegativeInteger;
@@ -23,12 +24,7 @@ class GetBit extends AbstractRedisOperation {
         if (value == null) {
             return Response.integer(0L);
         }
-        if (pos >= value.length() * 8) {
-            return Response.integer(0L);
-        }
-        if ((value.data()[pos / 8] & (1 << (pos % 8))) != 0) {
-            return Response.integer(1);
-        }
-        return Response.integer(0);
+        BitSet bitSet = BitSet.valueOf(value.data());
+        return Response.integer(bitSet.get(pos) ? 1 : 0);
     }
 }
