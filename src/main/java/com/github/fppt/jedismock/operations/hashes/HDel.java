@@ -15,17 +15,19 @@ class HDel extends AbstractRedisOperation {
     }
 
     protected Slice response(){
-        Slice key1 = params().get(0);
-        Slice key2 = params().get(1);
+        Slice key = params().get(0);
+        int count = 0;
 
-        Slice oldValue = base().getSlice(key1, key2);
+        for (int i = 1; i < params().size(); ++i) {
+            Slice currKey = params().get(i);
+            Slice oldValue = base().getSlice(key, currKey);
+            base().deleteValue(key, currKey);
 
-        base().deleteValue(key1, key2);
-
-        if(oldValue == null){
-            return Response.integer(0);
-        } else {
-            return Response.integer(1);
+            if (oldValue != null) {
+                ++count;
+            }
         }
+
+        return Response.integer(count);
     }
 }

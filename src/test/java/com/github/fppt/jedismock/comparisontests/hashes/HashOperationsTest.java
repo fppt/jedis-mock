@@ -96,19 +96,6 @@ public class HashOperationsTest {
     }
 
     @TestTemplate
-    public void whenHDeleting_EnsureValuesAreRemoved(Jedis jedis) {
-        String field = "my-field-2";
-        String hash = "my-hash-2";
-        String value = "my-value-2";
-
-        assertEquals(0L, jedis.hdel(hash, field));
-        jedis.hset(hash, field, value);
-        assertEquals(value, jedis.hget(hash, field));
-        assertEquals(1L, jedis.hdel(hash, field));
-        assertNull(jedis.hget(hash, field));
-    }
-
-    @TestTemplate
     public void whenHGetAll_EnsureAllKeysAndValuesReturned(Jedis jedis) {
         jedis.hset(HASH, FIELD_1, VALUE_1);
         jedis.hset(HASH, FIELD_2, VALUE_2);
