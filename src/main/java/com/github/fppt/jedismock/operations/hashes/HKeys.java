@@ -21,6 +21,7 @@ public class HKeys extends AbstractRedisOperation {
         Slice hash = params().get(0);
 
         Map<Slice, Slice> fieldAndValueMap = base().getFieldsAndValues(hash);
+
         int arraySize = fieldAndValueMap.size();
         Slice [] fkeys = new Slice[arraySize];
 

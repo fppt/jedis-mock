@@ -137,7 +137,7 @@ public class RedisBase {
     public Map<Slice, Slice> getFieldsAndValues(Slice hash) {
         RMSortedSet sortedSet = getSortedSet(hash);
         if (sortedSet == null) {
-            return null;
+            return Collections.emptyMap();
         }
         return sortedSet.getStoredData();
     }
