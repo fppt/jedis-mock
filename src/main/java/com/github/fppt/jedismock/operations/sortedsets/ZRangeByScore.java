@@ -1,9 +1,9 @@
 package com.github.fppt.jedismock.operations.sortedsets;
 
 import com.github.fppt.jedismock.datastructures.RMHMap;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.Collections;
@@ -38,16 +38,21 @@ public class ZRangeByScore extends AbstractByScoreOperation {
                 .filter(e -> filterPredicate.test(e.getValue()));
 
         boolean withScores = false;
+        boolean isRev = false;
         for (int i = 3; i < params().size(); i++) {
             String param = params().get(i).toString();
             if ("withscores".equalsIgnoreCase(param)) {
                 withScores = true;
+            }
+            if ("isRev".equalsIgnoreCase(param)) {
+                isRev = true;
             } else if ("limit".equalsIgnoreCase(param)) {
                 long offset = convertToLong(params().get(++i).toString());
                 long count = convertToLong(params().get(++i).toString());
                 entryStream = entryStream.skip(offset).limit(count);
             }
         }
+        entryStream = entryStream.sorted(isRev ? ZRange.zRangeComparator.reversed() : ZRange.zRangeComparator);
 
         Stream<Slice> result;
         if (withScores) {
