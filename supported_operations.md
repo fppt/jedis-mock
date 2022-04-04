@@ -208,7 +208,7 @@
 :heavy_check_mark: zremrangebyscore<br>
 :heavy_check_mark: zrevrange<br>
 :heavy_check_mark: zrevrangebylex<br>
-:x: zrevrangebyscore<br>
+:heavy_check_mark: zrevrangebyscore<br>
 :x: zrevrank<br>
 :x: zscan<br>
 :heavy_check_mark: zscore<br>
