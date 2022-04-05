@@ -89,7 +89,8 @@ public class TestRedisOperationExecutor {
         Map<Integer, RedisBase> redisBases = new HashMap<>();
         redisBases.put(0, new RedisBase());
         RedisClient redisClient = new RedisClient(redisBases,
-                mockSocket, ServiceOptions.defaultOptions());
+                mockSocket, ServiceOptions.defaultOptions(), c -> {
+        });
         OperationExecutorState state = new OperationExecutorState(redisClient, redisBases);
         executor = new RedisOperationExecutor(state);
     }

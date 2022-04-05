@@ -54,31 +54,48 @@ public class TestRedisServer {
     }
 
     @Test
-    public void whenRepeatedlyStoppingAndStartingServer_EnsureItResponds() throws IOException {
-        for (int i = 0; i < 20; i ++){
+    public void whenRepeatedlyStoppingAndCreatingServer_EnsureItResponds() throws IOException {
+        for (int i = 0; i < 20; i++) {
             RedisServer server = RedisServer.newRedisServer();
             server.start();
-
-            Jedis jedis = new Jedis(server.getHost(), server.getBindPort());
-            assertEquals("PONG", jedis.ping());
-
-            server.stop();
-            assertThrows(JedisConnectionException.class, () -> {
-                jedis.ping();
-            });
+            try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort())) {
+                assertEquals("PONG", jedis.ping());
+                server.stop();
+                assertThrows(JedisConnectionException.class, jedis::ping);
+            }
         }
+    }
 
+    @Test
+    public void whenPartOfTheClientsQuitAndServerStops_AllTheConnectionsAreClosed() throws IOException {
         RedisServer server = RedisServer.newRedisServer();
-        for (int i = 0; i < 20; i ++){
+        server.start();
+        Jedis[] jedis = new Jedis[5];
+        for (int i = 0; i < jedis.length; i++) {
+            jedis[i] = new Jedis(server.getHost(), server.getBindPort());
+            assertEquals("PONG", jedis[i].ping());
+            if (i % 2 == 1) {
+                //Part of the clients quit
+                jedis[i].quit();
+            }
+        }
+        server.stop();
+        for (Jedis j : jedis) {
+            assertThrows(JedisConnectionException.class, j::ping);
+            j.close();
+        }
+    }
+
+    @Test
+    public void whenRepeatedlyStoppingAndStartingServer_EnsureItResponds() throws IOException {
+        RedisServer server = RedisServer.newRedisServer();
+        for (int i = 0; i < 20; i++) {
             server.start();
-
-            Jedis jedis = new Jedis(server.getHost(), server.getBindPort());
-            assertEquals("PONG", jedis.ping());
-
-            server.stop();
-            assertThrows(JedisConnectionException.class, () -> {
-                jedis.ping();
-            });
+            try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort())) {
+                assertEquals("PONG", jedis.ping());
+                server.stop();
+                assertThrows(JedisConnectionException.class, jedis::ping);
+            }
         }
     }
 }
