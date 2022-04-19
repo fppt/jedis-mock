@@ -35,7 +35,7 @@ Add it as a dependency in Maven as:
 <dependency>
   <groupId>com.github.fppt</groupId>
   <artifactId>jedis-mock</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
 </dependency>
 ```
 
