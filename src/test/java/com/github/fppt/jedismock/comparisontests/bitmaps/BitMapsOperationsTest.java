@@ -37,8 +37,8 @@ public class BitMapsOperationsTest {
 
     @TestTemplate
     void testGetStringRepresentation(Jedis jedis) {
-        String bitmapString = jedis.get("bm");
-        jedis.set("bm2", bitmapString);
+        byte[] bitmapString = jedis.get("bm".getBytes());
+        jedis.set("bm2".getBytes(), bitmapString);
         for (int i = 0; i <= Collections.max(bits); i++) {
             assertEquals(bits.contains(i), jedis.getbit("bm2", i));
         }
@@ -47,9 +47,9 @@ public class BitMapsOperationsTest {
     @TestTemplate
     void testValueAftersetbit(Jedis jedis) {
         jedis.setbit("foo", 0L, true);
-        assertEquals(jedis.getbit("foo", 0L), true);
+        assertTrue(jedis.getbit("foo", 0L));
         jedis.setbit("foo", 1L, true);
-        assertEquals(jedis.getbit("foo", 0L), true);
+        assertTrue(jedis.getbit("foo", 0L));
     }
 
 }
