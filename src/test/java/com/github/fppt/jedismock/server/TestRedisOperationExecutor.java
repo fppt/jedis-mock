@@ -316,11 +316,7 @@ public class TestRedisOperationExecutor {
         assertCommandEquals(1, array("getbit", "mykey", "7"));
         assertCommandEquals(0, array("getbit", "mykey", "6"));
         assertCommandEquals(1, array("setbit", "mykey", "7", "0"));
-        assertEquals(Response.bulkString(Slice.create(new byte[]{0})),
-                executor.execCommand(RedisCommandParser.parse(array("get", "mykey"))));
         assertCommandEquals(0, array("setbit", "mykey", "33", "1"));
-        assertEquals(Response.bulkString(Slice.create(new byte[]{0, 0, 0, 0, 2})),
-                executor.execCommand(RedisCommandParser.parse(array("get", "mykey"))));
         assertCommandEquals(0, array("setbit", "mykey", "22", "1"));
         assertCommandEquals(0, array("getbit", "mykey", "117"));
         assertCommandError(array("getbit", "mykey", "a"));

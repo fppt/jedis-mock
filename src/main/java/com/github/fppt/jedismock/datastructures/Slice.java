@@ -1,10 +1,15 @@
 package com.github.fppt.jedismock.datastructures;
 
-import com.github.fppt.jedismock.exception.WrongValueTypeException;
+import com.github.fppt.jedismock.exception.DeserializationException;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class Slice implements RMDataStructure, Comparable<Slice> {
+public class Slice implements Comparable<Slice>, Serializable {
+    private static final long serialVersionUID= 1L;
     private final byte[] storedData;
 
     private Slice(byte[] storedData) {
@@ -45,16 +50,6 @@ public class Slice implements RMDataStructure, Comparable<Slice> {
         return Arrays.hashCode(data());
     }
 
-    @Override
-    public void raiseTypeCastException() {
-        throw new WrongValueTypeException("WRONGTYPE Slice value is used in the wrong place");
-    }
-
-    @Override
-    public String getTypeName() {
-        return "string";
-    }
-
     public int compareTo(Slice b) {
         int len1 = data().length;
         int len2 = b.data().length;
@@ -70,5 +65,23 @@ public class Slice implements RMDataStructure, Comparable<Slice> {
             k++;
         }
         return len1 - len2;
+    }
+
+    public RMDataStructure expand() {
+        if (storedData[0] == (byte)  0xac && storedData[1] == (byte) 0xed) {
+            try {
+                ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(storedData));
+                Object value = objectInputStream.readObject();
+
+                if (value instanceof RMDataStructure) {
+                    return (RMDataStructure) value;
+                }
+
+            } catch (IOException | ClassNotFoundException ignored) {
+                throw new DeserializationException("problems with deserialization");
+            }
+        }
+
+        return new RMString(this.toString());
     }
 }

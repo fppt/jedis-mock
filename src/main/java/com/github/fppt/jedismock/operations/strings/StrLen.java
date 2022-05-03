@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.strings;
 
+import com.github.fppt.jedismock.datastructures.RMString;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
@@ -15,10 +16,10 @@ class StrLen extends AbstractRedisOperation {
     }
 
     protected Slice response() {
-        Slice value = base().getSlice(params().get(0));
+        RMString value = base().getRMString(params().get(0));
         if (value == null) {
             return Response.integer(0);
         }
-        return Response.integer(value.length());
+        return Response.integer(value.size());
     }
 }

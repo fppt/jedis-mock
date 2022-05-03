@@ -1,12 +1,15 @@
 package com.github.fppt.jedismock.storage;
 
 import com.github.fppt.jedismock.Utils;
+import com.github.fppt.jedismock.datastructures.RMHyperLogLog;
 import com.github.fppt.jedismock.datastructures.RMDataStructure;
-import com.github.fppt.jedismock.datastructures.RMHMap;
 import com.github.fppt.jedismock.datastructures.RMSet;
-import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.datastructures.RMList;
+import com.github.fppt.jedismock.datastructures.RMString;
+import com.github.fppt.jedismock.datastructures.RMBitMap;
 import com.github.fppt.jedismock.datastructures.RMSortedSet;
+import com.github.fppt.jedismock.datastructures.RMList;
+import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.datastructures.RMHMap;
 import com.github.fppt.jedismock.server.RedisClient;
 
 import java.util.ArrayList;
@@ -90,6 +93,52 @@ public class RedisBase {
         return (RMList) value;
     }
 
+    public RMBitMap getBitMap(Slice key) {
+        RMDataStructure value = getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        if (!(value instanceof RMBitMap || value instanceof RMString)) {
+            value.raiseTypeCastException();
+        }
+
+        if (value instanceof RMBitMap) {
+            return (RMBitMap) value;
+        }
+
+        return new RMBitMap(((RMString) value).getStoredData().getBytes());
+    }
+
+    public RMHyperLogLog getHLL(Slice key) {
+        RMDataStructure value = getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        if (!(value instanceof RMHyperLogLog)) {
+            value.raiseTypeCastException();
+        }
+
+        return (RMHyperLogLog) value;
+    }
+
+    public RMString getRMString(Slice key) {
+        RMDataStructure value = getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        if (!(value instanceof RMString)) {
+            value.raiseTypeCastException();
+        }
+
+        return (RMString) value;
+    }
+
     public Slice getSlice(Slice key) {
         RMDataStructure value = getValue(key);
 
@@ -97,11 +146,7 @@ public class RedisBase {
             return null;
         }
 
-        if (!(value instanceof Slice)) {
-            value.raiseTypeCastException();
-        }
-
-        return (Slice) value;
+        return value.getAsSlice();
     }
 
     public Slice getSlice(Slice key1, Slice key2) {
@@ -177,6 +222,10 @@ public class RedisBase {
 
     public void putSlice(Slice key1, Slice key2, Slice value, Long ttl) {
         keyValueStorage.put(key1, key2, value, ttl);
+    }
+
+    public void putValueWithoutClearingTtl(Slice key, RMDataStructure value) {
+        putValue(key, value, null);
     }
 
     public void putValue(Slice key, RMDataStructure value, Long ttl) {

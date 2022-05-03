@@ -25,6 +25,7 @@ public class Response {
         if (slice == null) {
             return NULL;
         }
+
         ByteArrayOutputStream bo = new ByteArrayOutputStream();
 
         try {
