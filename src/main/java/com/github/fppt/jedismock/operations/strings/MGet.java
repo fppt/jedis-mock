@@ -18,7 +18,7 @@ class MGet extends AbstractRedisOperation {
 
     protected Slice response() {
         return Response.array(params().stream()
-                .map(key-> base().getSlice(key))
+                .map(key-> base().getRMString(key) != null ? (base().getRMString(key).getAsSlice()) : null)
                 .map(Response::bulkString)
                 .collect(toList()));
     }

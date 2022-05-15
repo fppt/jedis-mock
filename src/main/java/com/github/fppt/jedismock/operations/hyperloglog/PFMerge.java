@@ -1,15 +1,13 @@
 package com.github.fppt.jedismock.operations.hyperloglog;
 
-import com.github.fppt.jedismock.datastructures.RMSet;
+import com.github.fppt.jedismock.datastructures.RMHyperLogLog;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @RedisCommand("pfmerge")
 class PFMerge extends AbstractRedisOperation {
@@ -19,28 +17,18 @@ class PFMerge extends AbstractRedisOperation {
 
     protected Slice response() {
         Slice key = params().get(0);
-        RMSet rmData = base().getSet(key);
-        boolean first;
-        Set<Slice> set;
-        if (rmData == null) {
-            set = new HashSet<>();
-            first = true;
-        } else {
-            set = rmData.getStoredData();
-            first = false;
-        }
+        RMHyperLogLog rmData = base().getHLL(key);
+        RMHyperLogLog set = (rmData == null ? new RMHyperLogLog() : rmData);
 
         for (Slice v : params().subList(1, params().size())) {
-            RMSet valueToMerge = base().getSet(v);
+            RMHyperLogLog valueToMerge = base().getHLL(v);
+
             if (valueToMerge != null) {
-                Set<Slice> s = valueToMerge.getStoredData();
-                set.addAll(s);
+                set.addAll(valueToMerge.getStoredData());
             }
         }
 
-        if (first) {
-            base().putValue(key, new RMSet(set));
-        }
+        base().putValue(key, set);
         return Response.OK;
     }
 }

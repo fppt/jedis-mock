@@ -1,7 +1,7 @@
 package com.github.fppt.jedismock.storage;
 
 import com.github.fppt.jedismock.datastructures.RMDataStructure;
-import com.github.fppt.jedismock.datastructures.RMSortedSet;
+import com.github.fppt.jedismock.datastructures.RMHash;
 import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.HashMap;
@@ -39,7 +39,7 @@ public class ExpiringKeyValueStorage {
         if (!verifyKey(key1)) {
             return;
         }
-        RMSortedSet sortedSetByKey = getRMSortedSet(key1);
+        RMHash sortedSetByKey = getRMSortedSet(key1);
         Map<Slice, Slice> storedData = sortedSetByKey.getStoredData();
 
         if (!storedData.containsKey(key2)) {
@@ -120,7 +120,7 @@ public class ExpiringKeyValueStorage {
         keyChangeNotifier.accept(key);
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
-        values().put(key, value);
+        values().put(key, value.extract());
         configureTTL(key, ttl);
     }
 
@@ -130,10 +130,10 @@ public class ExpiringKeyValueStorage {
         Objects.requireNonNull(key1);
         Objects.requireNonNull(key2);
         Objects.requireNonNull(value);
-        RMSortedSet mapByKey;
+        RMHash mapByKey;
 
         if(!values.containsKey(key1)) {
-            mapByKey = new RMSortedSet();
+            mapByKey = new RMHash();
             values.put(key1, mapByKey);
         } else {
             mapByKey = getRMSortedSet(key1);
@@ -142,13 +142,13 @@ public class ExpiringKeyValueStorage {
         configureTTL(key1, ttl);
     }
 
-    private RMSortedSet getRMSortedSet(Slice key) {
+    private RMHash getRMSortedSet(Slice key) {
         RMDataStructure valueByKey = values.get(key);
         if(!isSortedSetValue(valueByKey)) {
             valueByKey.raiseTypeCastException();
         }
 
-        return (RMSortedSet) valueByKey;
+        return (RMHash) valueByKey;
     }
 
     private void configureTTL(Slice key, Long ttl) {
@@ -181,7 +181,7 @@ public class ExpiringKeyValueStorage {
     }
 
     private boolean isSortedSetValue(RMDataStructure value) {
-        return value instanceof RMSortedSet;
+        return value instanceof RMHash;
     }
 
     public Slice type(Slice key) {

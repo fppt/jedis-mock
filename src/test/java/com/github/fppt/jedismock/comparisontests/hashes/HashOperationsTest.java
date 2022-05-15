@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.comparisontests.hashes;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
+import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -269,5 +270,13 @@ public class HashOperationsTest {
         hash.replace("key1", "2");
         jedis.hset("foo", hash);
         assertNotEquals(-1L, jedis.ttl("foo"));
+    }
+
+    @TestTemplate
+    void checkGetOperation(Jedis jedis) {
+        Map<String, String> hash = new HashMap<>();
+        hash.put("key1", "1");
+        jedis.hset("foo", hash);
+        assertThrows(JedisDataException.class, () -> jedis.get("foo"));
     }
 }

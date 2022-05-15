@@ -1,12 +1,13 @@
 package com.github.fppt.jedismock.comparisontests.bitmaps;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import com.github.fppt.jedismock.datastructures.Slice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisDataException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -37,8 +38,7 @@ public class BitMapsOperationsTest {
 
     @TestTemplate
     void testGetStringRepresentation(Jedis jedis) {
-        String bitmapString = jedis.get("bm");
-        jedis.set("bm2", bitmapString);
+        jedis.set("bm2".getBytes(), jedis.get("bm".getBytes()));
         for (int i = 0; i <= Collections.max(bits); i++) {
             assertEquals(bits.contains(i), jedis.getbit("bm2", i));
         }
@@ -47,9 +47,17 @@ public class BitMapsOperationsTest {
     @TestTemplate
     void testValueAftersetbit(Jedis jedis) {
         jedis.setbit("foo", 0L, true);
-        assertEquals(jedis.getbit("foo", 0L), true);
+        assertTrue(jedis.getbit("foo", 0L));
         jedis.setbit("foo", 1L, true);
-        assertEquals(jedis.getbit("foo", 0L), true);
+        assertTrue(jedis.getbit("foo", 0L));
     }
 
+    @TestTemplate
+    public void testStringAndBitmapGet(Jedis jedis) {
+        jedis.set("something", "foo");
+        jedis.setbit("something", 41, true);
+        jedis.set("something2".getBytes(), jedis.get("something".getBytes()));
+        assertTrue(jedis.getbit("something2", 1));
+        assertTrue(jedis.getbit("something2", 41));
+    }
 }

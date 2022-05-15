@@ -4,14 +4,14 @@ import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class RMSortedSet implements RMDataStructure {
+public class RMHash implements RMDataStructure {
     private final LinkedHashMap<Slice, Slice> storedData;
 
     public Map<Slice, Slice> getStoredData() {
         return storedData;
     }
 
-    public RMSortedSet() {
+    public RMHash() {
         storedData = new LinkedHashMap<>();
     }
 

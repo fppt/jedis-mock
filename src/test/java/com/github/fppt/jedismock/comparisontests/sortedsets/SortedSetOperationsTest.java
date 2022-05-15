@@ -5,12 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.resps.Tuple;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(ComparisonBase.class)
 public class SortedSetOperationsTest {
@@ -185,5 +185,16 @@ public class SortedSetOperationsTest {
         assertEquals(1d, jedis.zscore(key, "bbb"));
         assertEquals(1d, jedis.zscore(key, "ddd"));
         assertNull(jedis.zscore(key, "ccc"));
+    }
+
+    @TestTemplate
+    public void testGetOperation(Jedis jedis) {
+        String key = "a_key";
+        Map<String, Double> members = new HashMap<>();
+        members.put("aaa", 0d);
+        members.put("bbb", 1d);
+        members.put("ddd", 1d);
+        jedis.zadd(key, members);
+        assertThrows(JedisDataException.class, () -> jedis.get("a_key"));
     }
 }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.List;
 
@@ -90,5 +91,12 @@ public class ListOperationsTest {
         list = jedis.lrange(key, 0, -1);
         assertEquals(hello, list.get(0));
         assertEquals(foo, list.get(1));
+    }
+
+    @TestTemplate
+    public void testGetOperation(Jedis jedis) {
+        String key = "Another key";
+        jedis.rpush(key, "1", "2", "3");
+        assertThrows(JedisDataException.class, () -> jedis.get("Another key"));
     }
 }

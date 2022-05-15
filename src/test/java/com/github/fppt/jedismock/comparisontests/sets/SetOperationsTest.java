@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -125,5 +126,13 @@ public class SetOperationsTest {
 
         intersection = jedis.sinter(key1, key2, key3);
         assertEquals(expectedIntersection2, intersection);
+    }
+
+    @TestTemplate
+    public void testFailingGetOperation(Jedis jedis) {
+        jedis.sadd("my-set-key", "a", "b", "c", "d");
+        assertTrue(
+                assertThrows(JedisDataException.class, () -> jedis.get("my-set-key"))
+                        .getMessage().startsWith("WRONGTYPE"));
     }
 }

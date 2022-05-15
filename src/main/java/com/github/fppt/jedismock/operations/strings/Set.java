@@ -27,7 +27,7 @@ class Set extends AbstractRedisOperation {
         if (nx()) {
             Slice old = base().getSlice(key);
             if (old == null) {
-                base().putValue(key, value, ttl());
+                base().putValue(key, value.extract(), ttl());
                 return Response.OK;
             } else {
                 return Response.NULL;
@@ -37,11 +37,11 @@ class Set extends AbstractRedisOperation {
             if (old == null) {
                 return Response.NULL;
             } else {
-                base().putValue(key, value, ttl());
+                base().putValue(key, value.extract(), ttl());
                 return Response.OK;
             }
         } else {
-            base().putValue(key, value, ttl());
+            base().putValue(key, value.extract(), ttl());
             return Response.OK;
         }
     }

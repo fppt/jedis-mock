@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.strings;
 
+import com.github.fppt.jedismock.datastructures.RMString;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
@@ -16,20 +17,16 @@ class Append extends AbstractRedisOperation {
 
     protected Slice response() {
         Slice key = params().get(0);
-        Slice value = params().get(1);
-        Slice s = base().getSlice(key);
+        String value = params().get(1).toString();
+        RMString s = base().getRMString(key);
+
         if (s == null) {
-            base().putSlice(key, value);
+            base().putValue(key, RMString.create(value));
             return Response.integer(value.length());
         }
-        byte[] b = new byte[s.length() + value.length()];
-        for (int i = 0; i < s.length(); i++) {
-            b[i] = s.data()[i];
-        }
-        for (int i = s.length(); i < s.length() + value.length(); i++) {
-            b[i] = value.data()[i - s.length()];
-        }
-        base().putSlice(key, Slice.create(b));
-        return Response.integer(b.length);
+
+        s.add(value);
+        base().putValue(key, s);
+        return Response.integer(s.size());
     }
 }

@@ -19,6 +19,8 @@ public class TestType {
         jedis.sadd("skey", "val1", "val2");
         jedis.zadd("zkey", 1, "foo");
         jedis.hset("hkey", "k", "v");
+        jedis.setbit("bitmap", 22, true);
+        jedis.pfadd("hll", "foo");
     }
 
     @TestTemplate
@@ -29,7 +31,9 @@ public class TestType {
                 () -> assertEquals("list", jedis.type("lkey")),
                 () -> assertEquals("set", jedis.type("skey")),
                 () -> assertEquals("zset", jedis.type("zkey")),
-                () -> assertEquals("hash", jedis.type("hkey"))
+                () -> assertEquals("hash", jedis.type("hkey")),
+                () -> assertEquals("string", jedis.type("bitmap")),
+                () -> assertEquals("string", jedis.type("hll"))
         );
     }
 

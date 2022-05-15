@@ -1,6 +1,6 @@
 package com.github.fppt.jedismock.operations.sortedsets;
 
-import com.github.fppt.jedismock.datastructures.RMHMap;
+import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
@@ -19,7 +19,7 @@ class ZRem extends AbstractRedisOperation {
 
     protected Slice response() {
         Slice key = params().get(0);
-        final RMHMap mapDBObj = getHMapFromBaseOrCreateEmpty(key);
+        final RMZSet mapDBObj = getHMapFromBaseOrCreateEmpty(key);
         final Map<Slice, Double> map = mapDBObj.getStoredData();
         if(map == null || map.isEmpty()) return Response.integer(0);
         int count = 0;

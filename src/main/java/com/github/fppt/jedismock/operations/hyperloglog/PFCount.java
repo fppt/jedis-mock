@@ -1,6 +1,6 @@
 package com.github.fppt.jedismock.operations.hyperloglog;
 
-import com.github.fppt.jedismock.datastructures.RMSet;
+import com.github.fppt.jedismock.datastructures.RMHyperLogLog;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
@@ -20,7 +20,7 @@ class PFCount extends AbstractRedisOperation {
     protected Slice response() {
         Set<Slice> set = new HashSet<>();
         for (Slice key : params()) {
-            RMSet data = base().getSet(key);
+            RMHyperLogLog data = base().getHLL(key);
             if (data == null) {
                 continue;
             }
@@ -28,6 +28,6 @@ class PFCount extends AbstractRedisOperation {
             Set<Slice> s = data.getStoredData();
             set.addAll(s);
         }
-        return Response.integer((long) set.size());
+        return Response.integer(set.size());
     }
 }

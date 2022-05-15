@@ -5,24 +5,24 @@ import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class RMHMap implements RMDataStructure {
+public class RMZSet implements RMDataStructure {
     private final Map<Slice, Double> storedData;
 
     public Map<Slice, Double> getStoredData() {
         return storedData;
     }
 
-    public RMHMap() {
+    public RMZSet() {
         storedData = new LinkedHashMap<>();
     }
 
-    public RMHMap(Map<Slice, Double> data) {
+    public RMZSet(Map<Slice, Double> data) {
         storedData = data;
     }
 
     @Override
     public void raiseTypeCastException() {
-        throw new WrongValueTypeException("WRONGTYPE RMHMap value is used in the wrong place");
+        throw new WrongValueTypeException("WRONGTYPE RMZSet value is used in the wrong place");
     }
 
     @Override
