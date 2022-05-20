@@ -44,7 +44,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <junit.version>5.8.2</junit.version>
         <jedis.version>4.2.1</jedis.version>
-        <testcontainers.version>1.16.3</testcontainers.version>
+        <testcontainers.version>1.17.2</testcontainers.version>
         <spotbugs.version>4.6.0.0</spotbugs.version>
         <slf4j.version>1.7.36</slf4j.version>
     </properties>
