@@ -43,12 +43,7 @@ public class ZRemRangeByScore extends AbstractByScoreOperation {
                             throw new IllegalStateException();
                         }, LinkedHashMap::new));
 
-        try {
-            base().putValue(key, new RMZSet(result));
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-
+        base().putValue(key, new RMZSet(result));
         return Response.integer(values.size());
     }
 

@@ -14,6 +14,9 @@
 
     <Match>
         <Class name="com.github.fppt.jedismock.server.RedisService"/>
-        <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+        <Or>
+            <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+            <Bug pattern="THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION"/>
+        </Or>
     </Match>
 </FindBugsFilter>

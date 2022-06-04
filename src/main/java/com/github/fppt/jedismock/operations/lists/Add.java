@@ -26,11 +26,8 @@ abstract class Add extends AbstractRedisOperation {
             addSliceToList(list, params().get(i));
         }
 
-        try {
-            base().putValue(key, listDBObj);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        base().putValue(key, listDBObj);
+
         //Notify all waiting operations
         lock.notifyAll();
         return Response.integer(list.size());

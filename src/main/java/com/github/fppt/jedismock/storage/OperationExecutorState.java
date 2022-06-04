@@ -50,7 +50,7 @@ public class OperationExecutorState {
     }
 
     public void newTransaction(){
-        if(isTransactionModeOn.get()) throw new RuntimeException("Redis mock does not support more than one transaction");
+        if(isTransactionModeOn.get()) throw new IllegalStateException("Redis mock does not support more than one transaction");
         transactionMode(true);
     }
 

@@ -49,11 +49,7 @@ class ZAdd extends AbstractRedisOperation {
             .collect(
                 toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 
-        try {
-            base().putValue(key, new RMZSet(sortedMap));
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        base().putValue(key, new RMZSet(sortedMap));
         return Response.integer(count);
     }
 

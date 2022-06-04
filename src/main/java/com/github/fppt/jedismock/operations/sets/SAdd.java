@@ -29,11 +29,8 @@ class SAdd extends AbstractRedisOperation {
             }
         }
 
-        try {
-            base().putValue(key, setDBObj);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        base().putValue(key, setDBObj);
+
         return Response.integer(count);
     }
 }
