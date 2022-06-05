@@ -9,6 +9,7 @@ import redis.clients.jedis.params.ZRangeParams;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -59,5 +60,14 @@ public class TestZRange {
         jedis.zadd("foo", 42, "abc");
         assertEquals(Arrays.asList("abc", "def"), jedis.zrange("foo", 0, -1));
         assertEquals(Arrays.asList("def", "abc"), jedis.zrange("foo", ZRangeParams.zrangeParams(0, -1).rev()));
+    }
+
+    @TestTemplate
+    public void zRangeWorksSimilarToZRevRangeByScore(Jedis jedis) {
+        jedis.zadd("foo", 1, "one");
+        jedis.zadd("foo", 2, "two");
+        jedis.zadd("foo", 3, "three");
+        final List<String> list = jedis.zrange("foo", ZRangeParams.zrangeByScoreParams(3, 1).rev());
+        assertEquals(Arrays.asList("three", "two", "one"), list);
     }
 }
