@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ZRangeParams;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,27 +30,27 @@ public class TestZRange {
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsEverythingInRightOrderWithPlusMinusMaxInteger(Jedis jedis) {
-        assertEquals(Arrays.asList("cccc", "aaaa", "babb", "bbbb", "bcbb"), new ArrayList<>(jedis.zrange(ZSET_KEY, Integer.MIN_VALUE, Integer.MAX_VALUE)));
+        assertEquals(Arrays.asList("cccc", "aaaa", "babb", "bbbb", "bcbb"), jedis.zrange(ZSET_KEY, Integer.MIN_VALUE, Integer.MAX_VALUE));
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithPositiveRange(Jedis jedis) {
-        assertEquals(Arrays.asList("aaaa", "babb", "bbbb"), new ArrayList<>(jedis.zrange(ZSET_KEY, 1, 3)));
+        assertEquals(Arrays.asList("aaaa", "babb", "bbbb"), jedis.zrange(ZSET_KEY, 1, 3));
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithNegativeRange(Jedis jedis) {
-        assertEquals(Arrays.asList("babb", "bbbb", "bcbb"), new ArrayList<>(jedis.zrange(ZSET_KEY, -3, -1)));
+        assertEquals(Arrays.asList("babb", "bbbb", "bcbb"), jedis.zrange(ZSET_KEY, -3, -1));
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithNegativeStartAndPositiveEndRange(Jedis jedis) {
-        assertEquals(Arrays.asList("cccc", "aaaa", "babb"), new ArrayList<>(jedis.zrange(ZSET_KEY, -5, 2)));
+        assertEquals(Arrays.asList("cccc", "aaaa", "babb"), jedis.zrange(ZSET_KEY, -5, 2));
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithPositiveStartAndNegativeEndRange(Jedis jedis) {
-        assertEquals(Arrays.asList("aaaa", "babb", "bbbb", "bcbb"), new ArrayList<>(jedis.zrange(ZSET_KEY, 1, -1)));
+        assertEquals(Arrays.asList("aaaa", "babb", "bbbb", "bcbb"), jedis.zrange(ZSET_KEY, 1, -1));
     }
 
     @TestTemplate

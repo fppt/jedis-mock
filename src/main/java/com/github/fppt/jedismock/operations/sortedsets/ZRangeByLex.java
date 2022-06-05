@@ -1,15 +1,16 @@
 package com.github.fppt.jedismock.operations.sortedsets;
 
 import com.github.fppt.jedismock.datastructures.RMZSet;
+import com.github.fppt.jedismock.datastructures.ZSetEntry;
+import com.github.fppt.jedismock.datastructures.ZSetEntryBound;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @RedisCommand("zrangebylex")
@@ -27,20 +28,25 @@ class ZRangeByLex extends AbstractRedisOperation {
     @Override
     protected Slice response() {
         Slice key = params().get(0);
-        final RMZSet mapDBObj = getHMapFromBaseOrCreateEmpty(key);
-        final Map<Slice, Double> map = mapDBObj.getStoredData();
+        RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
 
-        String start = params().get(1).toString();
+        String start = min();
         if (!validateStart(start)) {
             return buildErrorResponse("start");
         }
 
-        String end = params().get(2).toString();
+        String end = max();
         if (!validateEnd(end)) {
             return buildErrorResponse("end");
         }
 
-        return Response.array(doProcess(map, start, end));
+        if (mapDBObj.isEmpty()) {
+            return Response.array(Collections.emptyList());
+        } else {
+            //We assume that all the elements have the same score
+            double score = mapDBObj.entries(false).first().getScore();
+            return Response.array(doProcess(mapDBObj, start, end, score));
+        }
     }
 
     private Slice buildErrorResponse(String param) {
@@ -49,44 +55,48 @@ class ZRangeByLex extends AbstractRedisOperation {
     }
     
     protected boolean validateStart(String start) {
-        return getStartUnbounded().equals(start) || startsWithAnyPrefix(start);
+        return NEGATIVELY_INFINITE.equals(start) || startsWithAnyPrefix(start);
     }
 
     protected boolean validateEnd(String end) {
-        return getEndUnbounded().equals(end) || startsWithAnyPrefix(end);
+        return POSITIVELY_INFINITE.equals(end) || startsWithAnyPrefix(end);
     }
     
     protected boolean startsWithAnyPrefix(String s) {
         return s.startsWith(INCLUSIVE_PREFIX) || s.startsWith(EXCLUSIVE_PREFIX);
     }
 
-    protected List<Slice> doProcess(Map<Slice, Double> map, String start, String end) {
-        return map.keySet().stream()
-                .filter(buildStartPredicate(start).and(buildEndPredicate(end)))
-                .sorted()
+    protected List<Slice> doProcess(RMZSet map, String start, String end, double score) {
+        return map.subset(buildStartEntryBound(score, start),
+                buildEndEntryBound(score, end))
+                .stream()
+                .map(ZSetEntry::getValue)
+                .map(Slice::create)
                 .map(Response::bulkString)
                 .collect(Collectors.toList());
     }
 
-    protected Predicate<Slice> buildStartPredicate(String start) {
-        return p -> getStartUnbounded().equals(start) ||
-                (start.startsWith(INCLUSIVE_PREFIX)
-                        ? p.toString().compareTo(start.substring(1)) >= 0
-                        : p.toString().compareTo(start.substring(1)) > 0);
+    protected ZSetEntryBound buildStartEntryBound(double score, String start) {
+        if (NEGATIVELY_INFINITE.equals(start)) {
+            return new ZSetEntryBound(score, ZSetEntry.MIN_VALUE, true);
+        } else {
+            return new ZSetEntryBound(score, start.substring(1), start.startsWith(INCLUSIVE_PREFIX));
+        }
     }
 
-    protected Predicate<Slice> buildEndPredicate(String end) {
-        return p -> getEndUnbounded().equals(end) ||
-                (end.startsWith(INCLUSIVE_PREFIX)
-                        ? p.toString().compareTo(end.substring(1)) <= 0
-                        : p.toString().compareTo(end.substring(1)) < 0);
+    protected ZSetEntryBound buildEndEntryBound(double score, String end)  {
+        if (POSITIVELY_INFINITE.equals(end)) {
+            return new ZSetEntryBound(score, ZSetEntry.MAX_VALUE, false);
+        } else {
+            return new ZSetEntryBound(score, end.substring(1), end.startsWith(INCLUSIVE_PREFIX));
+        }
     }
 
-    protected String getStartUnbounded() {
-        return NEGATIVELY_INFINITE;
+    protected String min(){
+        return params().get(1).toString();
     }
 
-    protected String getEndUnbounded() {
-        return POSITIVELY_INFINITE;
+    protected String max() {
+        return params().get(2).toString();
     }
 }

@@ -8,6 +8,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,9 +68,8 @@ public class TestZRemRangeByScore {
 
         // then
         assertEquals(2, zremrangeByScoreResult);
-        final List<String> zrangeResult = jedis.zrange(ZSET_KEY, 0, -1);
-        assertEquals(1, zrangeResult.size());
-        assertArrayEquals(zrangeResult.toArray(), new String[]{"three"});
+        List<String> zrangeResult = jedis.zrange(ZSET_KEY, 0, -1);
+        assertEquals(Collections.singletonList("three"), zrangeResult);
     }
 
     @TestTemplate

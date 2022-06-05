@@ -32,25 +32,25 @@ public class TestZRangeWithByLexArg {
 
     @TestTemplate
     public void zrangebylexKeysCorrectOrderUnbounded(Jedis jedis) {
-        List<String> results = new ArrayList<>(jedis.zrange(key, ZRangeParams.zrangeByLexParams("-", "+")));
+        List<String> results = jedis.zrange(key, ZRangeParams.zrangeByLexParams("-", "+"));
         assertEquals(Arrays.asList("aaa", "bbb", "ccc", "ddd"), results);
     }
 
     @TestTemplate
     void zrangebylexKeysCorrectOrderBounded(Jedis jedis) {
-        List<String> results = new ArrayList<>(jedis.zrange(key, ZRangeParams.zrangeByLexParams("[bbb", "(ddd")));
+        List<String> results = jedis.zrange(key, ZRangeParams.zrangeByLexParams("[bbb", "(ddd"));
         assertEquals(Arrays.asList("bbb", "ccc"), results);
     }
 
     @TestTemplate
     public void zrevrangebylexKeysCorrectOrderUnbounded(Jedis jedis) {
-        List<String> results = new ArrayList<>(jedis.zrange(key, ZRangeParams.zrangeByLexParams("+", "-").rev()));
+        List<String> results = jedis.zrange(key, ZRangeParams.zrangeByLexParams("+", "-").rev());
         assertEquals(Arrays.asList("ddd", "ccc", "bbb", "aaa"), results);
     }
 
     @TestTemplate
     void zrevrangebylexKeysCorrectOrderBounded(Jedis jedis) {
-        List<String> results = new ArrayList<>(jedis.zrange(key, ZRangeParams.zrangeByLexParams("[ddd", "(bbb").rev()));
+        List<String> results = jedis.zrange(key, ZRangeParams.zrangeByLexParams("[ddd", "(bbb").rev());
         assertEquals(Arrays.asList("ddd", "ccc"), results);
     }
 

@@ -51,12 +51,11 @@ public abstract class AbstractRedisOperation implements RedisOperation {
         return data;
     }
 
-    public RMZSet getHMapFromBaseOrCreateEmpty(Slice key) {
+    public RMZSet getZSetFromBaseOrCreateEmpty(Slice key) {
         RMZSet data = base().getZSet(key);
         if(data == null) {
             return new RMZSet();
         }
-
         return data;
     }
 

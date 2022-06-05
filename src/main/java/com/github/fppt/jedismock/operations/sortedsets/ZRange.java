@@ -6,10 +6,7 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,10 +14,6 @@ import static com.github.fppt.jedismock.Utils.convertToInteger;
 
 @RedisCommand("zrange")
 class ZRange extends AbstractByScoreOperation {
-
-    public static final Comparator<Map.Entry<Slice, Double>> zRangeComparator = Comparator
-            .comparingDouble((ToDoubleFunction<Map.Entry<Slice, Double>>) Map.Entry::getValue)
-            .thenComparing(Map.Entry::getKey);
 
     private static final String WITH_SCORES = "WITHSCORES";
     private static final String IS_REV = "REV";
@@ -41,8 +34,7 @@ class ZRange extends AbstractByScoreOperation {
     @Override
     protected Slice response() {
         Slice key = params().get(0);
-        final RMZSet mapDBObj = getHMapFromBaseOrCreateEmpty(key);
-        final Map<Slice, Double> map = mapDBObj.getStoredData();
+        final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
 
         parseArgs();
 
@@ -63,24 +55,24 @@ class ZRange extends AbstractByScoreOperation {
             return zRevRangeByLex.response();
         }
 
-        calculateIndexes(map);
+        calculateIndexes(mapDBObj);
 
         boolean finalWithScores = withScores;
 
-        List<Slice> values = map.entrySet().stream()
-                .sorted(isRev ? zRangeComparator.reversed() : zRangeComparator)
+        final List<Slice> values = mapDBObj.entries(isRev).stream()
                 .skip(start)
                 .limit(end - start + 1)
                 .flatMap(e -> finalWithScores
-                        ? Stream.of(e.getKey(), Slice.create(e.getValue().toString()))
-                        : Stream.of(e.getKey()))
+                        ? Stream.of(e.getValue(), Double.toString(e.getScore()))
+                        : Stream.of(e.getValue()))
+                .map(Slice::create)
                 .map(Response::bulkString)
                 .collect(Collectors.toList());
 
         return Response.array(values);
     }
 
-    private void calculateIndexes(Map<Slice, Double> map) {
+    private void calculateIndexes(RMZSet map) {
         start = convertToInteger(params().get(1).toString());
         end = convertToInteger(params().get(2).toString());
 

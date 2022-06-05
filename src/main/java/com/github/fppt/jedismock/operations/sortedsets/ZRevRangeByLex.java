@@ -1,15 +1,12 @@
 package com.github.fppt.jedismock.operations.sortedsets;
 
-import com.github.fppt.jedismock.operations.RedisCommand;
-import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.storage.RedisBase;
-import java.util.Comparator;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @RedisCommand("zrevrangebylex")
 class ZRevRangeByLex extends ZRangeByLex {
@@ -19,37 +16,19 @@ class ZRevRangeByLex extends ZRangeByLex {
     }
 
     @Override
-    protected List<Slice> doProcess(Map<Slice, Double> map, String start, String end) {
-        return map.keySet().stream()
-                .filter(buildStartPredicate(start).and(buildEndPredicate(end)))
-                .sorted(Comparator.reverseOrder())
-                .map(Response::bulkString)
-                .collect(Collectors.toList());
+    protected List<Slice> doProcess(RMZSet map, String start, String end, double score) {
+        final List<Slice> list = super.doProcess(map, start, end, score);
+        Collections.reverse(list);
+        return list;
     }
 
     @Override
-    protected Predicate<Slice> buildStartPredicate(String start) {
-        return p -> getStartUnbounded().equals(start) ||
-                (start.startsWith(INCLUSIVE_PREFIX)
-                        ? p.toString().compareTo(start.substring(1)) <= 0
-                        : p.toString().compareTo(start.substring(1)) < 0);
+    protected String min() {
+        return params().get(2).toString();
     }
 
     @Override
-    protected Predicate<Slice> buildEndPredicate(String end) {
-        return p -> getEndUnbounded().equals(end) ||
-                (end.startsWith(INCLUSIVE_PREFIX)
-                        ? p.toString().compareTo(end.substring(1)) >= 0
-                        : p.toString().compareTo(end.substring(1)) > 0);
+    protected String max() {
+        return params().get(1).toString();
     }
-    
-    @Override
-    protected String getStartUnbounded() {
-        return POSITIVELY_INFINITE;
-    }
-
-    @Override
-    protected String getEndUnbounded() {
-        return NEGATIVELY_INFINITE;
-    }    
 }

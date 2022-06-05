@@ -30,7 +30,7 @@ public class SortedSetOperationsTest {
 
         assertEquals(1L, result);
 
-        List<String> results = new LinkedList<>(jedis.zrange(key, 0, -1));
+        List<String> results = jedis.zrange(key, 0, -1);
 
         assertEquals(1, results.size());
         assertEquals(value, results.get(0));
@@ -47,7 +47,7 @@ public class SortedSetOperationsTest {
 
         assertEquals(2L, result);
 
-        List<String> results = new LinkedList<>(jedis.zrange(key, 0, -1));
+        List<String> results = jedis.zrange(key, 0, -1);
 
         assertEquals(2, results.size());
         assertEquals("myvalue1", results.get(0));
@@ -88,7 +88,7 @@ public class SortedSetOperationsTest {
 
         assertEquals(2L, result);
 
-        List<String> results = new LinkedList<>(jedis.zrange(key, 0, -1));
+        List<String> results = jedis.zrange(key, 0, -1);
 
         assertEquals(2, results.size());
         assertEquals("myvalue1", results.get(0));
@@ -98,7 +98,7 @@ public class SortedSetOperationsTest {
 
         assertEquals(1L, result);
 
-        results = new LinkedList<>(jedis.zrange(key, 0, -1));
+        results = jedis.zrange(key, 0, -1);
 
         assertEquals(1, results.size());
         assertEquals("myvalue2", results.get(0));
@@ -117,7 +117,7 @@ public class SortedSetOperationsTest {
 
         assertEquals(4L, result);
 
-        List<String> results = new LinkedList<>(jedis.zrange(key, 0, -1));
+        List<String> results = jedis.zrange(key, 0, -1);
 
         assertEquals(4, results.size());
         assertEquals("myvalue1", results.get(0));
@@ -157,7 +157,7 @@ public class SortedSetOperationsTest {
 
         assertEquals(4L, result);
 
-        List<Tuple> results = new LinkedList<>(jedis.zrangeWithScores(key, 0, -1));
+        List<Tuple> results = jedis.zrangeWithScores(key, 0, -1);
 
         assertEquals(4, results.size());
         assertEquals("myvalue1", results.get(0).getElement());

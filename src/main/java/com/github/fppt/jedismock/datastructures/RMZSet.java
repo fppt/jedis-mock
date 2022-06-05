@@ -2,22 +2,55 @@ package com.github.fppt.jedismock.datastructures;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.NavigableSet;
+import java.util.TreeSet;
+
 
 public class RMZSet implements RMDataStructure {
-    private final Map<Slice, Double> storedData;
+    private final Map<String, Double> scores = new HashMap<>();
+    private final NavigableSet<ZSetEntry> entries = new TreeSet<>();
 
-    public Map<Slice, Double> getStoredData() {
-        return storedData;
+    public Double put(String value, double score) {
+        Double previous = scores.put(value, score);
+        if (previous != null) {
+            entries.remove(new ZSetEntry(previous, value));
+        }
+        entries.add(new ZSetEntry(score, value));
+        return previous;
     }
 
-    public RMZSet() {
-        storedData = new LinkedHashMap<>();
+    public Double getScore(String value) {
+        return scores.get(value);
     }
 
-    public RMZSet(Map<Slice, Double> data) {
-        storedData = data;
+    public boolean remove(String value) {
+        final Double previous = scores.remove(value);
+        if (previous == null) {
+            return false;
+        } else {
+            entries.remove(new ZSetEntry(previous, value));
+            return true;
+        }
+    }
+
+    public int size() {
+        return scores.size();
+    }
+
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    public NavigableSet<ZSetEntry> subset(ZSetEntryBound start,
+                                          ZSetEntryBound end) {
+        return entries.subSet(start.getBound(), start.isInclusive(),
+                end.getBound(), end.isInclusive());
+    }
+
+    public NavigableSet<ZSetEntry> entries(boolean reversed) {
+        return reversed ? entries.descendingSet() : entries;
     }
 
     @Override
@@ -29,4 +62,6 @@ public class RMZSet implements RMDataStructure {
     public String getTypeName() {
         return "zset";
     }
+
+
 }

@@ -11,7 +11,6 @@ public class ZRevRangeByScore extends AbstractByScoreOperation {
     private final Slice start;
     private final Slice end;
 
-
     ZRevRangeByScore(RedisBase base, List<Slice> params) {
         super(base, params);
         //NB: reverse order of arguments, cf. ZRangeByScore

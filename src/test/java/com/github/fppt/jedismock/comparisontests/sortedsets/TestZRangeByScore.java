@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(ComparisonBase.class)
@@ -29,8 +31,8 @@ public class TestZRangeByScore {
 
     @TestTemplate
     public void whenUsingZrangeByScore_EnsureItReturnsEmptySetForNonDefinedKey(Jedis jedis) {
-        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf"));
-        assertEquals(Collections.emptyList(), jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf"));
+        assertEquals(emptyList(), jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf"));
+        assertEquals(emptyList(), jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf"));
     }
 
     @TestTemplate
@@ -90,8 +92,8 @@ public class TestZRangeByScore {
         assertEquals(3, jedis.zrange(ZSET_KEY, 0, -1).size());
 
         // then
-        assertEquals(Collections.singletonList("one"), jedis.zrangeByScore(ZSET_KEY, "-inf", "(2"));
-        assertEquals(Collections.singletonList(new Tuple("one", 1.)),
+        assertEquals(singletonList("one"), jedis.zrangeByScore(ZSET_KEY, "-inf", "(2"));
+        assertEquals(singletonList(new Tuple("one", 1.)),
                 jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "(2"));
     }
 
@@ -188,7 +190,7 @@ public class TestZRangeByScore {
         jedis.zadd("foo", 42, "def");
         jedis.zadd("foo", 42, "abc");
         final List<String> list = jedis.zrangeByScore("foo", 42, 42, 0, 1);
-        assertEquals(Collections.singletonList("abc"), list);
+        assertEquals(singletonList("abc"), list);
     }
 
     @TestTemplate

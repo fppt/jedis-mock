@@ -1,6 +1,8 @@
 package com.github.fppt.jedismock.operations.sortedsets;
 
 import com.github.fppt.jedismock.datastructures.RMZSet;
+import com.github.fppt.jedismock.datastructures.ZSetEntry;
+import com.github.fppt.jedismock.datastructures.ZSetEntryBound;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
@@ -9,12 +11,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
+import java.util.NavigableSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.github.fppt.jedismock.Utils.convertToDouble;
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
 public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
@@ -26,87 +26,72 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
         super(base, params);
     }
 
-    private double getStartScore(String start) {
+    private static double toDouble(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            throw new WrongValueTypeException("Valid start must be a number or start with '" + EXCLUSIVE_PREFIX + "' or be equal to '"
+                    + LOWEST_POSSIBLE_SCORE + "'");
+        }
+    }
+
+    final ZSetEntryBound getStartBound(String start) {
         if (LOWEST_POSSIBLE_SCORE.equalsIgnoreCase(start)) {
-            return Double.MIN_VALUE;
+            return ZSetEntryBound.MINUS_INF;
         } else if (start.startsWith(EXCLUSIVE_PREFIX)) {
-            return convertToDouble(start.substring(1));
+            return new ZSetEntryBound(toDouble(start.substring(1)), ZSetEntry.MAX_VALUE, false);
         } else {
-            try {
-                return Double.parseDouble(start);
-            } catch (NumberFormatException e) {
-                throw new WrongValueTypeException("Valid start must be a number or start with '" + EXCLUSIVE_PREFIX + "' or be equal to '"
-                        + LOWEST_POSSIBLE_SCORE + "'");
-            }
+            return new ZSetEntryBound(toDouble(start), ZSetEntry.MIN_VALUE, true);
         }
     }
 
-    private double getEndScore(String end) {
+    final ZSetEntryBound getEndBound(String end) {
         if (HIGHEST_POSSIBLE_SCORE.equalsIgnoreCase(end)) {
-            return Double.MAX_VALUE;
+            return ZSetEntryBound.PLUS_INF;
         } else if (end.startsWith(EXCLUSIVE_PREFIX)) {
-            return convertToDouble(end.substring(1));
+            return new ZSetEntryBound(toDouble(end.substring(1)), ZSetEntry.MIN_VALUE, false);
         } else {
-            try {
-                return Double.parseDouble(end);
-            } catch (NumberFormatException e) {
-                throw new WrongValueTypeException("Valid end must be a number or start with '" + EXCLUSIVE_PREFIX + "' or be equal to '"
-                        + HIGHEST_POSSIBLE_SCORE + "'");
-            }
+            return new ZSetEntryBound(toDouble(end), ZSetEntry.MAX_VALUE, true);
         }
-    }
-
-    protected Predicate<Double> getFilterPredicate(String start, String end) {
-        final double startScore = getStartScore(start);
-        final Predicate<Double> compareToStart = p -> start.startsWith(EXCLUSIVE_PREFIX)
-                ? p.compareTo(startScore) > 0
-                : p.compareTo(startScore) >= 0;
-
-        final double endScore = getEndScore(end);
-        final Predicate<Double> compareToEnd = p -> (end.startsWith(EXCLUSIVE_PREFIX)
-                ? p.compareTo(endScore) < 0
-                : p.compareTo(endScore) <= 0);
-        return compareToStart.and(compareToEnd);
     }
 
     final Slice rangeByScore(Slice start, Slice end, boolean rev) {
         final Slice key = params().get(0);
-        final RMZSet mapDBObj = getHMapFromBaseOrCreateEmpty(key);
-        final Map<Slice, Double> map = mapDBObj.getStoredData();
-
-        if (map == null || map.isEmpty()) return
+        final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
+        if (mapDBObj.isEmpty()) return
                 Response.array(Collections.emptyList());
 
-        Predicate<Double> filterPredicate = getFilterPredicate(start.toString(), end.toString());
-
-        Stream<Map.Entry<Slice, Double>> entryStream = map.entrySet().stream()
-                .filter(e -> filterPredicate.test(e.getValue()));
-
+        NavigableSet<ZSetEntry> subset =
+                mapDBObj.subset(getStartBound(start.toString()), getEndBound(end.toString()));
+        if (rev) {
+            subset = subset.descendingSet();
+        }
+        Stream<ZSetEntry> entries = subset.stream();
         boolean withScores = false;
         for (int i = 3; i < params().size(); i++) {
             String param = params().get(i).toString();
             if ("withscores".equalsIgnoreCase(param)) {
                 withScores = true;
-            }
-            else if ("limit".equalsIgnoreCase(param)) {
+            } else if ("limit".equalsIgnoreCase(param)) {
                 long offset = convertToLong(params().get(++i).toString());
                 long count = convertToLong(params().get(++i).toString());
-                entryStream = entryStream.skip(offset).limit(count);
+                entries = entries.skip(offset).limit(count);
             }
         }
-        entryStream = entryStream.sorted(rev ? ZRange.zRangeComparator.reversed() : ZRange.zRangeComparator);
 
-        Stream<Slice> result;
+        Stream<String> result;
         if (withScores) {
-            result = entryStream
-                    .flatMap(e -> Stream.of(e.getKey(),
-                            Slice.create(e.getValue().toString())));
+            result = entries
+                    .flatMap(e -> Stream.of(e.getValue(),
+                            Double.toString(e.getScore())));
         } else {
-            result = entryStream
-                    .map(Map.Entry::getKey);
+            result = entries.map(ZSetEntry::getValue);
         }
-        return Response.array(result
+        final List<Slice> list = result
+                .map(Slice::create)
                 .map(Response::bulkString)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
+
+        return Response.array(list);
     }
 }

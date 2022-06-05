@@ -31,25 +31,25 @@ public class TestZRangeByLex {
 
     @TestTemplate
     public void zrangebylexKeysCorrectOrderUnbounded(Jedis jedis) {
-        List<String> results = new ArrayList<>(jedis.zrangeByLex(key, "-", "+"));
+        List<String> results = jedis.zrangeByLex(key, "-", "+");
         assertEquals(Arrays.asList("aaa", "bbb", "ccc", "ddd"), results);
     }
 
     @TestTemplate
     void zrangebylexKeysCorrectOrderBounded(Jedis jedis) {
-        List<String> results = new ArrayList<>(jedis.zrangeByLex(key, "[bbb", "(ddd"));
+        List<String> results = jedis.zrangeByLex(key, "[bbb", "(ddd");
         assertEquals(Arrays.asList("bbb", "ccc"), results);
     }
 
     @TestTemplate
     public void zrevrangebylexKeysCorrectOrderUnbounded(Jedis jedis) {
-        List<String> results = new ArrayList<>(jedis.zrevrangeByLex(key, "+", "-"));
+        List<String> results = jedis.zrevrangeByLex(key, "+", "-");
         assertEquals(Arrays.asList("ddd", "ccc", "bbb", "aaa"), results);
     }
 
     @TestTemplate
     void zrevrangebylexKeysCorrectOrderBounded(Jedis jedis) {
-        List<String> results = new ArrayList<>(jedis.zrevrangeByLex(key, "[ddd", "(bbb"));
+        List<String> results = jedis.zrevrangeByLex(key, "[ddd", "(bbb");
         assertEquals(Arrays.asList("ddd", "ccc"), results);
     }
 

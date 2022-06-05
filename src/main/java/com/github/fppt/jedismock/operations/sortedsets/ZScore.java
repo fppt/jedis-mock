@@ -8,11 +8,10 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
-import java.util.Map;
 
 @RedisCommand("zscore")
 class ZScore extends AbstractRedisOperation {
-    
+
     ZScore(RedisBase base, List<Slice> params) {
         super(base, params);
     }
@@ -21,16 +20,14 @@ class ZScore extends AbstractRedisOperation {
     protected Slice response() {
         Slice key = params().get(0);
         Slice val = params().get(1);
-
-        final RMZSet mapDBObj = getHMapFromBaseOrCreateEmpty(key);
-        final Map<Slice, Double> map = mapDBObj.getStoredData();
-        
-        if(val == null || val.toString().isEmpty()) {
+        if (val == null || val.toString().isEmpty()) {
             return Response.error("Valid parameter must be provided");
         }
-        
-        Double score = map.get(Slice.create(val.toString()));
-        
+
+        final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
+
+        Double score = mapDBObj.getScore(val.toString());
+
         return score == null ? Response.NULL : Response.bulkString(Slice.create(score.toString()));
     }
 }

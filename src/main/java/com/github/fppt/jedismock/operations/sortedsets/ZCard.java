@@ -8,7 +8,6 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
-import java.util.Map;
 
 @RedisCommand("zcard")
 class ZCard extends AbstractRedisOperation {
@@ -20,9 +19,7 @@ class ZCard extends AbstractRedisOperation {
     @Override
     protected Slice response() {
         Slice key = params().get(0);
-        final RMZSet mapDBObj = getHMapFromBaseOrCreateEmpty(key);
-        final Map<Slice, Double> map = mapDBObj.getStoredData();
-        if (map == null || map.isEmpty()) return Response.integer(0);
-        return Response.integer(map.size());
+        final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
+        return Response.integer(mapDBObj.size());
     }
 }

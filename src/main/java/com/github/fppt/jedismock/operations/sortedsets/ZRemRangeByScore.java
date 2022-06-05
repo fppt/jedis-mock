@@ -1,16 +1,14 @@
 package com.github.fppt.jedismock.operations.sortedsets;
 
 import com.github.fppt.jedismock.datastructures.RMZSet;
+import com.github.fppt.jedismock.datastructures.ZSetEntry;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.NavigableSet;
 
 @RedisCommand("zremrangebyscore")
 public class ZRemRangeByScore extends AbstractByScoreOperation {
@@ -22,29 +20,15 @@ public class ZRemRangeByScore extends AbstractByScoreOperation {
     @Override
     protected Slice response() {
         final Slice key = params().get(0);
-        final RMZSet mapDBObj = getHMapFromBaseOrCreateEmpty(key);
-        final Map<Slice, Double> map = mapDBObj.getStoredData();
-
-        if (map == null || map.isEmpty()) return Response.integer(0);
-
+        final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
+        if (mapDBObj.isEmpty()) return Response.integer(0);
         final String start = params().get(1).toString();
         final String end = params().get(2).toString();
-        Predicate<Double> filterPredicate = getFilterPredicate(start, end);
-
-        List<Double> values = map.values().stream()
-                .filter(filterPredicate)
-                .collect(Collectors.toList());
-
-        final Map<Slice, Double> result = map.entrySet().stream()
-                .filter(entry -> filterPredicate.negate().test(entry.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (u, v) -> {
-                            //duplicate key
-                            throw new IllegalStateException();
-                        }, LinkedHashMap::new));
-
-        base().putValue(key, new RMZSet(result));
-        return Response.integer(values.size());
+        final NavigableSet<ZSetEntry> subset = mapDBObj.subset(getStartBound(start), getEndBound(end));
+        int count = subset.size();
+        subset.clear();
+        base().putValue(key, mapDBObj);
+        return Response.integer(count);
     }
 
 }

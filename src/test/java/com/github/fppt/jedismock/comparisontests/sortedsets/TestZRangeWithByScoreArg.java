@@ -12,6 +12,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,8 +29,8 @@ public class TestZRangeWithByScoreArg {
 
     @TestTemplate
     public void whenUsingZrangeByScore_EnsureItReturnsEmptySetForNonDefinedKey(Jedis jedis) {
-        assertEquals(Collections.emptyList(), jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)));
-        assertEquals(Collections.emptyList(), jedis.zrange(ZSET_KEY + " WITHSCORES", ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)));
+        assertEquals(emptyList(), jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)));
+        assertEquals(emptyList(), jedis.zrange(ZSET_KEY + " WITHSCORES", ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)));
     }
 
     @TestTemplate
@@ -88,8 +90,8 @@ public class TestZRangeWithByScoreArg {
         assertEquals(3, jedis.zrange(ZSET_KEY, 0, -1).size());
 
         // then
-        assertEquals(Collections.singletonList("one"), jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, 1.99)));
-        assertEquals(Collections.singletonList(new Tuple("one", 1.)),
+        assertEquals(singletonList("one"), jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, 1.99)));
+        assertEquals(singletonList(new Tuple("one", 1.)),
                 jedis.zrangeWithScores(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, 1.99)));
     }
 
