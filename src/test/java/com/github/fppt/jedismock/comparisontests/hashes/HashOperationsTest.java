@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.hashes;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +13,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(ComparisonBase.class)
 public class HashOperationsTest {

@@ -2,22 +2,21 @@ package com.github.fppt.jedismock.comparisontests.sortedsets;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.ZRangeParams;
 import redis.clients.jedis.resps.Tuple;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRangeByScore {

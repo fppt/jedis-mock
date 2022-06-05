@@ -7,7 +7,6 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,7 +17,7 @@ public class PubSub extends AbstractRedisOperation {
     }
 
     @Override
-    protected Slice response() throws IOException {
+    protected Slice response() {
         Slice subcommand = params().get(0);
         if ("channels".equalsIgnoreCase(subcommand.toString())) {
             String pattern =

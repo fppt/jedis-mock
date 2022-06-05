@@ -2,7 +2,6 @@ package com.github.fppt.jedismock.comparisontests.sortedsets;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;

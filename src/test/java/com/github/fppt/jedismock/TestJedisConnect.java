@@ -1,6 +1,5 @@
 package com.github.fppt.jedismock;
 
-import com.github.fppt.jedismock.server.ServiceOptions;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
@@ -17,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TestJedisConnect {
 
     @Test
-    public void testPipeline() throws IOException, InterruptedException {
+    public void testPipeline() throws IOException {
         RedisServer server = RedisServer.newRedisServer();
         server.start();
         Jedis jedis = new Jedis(server.getHost(), server.getBindPort());
@@ -49,9 +48,9 @@ public class TestJedisConnect {
         RedisServer server = RedisServer.newRedisServer();
         server.start();
         Jedis jedis = new Jedis(server.getHost(), server.getBindPort(), 10000000);
-        assertEquals(1, (long) jedis.lpush("list", "world"));
-        assertEquals(2, (long) jedis.lpush("list", "hello"));
-        assertEquals(3, (long) jedis.rpush("list", "!"));
+        assertEquals(1, jedis.lpush("list", "world"));
+        assertEquals(2, jedis.lpush("list", "hello"));
+        assertEquals(3, jedis.rpush("list", "!"));
         assertArrayEquals(new String[]{"hello", "world", "!"}, jedis.lrange("list", 0, -1).toArray());
         jedis.disconnect();
         server.stop();

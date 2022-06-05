@@ -24,7 +24,7 @@ class RedisClientTest {
     }
 
     @Test
-    void testClosedSocket() throws IOException {
+    void testClosedSocket() {
         Mockito.when(s.isClosed()).thenReturn(true);
         redisClient.run();
     }

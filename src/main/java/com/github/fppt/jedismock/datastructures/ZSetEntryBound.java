@@ -3,9 +3,9 @@ package com.github.fppt.jedismock.datastructures;
 import java.util.Objects;
 
 public class ZSetEntryBound {
-    public static ZSetEntryBound MINUS_INF =
+    public static final ZSetEntryBound MINUS_INF =
             new ZSetEntryBound(new ZSetEntry(ZSetEntry.MIN_SCORE, ""), false);
-    public static ZSetEntryBound PLUS_INF =
+    public static final ZSetEntryBound PLUS_INF =
             new ZSetEntryBound(new ZSetEntry(ZSetEntry.MAX_SCORE, ""), false);
 
     private final ZSetEntry bound;

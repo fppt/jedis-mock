@@ -55,7 +55,7 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
                         new HostAndPort(redis.getContainerIpAddress(), redis.getFirstMappedPort())));
     }
 
-    private class JedisTestTemplateInvocationContext implements TestTemplateInvocationContext {
+    private static class JedisTestTemplateInvocationContext implements TestTemplateInvocationContext {
 
         private final String displayName;
         private final Jedis jedis;

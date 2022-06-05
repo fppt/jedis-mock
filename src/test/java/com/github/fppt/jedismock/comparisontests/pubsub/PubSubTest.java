@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(ComparisonBase.class)
 public class PubSubTest {
 
-    class TestSubscription implements AutoCloseable {
+    static class TestSubscription implements AutoCloseable {
         private final Jedis client;
         private final MockSubscriber subscriber;
         private final Future<?> future;

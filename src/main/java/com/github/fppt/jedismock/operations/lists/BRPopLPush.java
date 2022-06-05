@@ -35,7 +35,6 @@ class BRPopLPush extends RPopLPush {
         } catch (InterruptedException e) {
             //wait interrupted prematurely
             Thread.currentThread().interrupt();
-            return;
         }
     }
 

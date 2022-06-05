@@ -8,7 +8,6 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ZRangeParams;
 import redis.clients.jedis.resps.Tuple;
 
-import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;

@@ -1,7 +1,8 @@
 package com.github.fppt.jedismock.datastructures;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
-import java.util.LinkedList;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class RMList implements RMDataStructure {
@@ -12,7 +13,7 @@ public class RMList implements RMDataStructure {
     }
 
     public RMList() {
-        storedData = new LinkedList<>();
+        storedData = new ArrayList<>();
     }
 
     @Override

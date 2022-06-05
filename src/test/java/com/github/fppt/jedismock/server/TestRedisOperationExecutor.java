@@ -2,11 +2,6 @@ package com.github.fppt.jedismock.server;
 
 import com.github.fppt.jedismock.commands.RedisCommandParser;
 import com.github.fppt.jedismock.exception.ParseErrorException;
-import com.github.fppt.jedismock.server.RedisClient;
-import com.github.fppt.jedismock.server.RedisOperationExecutor;
-import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +12,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

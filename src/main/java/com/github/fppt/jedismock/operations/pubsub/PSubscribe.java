@@ -6,7 +6,6 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
-import java.io.IOException;
 import java.util.List;
 
 @RedisCommand(value = "psubscribe", transactional = false)
@@ -17,7 +16,8 @@ public class PSubscribe extends AbstractRedisOperation {
         this.state = state;
     }
 
-    protected Slice response() throws IOException {
+    @Override
+    protected Slice response() {
         params().forEach(pattern -> base().subscribeByPattern(pattern, state.owner()));
         List<Slice> numSubscriptions = base().getPSubscriptions(state.owner());
 
