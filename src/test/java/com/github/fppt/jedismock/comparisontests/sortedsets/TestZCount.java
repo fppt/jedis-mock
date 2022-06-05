@@ -114,4 +114,14 @@ public class TestZCount {
         assertThrows(RuntimeException.class,
                 () -> jedis.zcount(ZSET_KEY, "FOO", "BAR"));
     }
+
+    @TestTemplate
+    public void sameValuesDeduplication(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1, "one");
+        jedis.zadd(ZSET_KEY, 2, "one");
+        jedis.zadd(ZSET_KEY, 3, "one");
+        assertEquals(1,
+                jedis.zcount(ZSET_KEY, "-inf", "+inf"));
+        assertEquals(3, jedis.zscore(ZSET_KEY, "one"));
+    }
 }
