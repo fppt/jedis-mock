@@ -5,14 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class RMHash implements RMDataStructure {
-    private final LinkedHashMap<Slice, Slice> storedData;
+    private final LinkedHashMap<Slice, Slice> storedData = new LinkedHashMap<>();
 
     public Map<Slice, Slice> getStoredData() {
         return storedData;
-    }
-
-    public RMHash() {
-        storedData = new LinkedHashMap<>();
     }
 
     public void put(Slice key, Slice data) {
