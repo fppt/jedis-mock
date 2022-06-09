@@ -8,7 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 
-public class Slice implements Comparable<Slice>, Serializable {
+public final class Slice implements Comparable<Slice>, Serializable {
     private static final long serialVersionUID = 1L;
     private static final Slice emptySlice = new Slice(new byte[0]);
     private final byte[] storedData;

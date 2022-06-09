@@ -4,9 +4,10 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class RedisCommand {
+public final class RedisCommand {
 
     private final List<Slice> parameters;
 
@@ -23,22 +24,15 @@ public class RedisCommand {
 
     @Override
     public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o instanceof RedisCommand) {
-            RedisCommand that = (RedisCommand) o;
-            return (this.parameters.equals(that.parameters()));
-        }
-        return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RedisCommand that = (RedisCommand) o;
+        return parameters.equals(that.parameters);
     }
 
     @Override
     public int hashCode() {
-        int h$ = 1;
-        h$ *= 1000003;
-        h$ ^= parameters.hashCode();
-        return h$;
+        return Objects.hash(parameters);
     }
 
     @Override

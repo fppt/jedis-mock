@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.datastructures;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,5 +54,11 @@ class RMZSetTest {
     void compareWithMaxLex(){
         assertTrue(new ZSetEntry(1, Slice.create("Z"))
                 .compareTo(new ZSetEntry(1, ZSetEntry.MAX_VALUE)) < 0);
+    }
+
+    @Test
+    void equalsHashCode() {
+        EqualsVerifier.forClass(ZSetEntry.class)
+                .withNonnullFields("value").verify();
     }
 }

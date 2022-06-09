@@ -2,7 +2,7 @@ package com.github.fppt.jedismock.datastructures;
 
 import java.util.Objects;
 
-public class ZSetEntry implements Comparable<ZSetEntry> {
+public final class ZSetEntry implements Comparable<ZSetEntry> {
     public final static Double MIN_SCORE = Double.NEGATIVE_INFINITY;
     public final static Double MAX_SCORE = Double.POSITIVE_INFINITY;
     public final static Slice MIN_VALUE = Slice.empty();
