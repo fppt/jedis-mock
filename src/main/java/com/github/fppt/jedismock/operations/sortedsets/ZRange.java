@@ -63,9 +63,8 @@ class ZRange extends AbstractByScoreOperation {
                 .skip(start)
                 .limit(end - start + 1)
                 .flatMap(e -> finalWithScores
-                        ? Stream.of(e.getValue(), Double.toString(e.getScore()))
+                        ? Stream.of(e.getValue(), Slice.create(Double.toString(e.getScore())))
                         : Stream.of(e.getValue()))
-                .map(Slice::create)
                 .map(Response::bulkString)
                 .collect(Collectors.toList());
 

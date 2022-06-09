@@ -4,9 +4,9 @@ import java.util.Objects;
 
 public class ZSetEntryBound {
     public static final ZSetEntryBound MINUS_INF =
-            new ZSetEntryBound(new ZSetEntry(ZSetEntry.MIN_SCORE, ""), false);
+            new ZSetEntryBound(new ZSetEntry(ZSetEntry.MIN_SCORE, Slice.empty()), false);
     public static final ZSetEntryBound PLUS_INF =
-            new ZSetEntryBound(new ZSetEntry(ZSetEntry.MAX_SCORE, ""), false);
+            new ZSetEntryBound(new ZSetEntry(ZSetEntry.MAX_SCORE, Slice.empty()), false);
 
     private final ZSetEntry bound;
     private final boolean inclusive;
@@ -17,7 +17,7 @@ public class ZSetEntryBound {
         this.inclusive = inclusive;
     }
 
-    public ZSetEntryBound(double score, String value, boolean inclusive) {
+    public ZSetEntryBound(double score, Slice value, boolean inclusive) {
         this.bound = new ZSetEntry(score, value);
         this.inclusive = inclusive;
     }

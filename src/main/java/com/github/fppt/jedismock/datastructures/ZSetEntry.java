@@ -5,15 +5,15 @@ import java.util.Objects;
 public class ZSetEntry implements Comparable<ZSetEntry> {
     public final static Double MIN_SCORE = Double.NEGATIVE_INFINITY;
     public final static Double MAX_SCORE = Double.POSITIVE_INFINITY;
-    public final static String MIN_VALUE = "";
+    public final static Slice MIN_VALUE = Slice.empty();
     //magic string that is considered to be lexicographically greater than any other string
-    public final static String MAX_VALUE = "2815bbb7-cacd-4ce1-ba76-11fee7937b0e";
+    public final static Slice MAX_VALUE = Slice.create("2815bbb7-cacd-4ce1-ba76-11fee7937b0e");
 
     private final double score;
 
-    private final String value;
+    private final Slice value;
 
-    ZSetEntry(double score, String value) {
+    ZSetEntry(double score, Slice value) {
         Objects.requireNonNull(value);
         this.score = score;
         this.value = value;
@@ -23,7 +23,7 @@ public class ZSetEntry implements Comparable<ZSetEntry> {
         return score;
     }
 
-    public String getValue() {
+    public Slice getValue() {
         return value;
     }
 

@@ -24,7 +24,7 @@ class ZRem extends AbstractRedisOperation {
         }
         int count = 0;
         for (int i = 1; i < params().size(); i++) {
-            if (mapDBObj.remove(params().get(i).toString())) {
+            if (mapDBObj.remove(params().get(i))) {
                 count++;
             }
         }

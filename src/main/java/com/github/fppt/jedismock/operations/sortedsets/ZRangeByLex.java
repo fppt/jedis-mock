@@ -71,7 +71,6 @@ class ZRangeByLex extends AbstractRedisOperation {
                 buildEndEntryBound(score, end))
                 .stream()
                 .map(ZSetEntry::getValue)
-                .map(Slice::create)
                 .map(Response::bulkString)
                 .collect(Collectors.toList());
     }
@@ -80,7 +79,7 @@ class ZRangeByLex extends AbstractRedisOperation {
         if (NEGATIVELY_INFINITE.equals(start)) {
             return new ZSetEntryBound(score, ZSetEntry.MIN_VALUE, true);
         } else {
-            return new ZSetEntryBound(score, start.substring(1), start.startsWith(INCLUSIVE_PREFIX));
+            return new ZSetEntryBound(score, Slice.create(start.substring(1)), start.startsWith(INCLUSIVE_PREFIX));
         }
     }
 
@@ -88,7 +87,7 @@ class ZRangeByLex extends AbstractRedisOperation {
         if (POSITIVELY_INFINITE.equals(end)) {
             return new ZSetEntryBound(score, ZSetEntry.MAX_VALUE, false);
         } else {
-            return new ZSetEntryBound(score, end.substring(1), end.startsWith(INCLUSIVE_PREFIX));
+            return new ZSetEntryBound(score, Slice.create(end.substring(1)), end.startsWith(INCLUSIVE_PREFIX));
         }
     }
 

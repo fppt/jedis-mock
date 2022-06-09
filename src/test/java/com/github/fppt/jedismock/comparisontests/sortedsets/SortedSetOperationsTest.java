@@ -21,40 +21,6 @@ public class SortedSetOperationsTest {
     }
 
     @TestTemplate
-    public void zaddAddsKey(Jedis jedis) {
-        String key = "mykey";
-        double score = 10;
-        String value = "myvalue";
-
-        long result = jedis.zadd(key, score, value);
-
-        assertEquals(1L, result);
-
-        List<String> results = jedis.zrange(key, 0, -1);
-
-        assertEquals(1, results.size());
-        assertEquals(value, results.get(0));
-    }
-
-    @TestTemplate
-    public void zaddAddsKeys(Jedis jedis) {
-        String key = "mykey";
-        Map<String, Double> members = new HashMap<>();
-        members.put("myvalue1", 10d);
-        members.put("myvalue2", 20d);
-
-        long result = jedis.zadd(key, members);
-
-        assertEquals(2L, result);
-
-        List<String> results = jedis.zrange(key, 0, -1);
-
-        assertEquals(2, results.size());
-        assertEquals("myvalue1", results.get(0));
-        assertEquals("myvalue2", results.get(1));
-    }
-
-    @TestTemplate
     public void zcardEmptyKey(Jedis jedis) {
         String key = "mykey";
 

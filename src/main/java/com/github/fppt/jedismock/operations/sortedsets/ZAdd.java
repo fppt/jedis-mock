@@ -30,7 +30,7 @@ class ZAdd extends AbstractRedisOperation {
             // Score must be a double. Will throw an exception if it's not.
             double s = convertToDouble(score.toString());
 
-            Double prevScore = mapDBObj.put(value.toString(), s);
+            Double prevScore = mapDBObj.put(value, s);
             if (prevScore == null) count++;
         }
         base().putValue(key, mapDBObj);

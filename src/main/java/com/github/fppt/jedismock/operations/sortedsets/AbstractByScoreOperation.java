@@ -79,16 +79,15 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
             }
         }
 
-        Stream<String> result;
+        Stream<Slice> result;
         if (withScores) {
             result = entries
                     .flatMap(e -> Stream.of(e.getValue(),
-                            Double.toString(e.getScore())));
+                            Slice.create(Double.toString(e.getScore()))));
         } else {
             result = entries.map(ZSetEntry::getValue);
         }
         final List<Slice> list = result
-                .map(Slice::create)
                 .map(Response::bulkString)
                 .collect(Collectors.toList());
 

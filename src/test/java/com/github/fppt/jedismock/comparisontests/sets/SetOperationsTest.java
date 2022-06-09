@@ -135,4 +135,12 @@ public class SetOperationsTest {
                 assertThrows(JedisDataException.class, () -> jedis.get("my-set-key"))
                         .getMessage().startsWith("WRONGTYPE"));
     }
+
+    @TestTemplate
+    public void testSaddNonUTF8binary(Jedis jedis) {
+        byte[] msg = new byte[]{(byte) 0xbe};
+        jedis.sadd("foo".getBytes(), msg);
+        byte[] newMsg = jedis.spop("foo".getBytes());
+        assertArrayEquals(msg, newMsg);
+    }
 }

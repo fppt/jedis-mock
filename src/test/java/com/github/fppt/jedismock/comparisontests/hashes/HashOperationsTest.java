@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -282,5 +283,13 @@ public class HashOperationsTest {
         hash.put("key1", "1");
         jedis.hset("foo", hash);
         assertThrows(JedisDataException.class, () -> jedis.get("foo"));
+    }
+
+    @TestTemplate
+    public void testHsetNonUTF8binary(Jedis jedis) {
+        byte[] msg = new byte[]{(byte) 0xbe};
+        jedis.hset("foo".getBytes(), "bar".getBytes(), msg);
+        byte[] newMsg = jedis.hget("foo".getBytes(), "bar".getBytes());
+        assertArrayEquals(msg, newMsg);
     }
 }

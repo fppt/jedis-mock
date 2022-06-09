@@ -26,7 +26,7 @@ class ZScore extends AbstractRedisOperation {
 
         final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
 
-        Double score = mapDBObj.getScore(val.toString());
+        Double score = mapDBObj.getScore(val);
 
         return score == null ? Response.NULL : Response.bulkString(Slice.create(score.toString()));
     }

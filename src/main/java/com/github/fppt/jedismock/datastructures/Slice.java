@@ -9,8 +9,10 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 public class Slice implements Comparable<Slice>, Serializable {
-    private static final long serialVersionUID= 1L;
+    private static final long serialVersionUID = 1L;
+    private static final Slice emptySlice = new Slice(new byte[0]);
     private final byte[] storedData;
+
 
     private Slice(byte[] storedData) {
         if (storedData == null) {
@@ -19,19 +21,23 @@ public class Slice implements Comparable<Slice>, Serializable {
         this.storedData = storedData;
     }
 
-    public static Slice create(byte[] data){
+    public static Slice create(byte[] data) {
         return new Slice(data);
     }
 
-    public static Slice create(String data){
+    public static Slice create(String data) {
         return create(data.getBytes().clone());
+    }
+
+    public static Slice empty() {
+        return emptySlice;
     }
 
     public byte[] data() {
         return Arrays.copyOf(storedData, storedData.length);
     }
 
-    public int length(){
+    public int length() {
         return data().length;
     }
 

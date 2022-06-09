@@ -12,10 +12,10 @@ import static java.util.Collections.unmodifiableNavigableSet;
 
 
 public class RMZSet implements RMDataStructure {
-    private final Map<String, Double> scores = new HashMap<>();
+    private final Map<Slice, Double> scores = new HashMap<>();
     private final NavigableSet<ZSetEntry> entries = new TreeSet<>();
 
-    public Double put(String value, double score) {
+    public Double put(Slice value, double score) {
         Double previous = scores.put(value, score);
         if (previous != null) {
             entries.remove(new ZSetEntry(previous, value));
@@ -24,11 +24,11 @@ public class RMZSet implements RMDataStructure {
         return previous;
     }
 
-    public Double getScore(String value) {
+    public Double getScore(Slice value) {
         return scores.get(value);
     }
 
-    public boolean remove(String value) {
+    public boolean remove(Slice value) {
         final Double previous = scores.remove(value);
         if (previous == null) {
             return false;
