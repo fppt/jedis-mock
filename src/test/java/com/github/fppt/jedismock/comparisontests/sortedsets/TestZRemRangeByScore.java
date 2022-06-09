@@ -8,9 +8,9 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(ComparisonBase.class)
@@ -20,7 +20,7 @@ public class TestZRemRangeByScore {
 
     @BeforeEach
     public void clearKey(Jedis jedis) {
-        jedis.del(ZSET_KEY);
+        jedis.flushDB();
     }
 
     @TestTemplate
@@ -69,7 +69,7 @@ public class TestZRemRangeByScore {
         // then
         assertEquals(2, zremrangeByScoreResult);
         List<String> zrangeResult = jedis.zrange(ZSET_KEY, 0, -1);
-        assertEquals(Collections.singletonList("three"), zrangeResult);
+        assertEquals(singletonList("three"), zrangeResult);
     }
 
     @TestTemplate
@@ -130,5 +130,14 @@ public class TestZRemRangeByScore {
                 () -> jedis.zremrangeByScore(ZSET_KEY, "1.e", "2.d"));
         assertThrows(RuntimeException.class,
                 () -> jedis.zremrangeByScore(ZSET_KEY, "FOO", "BAR"));
+    }
+
+    @TestTemplate
+    public void whenUsingZremrangeByScore_ZCardIsDiminishing(Jedis jedis) {
+        jedis.zadd("foo", 1, "bar1");
+        jedis.zadd("foo", 2, "bar2");
+        jedis.zremrangeByScore("foo", 0, 1);
+        assertEquals(singletonList("bar2"), jedis.zrange("foo", 0, -1));
+        assertEquals(1, jedis.zcard("foo"));
     }
 }

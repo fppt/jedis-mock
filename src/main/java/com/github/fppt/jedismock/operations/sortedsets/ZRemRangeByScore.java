@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
 
@@ -24,11 +25,11 @@ public class ZRemRangeByScore extends AbstractByScoreOperation {
         if (mapDBObj.isEmpty()) return Response.integer(0);
         final String start = params().get(1).toString();
         final String end = params().get(2).toString();
-        final NavigableSet<ZSetEntry> subset = mapDBObj.subset(getStartBound(start), getEndBound(end));
-        int count = subset.size();
-        subset.clear();
+        final List<ZSetEntry> subset = new ArrayList<>(mapDBObj.subset(getStartBound(start), getEndBound(end)));
+        for (ZSetEntry entry : subset) {
+            mapDBObj.remove(entry.getValue());
+        }
         base().putValue(key, mapDBObj);
-        return Response.integer(count);
+        return Response.integer(subset.size());
     }
-
 }

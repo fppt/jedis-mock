@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
+import static java.util.Collections.unmodifiableNavigableSet;
+
 
 public class RMZSet implements RMDataStructure {
     private final Map<String, Double> scores = new HashMap<>();
@@ -45,12 +47,12 @@ public class RMZSet implements RMDataStructure {
 
     public NavigableSet<ZSetEntry> subset(ZSetEntryBound start,
                                           ZSetEntryBound end) {
-        return entries.subSet(start.getBound(), start.isInclusive(),
-                end.getBound(), end.isInclusive());
+        return unmodifiableNavigableSet(entries.subSet(start.getBound(), start.isInclusive(),
+                end.getBound(), end.isInclusive()));
     }
 
     public NavigableSet<ZSetEntry> entries(boolean reversed) {
-        return reversed ? entries.descendingSet() : entries;
+        return unmodifiableNavigableSet(reversed ? entries.descendingSet() : entries);
     }
 
     @Override
@@ -62,6 +64,5 @@ public class RMZSet implements RMDataStructure {
     public String getTypeName() {
         return "zset";
     }
-
 
 }
