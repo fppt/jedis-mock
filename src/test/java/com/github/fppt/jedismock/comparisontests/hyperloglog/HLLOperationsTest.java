@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -45,10 +46,19 @@ public class HLLOperationsTest {
     @TestTemplate
     public void testGetOperation(Jedis jedis) {
         jedis.pfadd("foo1", "bar");
-        final byte[] buf = jedis.get("foo1".getBytes());
+        byte[] buf = jedis.get("foo1".getBytes());
         jedis.set("foo2".getBytes(), buf);
         assertEquals(1, jedis.pfcount("foo1"));
         assertEquals(1, jedis.pfcount("foo2"));
+    }
+
+    @TestTemplate
+    public void testGetOperationRepeatable(Jedis jedis) {
+        jedis.pfadd("foo1", "bar");
+        byte[] buf = jedis.get("foo1".getBytes());
+        jedis.set("foo2".getBytes(), buf);
+        byte[] buf2 = jedis.get("foo2".getBytes());
+        assertArrayEquals(buf, buf2);
     }
 
     @TestTemplate

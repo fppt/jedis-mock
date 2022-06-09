@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -40,6 +41,15 @@ public class BitMapsOperationsTest {
             assertEquals(bits.contains(i), jedis.getbit("bm2", i));
         }
     }
+
+    @TestTemplate
+    public void testGetOperationRepeatable(Jedis jedis) {
+        byte[] buf = jedis.get("bm".getBytes());
+        jedis.set("bm2".getBytes(), buf);
+        byte[] buf2 = jedis.get("bm2".getBytes());
+        assertArrayEquals(buf, buf2);
+    }
+
 
     @TestTemplate
     void testValueAftersetbit(Jedis jedis) {

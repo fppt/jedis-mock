@@ -28,10 +28,6 @@ public class RMBitMap extends StringCompatible {
         return size;
     }
 
-    public BitSet getBitSet() {
-        return bitSet;
-    }
-
     public void setBit(byte bit, int pos) {
         int newSize = (pos + 7) / 8;
 
