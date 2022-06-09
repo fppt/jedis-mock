@@ -9,7 +9,6 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NavigableSet;
 
 @RedisCommand("zremrangebyscore")
 public class ZRemRangeByScore extends AbstractByScoreOperation {
