@@ -6,7 +6,6 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
