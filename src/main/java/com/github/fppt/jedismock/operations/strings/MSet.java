@@ -17,7 +17,7 @@ class MSet extends AbstractRedisOperation {
 
     protected Slice response() {
         for (int i = 0; i < params().size(); i += 2) {
-            base().putValue(params().get(i), RMString.create(params().get(i + 1).toString()));
+            base().putValue(params().get(i), RMString.create(params().get(i + 1).data()));
         }
         return Response.OK;
     }

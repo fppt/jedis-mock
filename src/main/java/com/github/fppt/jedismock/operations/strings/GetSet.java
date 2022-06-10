@@ -17,7 +17,7 @@ class GetSet extends AbstractRedisOperation {
 
     protected Slice response() {
         Slice value = base().getSlice(params().get(0));
-        base().putValue(params().get(0), RMString.create(params().get(1).toString()));
+        base().putValue(params().get(0), RMString.create(params().get(1).data()));
         return Response.bulkString(value);
     }
 }

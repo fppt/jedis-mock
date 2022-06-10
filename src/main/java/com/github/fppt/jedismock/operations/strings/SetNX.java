@@ -17,7 +17,7 @@ class SetNX extends AbstractRedisOperation {
 
     protected Slice response(){
         if (base().getValue(params().get(0)) == null) {
-            base().putValue(params().get(0), RMString.create(params().get(1).toString()));
+            base().putValue(params().get(0), RMString.create(params().get(1).data()));
             return Response.integer(1);
         }
         return Response.integer(0);

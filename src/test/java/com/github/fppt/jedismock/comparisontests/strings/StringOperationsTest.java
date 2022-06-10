@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(ComparisonBase.class)
 public class StringOperationsTest {
 
+    private final static byte[] msg = new byte[]{(byte) 0xbe};
+
     @BeforeEach
     public void setUp(Jedis jedis) {
         jedis.flushAll();
@@ -149,5 +151,29 @@ public class StringOperationsTest {
         long ttl = jedis.ttl(key);
 
         assertTrue(ttl > 0);
+    }
+
+    @TestTemplate
+    public void testSetNXNonUTF8binary(Jedis jedis) {
+        jedis.setnx("foo".getBytes(), msg);
+        assertArrayEquals(msg, jedis.get("foo".getBytes()));
+    }
+
+    @TestTemplate
+    public void testSetEXNonUTF8binary(Jedis jedis) {
+        jedis.setex("foo".getBytes(), 100, msg);
+        assertArrayEquals(msg, jedis.get("foo".getBytes()));
+    }
+
+    @TestTemplate
+    public void testMsetNonUTF8binary(Jedis jedis) {
+        jedis.mset("foo".getBytes(), msg);
+        assertArrayEquals(msg, jedis.get("foo".getBytes()));
+    }
+
+    @TestTemplate
+    public void testGetSetNonUTF8binary(Jedis jedis) {
+        jedis.getSet("foo".getBytes(), msg);
+        assertArrayEquals(msg, jedis.get("foo".getBytes()));
     }
 }
