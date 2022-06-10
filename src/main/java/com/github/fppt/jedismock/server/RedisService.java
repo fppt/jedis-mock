@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.server;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
@@ -24,11 +25,12 @@ public class RedisService implements Callable<Void> {
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private final List<RedisClient> clients = new CopyOnWriteArrayList<>();
 
-    public RedisService(int bindPort, Map<Integer, RedisBase> redisBases, ServiceOptions options) throws IOException {
+    public RedisService(int bindPort, InetAddress address,
+                        Map<Integer, RedisBase> redisBases, ServiceOptions options) throws IOException {
         Objects.requireNonNull(redisBases);
         Objects.requireNonNull(options);
 
-        this.server = new ServerSocket(bindPort);
+        this.server = new ServerSocket(bindPort, 0, address);
         this.redisBases = redisBases;
         this.options = options;
     }
