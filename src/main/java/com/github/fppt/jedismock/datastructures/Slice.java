@@ -74,7 +74,7 @@ public final class Slice implements Comparable<Slice>, Serializable {
     }
 
     public RMDataStructure extract() {
-        if (storedData[0] == (byte) 0xac && storedData[1] == (byte) 0xed) {
+        if (storedData.length > 2 && storedData[0] == (byte) 0xac && storedData[1] == (byte) 0xed) {
             try {
                 ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(storedData));
                 Object value = objectInputStream.readObject();

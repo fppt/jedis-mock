@@ -21,7 +21,7 @@ class Append extends AbstractRedisOperation {
         RMString s = base().getRMString(key);
 
         if (s == null) {
-            base().putValue(key, RMString.create(value.data()));
+            base().putValue(key, value.extract());
             return Response.integer(value.length());
         }
 

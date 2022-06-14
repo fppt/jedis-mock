@@ -176,4 +176,11 @@ public class StringOperationsTest {
         jedis.getSet("foo".getBytes(), msg);
         assertArrayEquals(msg, jedis.get("foo".getBytes()));
     }
+
+    @TestTemplate
+    public void testGetSetEmptyString(Jedis jedis) {
+        jedis.getSet("foo", "");
+        assertEquals("", jedis.get("foo"));
+    }
+
 }

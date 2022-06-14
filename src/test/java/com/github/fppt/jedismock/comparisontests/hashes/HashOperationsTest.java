@@ -292,4 +292,11 @@ public class HashOperationsTest {
         byte[] newMsg = jedis.hget("foo".getBytes(), "bar".getBytes());
         assertArrayEquals(msg, newMsg);
     }
+
+    @TestTemplate
+    public void testHsetEmptyString(Jedis jedis) {
+        jedis.hset("foo", "bar", "");
+        assertEquals("", jedis.hget("foo", "bar"));
+    }
+
 }

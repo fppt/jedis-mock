@@ -21,7 +21,7 @@ class SetEx extends Set {
     }
 
     protected Slice response() {
-        base().putValue(params().get(0), RMString.create(params().get(2).data()), timeoutToSet(params()));
+        base().putValue(params().get(0), params().get(2).extract(), timeoutToSet(params()));
         return Response.OK;
     }
 }

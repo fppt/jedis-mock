@@ -106,6 +106,12 @@ public class TestSet {
         assertArrayEquals(msg, jedis.get("foo".getBytes()));
     }
 
+    @TestTemplate
+    public void testSetEmptyString(Jedis jedis) {
+        jedis.set("foo", "");
+        assertEquals("", jedis.get("foo"));
+    }
+
     private void testSetValueExpires(Jedis jedis, SetParams setParams) throws InterruptedException {
         assertEquals("OK", jedis.set(SET_KEY, SET_VALUE, setParams));
         assertEquals(SET_VALUE, jedis.get(SET_KEY));
