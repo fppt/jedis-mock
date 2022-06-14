@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.operations.strings;
 
-import com.github.fppt.jedismock.datastructures.RMString;
-import com.github.fppt.jedismock.operations.RedisCommand;
+import com  .github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
