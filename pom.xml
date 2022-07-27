@@ -42,7 +42,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <junit.version>5.8.2</junit.version>
+        <junit.version>5.9.0</junit.version>
         <jedis.version>4.2.3</jedis.version>
         <testcontainers.version>1.17.3</testcontainers.version>
         <spotbugs.version>4.7.1.0</spotbugs.version>
