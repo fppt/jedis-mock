@@ -45,7 +45,7 @@
         <junit.version>5.9.0</junit.version>
         <jedis.version>4.2.3</jedis.version>
         <testcontainers.version>1.17.3</testcontainers.version>
-        <spotbugs.version>4.7.1.1</spotbugs.version>
+        <spotbugs.version>4.7.2.0</spotbugs.version>
         <slf4j.version>2.0.0</slf4j.version>
     </properties>
 
