@@ -99,4 +99,13 @@ public class KeysOperationsTest {
         //Check that the value is still there
         assertEquals("v", jedis.get("a"));
     }
+
+    @TestTemplate
+    public void handleCurlyBraces(Jedis jedis) {
+        jedis.mset("{hashslot}:one", "1", "{hashslot}:two", "2", "three", "3");
+
+        Set<String> results = jedis.keys("{hashslot}:*");
+        assertEquals(2, results.size());
+        assertTrue(results.contains("{hashslot}:one") && results.contains("{hashslot}:two"));
+    }
 }
