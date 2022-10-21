@@ -35,10 +35,11 @@ class LPop extends AbstractRedisOperation {
             List<Slice> responseList = new ArrayList<>();
             for (int i=0; i < count; ++i) {
                 Slice value = list.remove(0);
-                if (value != null)
+                if (value != null) {
                     responseList.add(Response.bulkString(value));
-                else
+                } else {
                     break;
+                }
             }
             return Response.array(responseList);
         } else {
