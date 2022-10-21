@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.datastructures.Slice;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RedisCommand("lpop")
@@ -24,8 +25,25 @@ class LPop extends AbstractRedisOperation {
         final RMList listDBObj = getListFromBaseOrCreateEmpty(key);
         List<Slice> list = listDBObj.getStoredData();
         if(list == null || list.isEmpty()) return Response.NULL;
-        Slice v = popper(list);
+
         base().putValue(key, listDBObj);
-        return Response.bulkString(v);
+
+        if (params().size() == 2) {
+            Slice countParam = params().get(1);
+            Integer count = Integer.decode(countParam.toString());
+            count = count <= list.size() ? count : list.size();
+            List<Slice> responseList = new ArrayList<>();
+            for (int i=0; i < count; ++i) {
+                Slice value = list.remove(0);
+                if (value != null)
+                    responseList.add(Response.bulkString(value));
+                else
+                    break;
+            }
+            return Response.array(responseList);
+        } else {
+            Slice v = popper(list);
+            return Response.bulkString(v);
+        }
     }
 }

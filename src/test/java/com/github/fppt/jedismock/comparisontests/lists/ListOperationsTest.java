@@ -27,6 +27,25 @@ public class ListOperationsTest {
     }
 
     @TestTemplate
+    public void whenUsingLpop_EnsureTheFirstElementPushedIsReturned(Jedis jedis) {
+        String key = "Another key";
+        jedis.rpush(key, "1", "2", "3");
+        assertEquals(jedis.lpop(key), "1");
+    }
+
+    @TestTemplate
+    public void whenUsingLpopCount_EnsureAllElementsPushedIsReturned(Jedis jedis) {
+        String key = "Another key";
+        jedis.rpush(key, "1", "2", "3", "4");
+        List<String> results1 = jedis.lpop(key, 3);
+        assertEquals(3, results1.size());
+        List<String> results2 = jedis.lpop(key, 5);
+        assertEquals(1, results2.size());
+        List<String> results3 = jedis.lpop(key, 5);
+        assertNull(results3);
+    }
+
+    @TestTemplate
     public void whenUsingRpoplpush_CorrectResultsAreReturned(Jedis jedis) {
         String list1key = "list 1";
         String list2key = "list 2";
