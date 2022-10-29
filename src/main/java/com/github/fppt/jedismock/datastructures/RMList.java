@@ -6,14 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RMList implements RMDataStructure {
-    private final List<Slice> storedData;
+    private final List<Slice> storedData = new ArrayList<>();
 
     public List<Slice> getStoredData() {
         return storedData;
-    }
-
-    public RMList() {
-        storedData = new ArrayList<>();
     }
 
     @Override
