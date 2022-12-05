@@ -7,8 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -61,7 +59,6 @@ public class ListOperationsTest {
         assertEquals(singletonList("1"), jedis.rpop(key, 5));
         assertNull(jedis.rpop(key, 5));
     }
-
 
     @TestTemplate
     public void whenUsingRpoplpush_CorrectResultsAreReturned(Jedis jedis) {
@@ -128,6 +125,125 @@ public class ListOperationsTest {
         list = jedis.lrange(key, 0, -1);
         assertEquals(hello, list.get(0));
         assertEquals(foo, list.get(1));
+    }
+
+    @TestTemplate
+    public void whenUsingLtrim_EnsureDeletionsWorkAsExpected(Jedis jedis) {
+        String key = "`Key";
+
+        // Keep #0 element
+        setupJedisForLTrim(jedis, key);
+        String result = jedis.ltrim(key, 0, 0);
+        assertEquals("OK", result);
+        assertEquals("e0", ltrimResult(jedis, key));
+
+        // Keep #1 element
+        setupJedisForLTrim(jedis, key);
+        result = jedis.ltrim(key, 1, 1);
+        assertEquals("OK", result);
+        assertEquals("e1", ltrimResult(jedis, key));
+
+        // Keep #2 element
+        setupJedisForLTrim(jedis, key);
+        result = jedis.ltrim(key, 2, 2);
+        assertEquals("OK", result);
+        assertEquals("e2", ltrimResult(jedis, key));
+
+        // Keep #-3 element
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, -3, -3);
+        assertEquals("e0", ltrimResult(jedis, key));
+
+        // Keep #-2 element
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, -2, -2);
+        assertEquals("e1", ltrimResult(jedis, key));
+
+        // Keep #-1 element
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, -1, -1);
+        assertEquals("e2", ltrimResult(jedis, key));
+
+        // Keep #0-1 elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 0, 1);
+        assertEquals("e0,e1", ltrimResult(jedis, key));
+
+        // Keep #1-2 elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 1, 2);
+        assertEquals("e1,e2", ltrimResult(jedis, key));
+
+        // Keep #0-2 elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 0, 2);
+        assertEquals("e0,e1,e2", ltrimResult(jedis, key));
+
+        // Keep #0-2 elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 0, -1);
+        assertEquals("e0,e1,e2", ltrimResult(jedis, key));
+
+        // Keep #1-2 elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 1, -1);
+        assertEquals("e1,e2", ltrimResult(jedis, key));
+
+        // Keep #2 element
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 2, -1);
+        assertEquals("e2", ltrimResult(jedis, key));
+
+        // Keep #0-1 elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 0, -2);
+        assertEquals("e0,e1", ltrimResult(jedis, key));
+
+        // Keep #0 element
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 1, -2);
+        assertEquals("e1", ltrimResult(jedis, key));
+
+        // Remove all elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, 2, -2);
+        assertEquals("", ltrimResult(jedis, key));
+
+        // Keep #0 element
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, -4, 0);
+        assertEquals("e0", ltrimResult(jedis, key));
+
+        // Keep all elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, -4, -1);
+        assertEquals("e0,e1,e2", ltrimResult(jedis, key));
+
+        // Keep all elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, -4, 5);
+        assertEquals("e0,e1,e2", ltrimResult(jedis, key));
+
+        // Keep all elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, -5, 5);
+        assertEquals("e0,e1,e2", ltrimResult(jedis, key));
+
+        // Remove all elements
+        setupJedisForLTrim(jedis, key);
+        jedis.ltrim(key, -5, -5);
+        assertEquals("", ltrimResult(jedis, key));
+    }
+
+    private void setupJedisForLTrim(Jedis jedis, String key) {
+        jedis.del(key);
+        jedis.rpush(key, "e0");
+        jedis.rpush(key, "e1");
+        jedis.rpush(key, "e2");
+    }
+
+    private String ltrimResult(Jedis jedis, String key) {
+        return String.join(",", jedis.lrange(key, 0, -1));
     }
 
     @TestTemplate
