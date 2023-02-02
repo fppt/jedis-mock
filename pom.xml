@@ -102,7 +102,7 @@
 		<dependency>
             <groupId>nl.jqno.equalsverifier</groupId>
             <artifactId>equalsverifier</artifactId>
-            <version>3.12.3</version>
+            <version>3.13</version>
             <scope>test</scope>
         </dependency>
         <!-- SLF4J is the logging API all modules should use -->
