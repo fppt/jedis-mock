@@ -16,3 +16,6 @@ When all the conditions are met, run the tests with the following command:
     % ./runtest --host <host> --port <port>
     
 For more flexible testing, see [original redis tests](https://github.com/redis/redis/tree/7.0/tests)
+
+NOTE: do not forget to comment out the content of `assert_encoding` from `support/test`, as encodings are not 
+supported by JedisMock.

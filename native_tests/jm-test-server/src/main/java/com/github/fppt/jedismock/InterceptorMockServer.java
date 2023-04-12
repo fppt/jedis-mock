@@ -41,8 +41,7 @@ public final class InterceptorMockServer {
                         // Currently it is supported only for RMHash.
                         // If you will add support for other data structures, insert their handling here
                         if (value instanceof RMHash) {
-                            RMHash hash = (RMHash) value;
-                            return Response.bulkString(Slice.create(hash.getMeta()));
+                            return Response.bulkString("hashtable");
                         } else if (value instanceof RMString) {
                             return Response.bulkString(Slice.create(" at: "));
                         }

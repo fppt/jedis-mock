@@ -73,8 +73,10 @@ proc assert_error {pattern code} {
 }
 
 proc assert_encoding {enc key} {
-    set dbg [r debug object $key]
-    assert_match "* encoding:$enc *" $dbg
+    # [[JEDIS-MOCK Do nothing as Jedis-mock does not support encodings
+	# set dbg [r debug object $key]
+    # assert_match "* encoding:$enc *" $dbg
+	# JEDIS-MOCK]]
 }
 
 proc assert_type {type key} {
