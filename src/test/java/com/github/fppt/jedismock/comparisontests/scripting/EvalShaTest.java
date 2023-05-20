@@ -18,12 +18,24 @@ class EvalShaTest {
     }
 
     @TestTemplate
-    public void evalShaWorks(Jedis jedis) {
+    public void evalShaWorksLowercase(Jedis jedis) {
         String script =
                 "redis.call('SADD', 'foo', 'bar')\n" +
-                        "return 'Hello, scripting!'";
+                        "return 'Hello, scripting! (lowercase SHA)'";
         Object evalResult = jedis.eval(script, 0);
-        String sha = Script.getScriptSHA(script);
+        String sha = Script.getScriptSHA(script).toLowerCase();
+        assertTrue(jedis.scriptExists(sha));
+        assertEquals(evalResult, jedis.evalsha(sha, 0));
+    }
+
+    @TestTemplate
+    public void evalShaWorksUppercase(Jedis jedis) {
+        String script =
+                "redis.call('SADD', 'foo', 'bar')\n" +
+                        "return 'Hello, scripting! (uppercase SHA)'";
+        Object evalResult = jedis.eval(script, 0);
+        String sha = Script.getScriptSHA(script).toUpperCase();
+        assertTrue(jedis.scriptExists(sha));
         assertEquals(evalResult, jedis.evalsha(sha, 0));
     }
 

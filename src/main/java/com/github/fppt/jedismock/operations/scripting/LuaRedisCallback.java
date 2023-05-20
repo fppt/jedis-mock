@@ -43,6 +43,10 @@ public class LuaRedisCallback {
         }
     }
 
+    public String sha1hex(String x) {
+        return Script.getScriptSHA(x);
+    }
+
     private LuaValue execute(final String operationName, final List<Slice> args) {
         final RedisOperation operation = CommandFactory.buildOperation(operationName.toLowerCase(), true, state, args);
         if (operation != null) {

@@ -80,6 +80,12 @@ public class EvalTest {
     }
 
     @TestTemplate
+    public void stringConversion(Jedis jedis) {
+        String script = "return {ok='fine'}";
+        assertEquals("fine", jedis.eval(script, 0));
+    }
+
+    @TestTemplate
     public void evalParametrizedReturnMultipleKeysArgsTest(Jedis jedis) {
         Object eval_return = jedis.eval(
                 "return { KEYS[1], KEYS[2], ARGV[1], ARGV[2], ARGV[3] }",
@@ -104,6 +110,7 @@ public class EvalTest {
     @TestTemplate
     public void evalRedisSetTest(Jedis jedis) {
         assertEquals("OK", jedis.eval("return redis.call('SET', 'test', 'hello')", 0));
+        assertEquals("hello", jedis.get("test"));
     }
 
     @TestTemplate
@@ -144,21 +151,45 @@ public class EvalTest {
     public void fibonacciScript(Jedis jedis) {
         String script =
                 "local a, b = 0, 1\n" +
-                "for i = 2, ARGV[1] do\n" +
-                "  local temp = a + b\n" +
-                "  a = b\n" +
-                "  b = temp\n" +
-                "  redis.call('RPUSH',KEYS[1], temp)\n" +
-                "end\n" ;
+                        "for i = 2, ARGV[1] do\n" +
+                        "  local temp = a + b\n" +
+                        "  a = b\n" +
+                        "  b = temp\n" +
+                        "  redis.call('RPUSH',KEYS[1], temp)\n" +
+                        "end\n";
         jedis.eval(script, 1, "mylist", "10");
         assertEquals(Arrays.asList("1", "2", "3", "5", "8", "13", "21", "34", "55"),
                 jedis.lrange("mylist", 0, -1));
     }
 
     @TestTemplate
+    public void trailingComment(Jedis jedis) {
+        assertEquals("hello", jedis.eval("return 'hello' --trailing comment", 0));
+    }
+
+    @TestTemplate
     public void manyArgumentsTest(Jedis jedis) {
-        String script = "return redis.call('SADD', 'myset', 1, 2, 3, 4, 5, 6)" ;
+        String script = "return redis.call('SADD', 'myset', 1, 2, 3, 4, 5, 6)";
         jedis.eval(script, 0);
         assertEquals(6, jedis.scard("myset"));
+    }
+
+    @TestTemplate
+    public void booleanTrueConversion(Jedis jedis) {
+        String script = "return true";
+        assertEquals(1L, jedis.eval(script, 0));
+    }
+
+    @TestTemplate
+    public void booleanFalseConversion(Jedis jedis) {
+        String script = "return false";
+        assertNull(jedis.eval(script, 0));
+    }
+
+    @TestTemplate
+    public void sha1hexImplementation(Jedis jedis){
+        String script = "return redis.sha1hex('Pizza & Mandolino')";
+        assertEquals("74822d82031af7493c20eefa13bd07ec4fada82f",
+                jedis.eval(script, 0));
     }
 }

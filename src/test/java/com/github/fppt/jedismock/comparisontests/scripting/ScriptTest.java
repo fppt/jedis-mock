@@ -22,6 +22,7 @@ class ScriptTest {
     @TestTemplate
     public void loadTest(Jedis jedis) {
         String sha = jedis.scriptLoad("return 'Hello'");
+        assertEquals(sha, sha.toLowerCase());
         assertEquals("Hello", jedis.evalsha(sha));
         assertTrue(jedis.scriptExists(sha));
     }

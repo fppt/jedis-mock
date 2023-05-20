@@ -301,11 +301,11 @@ public class RedisBase {
     }
 
     public String getCachedLuaScript(String sha1) {
-        return cachedLuaScripts.get(sha1);
+        return cachedLuaScripts.get(sha1.toLowerCase());
     }
 
     public boolean cachedLuaScriptExists(String sha1) {
-        return cachedLuaScripts.containsKey(sha1);
+        return cachedLuaScripts.containsKey(sha1.toLowerCase());
     }
 
     public void flushCachedLuaScrips() {

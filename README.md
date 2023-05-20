@@ -8,9 +8,9 @@ Jedis-Mock is a simple in-memory mock of Redis for Java testing, which can also 
 Despite its name, it works on network protocol level and can be used with any Redis client 
 (be it `Jedis`, `Lettuce` or others).
 
-When used as a mock, it allows you to test any behaviour dependent on Redis without having to deploy an instance of Redis.
+When used as a mock, it allows you to test behaviour dependent on Redis without having to deploy an instance of Redis.
 
-[List of currently supported operations](supported_operations.md)
+[List of currently supported operations](supported_operations.md).
 
 ## Why, if we already have TestContainers?
 TestContainers is a great solution for integration tests with real services, including Redis.
@@ -114,7 +114,7 @@ try (Jedis jedis = new Jedis(server.getHost(),
 
 ## Lua scripting support
 
-JedisMock supports Lua scripting (`EVAL`, `EVALSHA`, `SCRIPT LOAD/EXISTS/FLUSH` commands) via [luaj](https://github.com/luaj/luaj) which is not the Lua engine Redis uses, so it's recommended to be careful and test non-trivial scripts on 'real' Redis instance. In order to support these commands, [Jedis](https://github.com/redis/jedis) must be on the classpath as well. It is in the `provided` scope of Maven dependencies for JedisMock in order not to clash with the versions of Jedis you might be using. If you are experiencing "class not found" errors when running `EVAL`, [add Jedis dependency](https://github.com/redis/jedis#getting-started) to your test scope. 
+JedisMock supports Lua scripting (`EVAL`, `EVALSHA`, `SCRIPT LOAD/EXISTS/FLUSH` commands) via [luaj](https://github.com/luaj/luaj). In order to support these commands, [Jedis](https://github.com/redis/jedis) must be on the classpath as well. It is in the `provided` scope of Maven dependencies for JedisMock in order not to clash with the versions of Jedis you might be using. If you are experiencing "class not found" errors when running `EVAL`, [add Jedis dependency](https://github.com/redis/jedis#getting-started) to your test scope. 
 
 ```java
 String script =
@@ -132,7 +132,7 @@ jedis.lrange("mylist", 0, -1));
 
 ## Supported and Missing Operations
 
-All currently supported and missing operations are listed [here](supported_operations.md)
+All currently supported and missing operations are listed [here](supported_operations.md).
 
 If you get the following error:
 

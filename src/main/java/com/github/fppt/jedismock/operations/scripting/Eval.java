@@ -48,6 +48,9 @@ public class Eval extends AbstractRedisOperation {
                 "  pcall = function(...)\n" +
                 "    return _mock:pcall({...})\n" +
                 "  end,\n" +
+                "  sha1hex = function(x)\n" +
+                "    return _mock:sha1hex(x)\n" +
+                "  end,\n" +
                 "}\n" +
                 params().get(0).toString();
 
@@ -83,16 +86,22 @@ public class Eval extends AbstractRedisOperation {
         if (result.isnil()) {
             return Response.NULL;
         }
-        if (result.typename().equals("table") && !result.get("err").isnil()) {
-            return Response.error(result.get("err").tojstring());
-        }
+
         switch (result.typename()) {
             case "string":
                 return Response.bulkString(Slice.create(result.tojstring()));
             case "number":
                 return Response.integer(result.tolong());
             case "table":
+                if (!result.get("err").isnil()) {
+                    return Response.error(result.get("err").tojstring());
+                }
+                if (!result.get("ok").isnil()) {
+                    return resolveResult(result.get("ok"));
+                }
                 return Response.array(luaTableToList(result));
+            case "boolean":
+                return result.toboolean() ? Response.integer(1) : Response.NULL;
         }
         return Response.error(SCRIPT_RUNTIME_ERROR);
     }
