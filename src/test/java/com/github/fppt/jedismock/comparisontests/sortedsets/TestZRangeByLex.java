@@ -61,4 +61,22 @@ public class TestZRangeByLex {
         assertThrows(JedisDataException.class, () -> jedis.zrangeByLex(key, "[b", "d"));
         assertThrows(JedisDataException.class, () -> jedis.zrevrangeByLex(key, "[b", "d"));
     }
+
+    @TestTemplate
+    public void zrangebylexLimit(Jedis jedis) {
+        assertEquals(Collections.singletonList("aaa"),
+                jedis.zrangeByLex(key, "[a", "(c", 0, 1));
+    }
+
+    @TestTemplate
+    public void zrevrangebylexLimit(Jedis jedis) {
+        assertEquals(Collections.singletonList("bbb"),
+                jedis.zrevrangeByLex(key, "(c", "[a", 0, 1));
+    }
+
+    @TestTemplate
+    public void zrangebylexNegativeLimit(Jedis jedis) {
+        assertEquals(Arrays.asList("aaa", "bbb"),
+                jedis.zrangeByLex(key, "[a", "(c", 0, -1));
+    }
 }

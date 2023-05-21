@@ -75,7 +75,10 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
             } else if ("limit".equalsIgnoreCase(param)) {
                 long offset = convertToLong(params().get(++i).toString());
                 long count = convertToLong(params().get(++i).toString());
-                entries = entries.skip(offset).limit(count);
+                entries = entries.skip(offset);
+                if (count >= 0) {
+                    entries = entries.limit(count);
+                }
             }
         }
 

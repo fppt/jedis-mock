@@ -17,9 +17,7 @@ class ZRevRangeByLex extends ZRangeByLex {
 
     @Override
     protected List<Slice> doProcess(RMZSet map, String start, String end, double score) {
-        final List<Slice> list = super.doProcess(map, start, end, score);
-        Collections.reverse(list);
-        return list;
+        return process(map, start, end, score, true);
     }
 
     @Override

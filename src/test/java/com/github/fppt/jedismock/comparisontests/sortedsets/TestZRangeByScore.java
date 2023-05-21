@@ -9,6 +9,7 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.resps.Tuple;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -42,7 +43,7 @@ public class TestZRangeByScore {
         assertTrue(asList("one", "two", "three").containsAll(
                 jedis.zrangeByScore(ZSET_KEY, "-inf", "+inf")));
         assertTrue(asList(new Tuple("one", 1.),
-                        new Tuple("two", 1.), new Tuple("three", 1.)).containsAll(
+                new Tuple("two", 1.), new Tuple("three", 1.)).containsAll(
                 jedis.zrangeByScoreWithScores(ZSET_KEY, "-inf", "+inf")));
     }
 
@@ -204,5 +205,12 @@ public class TestZRangeByScore {
     void outOfOrderBounds(Jedis jedis) {
         jedis.zadd("foo", 42, "bar");
         assertEquals(0, jedis.zrangeByScore("foo", 5, 2).size());
+    }
+
+    @TestTemplate
+    void negativeCount(Jedis jedis) {
+        jedis.zadd("foo", 17, "bar");
+        assertEquals(Collections.singletonList("bar"),
+                jedis.zrangeByScore("foo", 0, 42, 0, -1));
     }
 }
