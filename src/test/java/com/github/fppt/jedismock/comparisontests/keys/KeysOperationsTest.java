@@ -156,4 +156,13 @@ public class KeysOperationsTest {
         assertFalse(jedis.exists("foo"));
         assertEquals(-2, jedis.ttl("foo"));
     }
+
+    @TestTemplate
+    public void multipleExpire (Jedis jedis){
+        jedis.set("foo1", "bar");
+        jedis.set("foo2", "bar");
+        jedis.expire("foo1", 0);
+        jedis.expire("foo2", 0);
+        assertEquals(0, jedis.dbSize());
+    }
 }

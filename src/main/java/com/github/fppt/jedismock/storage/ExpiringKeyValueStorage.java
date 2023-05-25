@@ -82,7 +82,7 @@ public class ExpiringKeyValueStorage {
         return true;
     }
 
-    private boolean isKeyOutdated(Slice key) {
+    boolean isKeyOutdated(Slice key) {
         Long deadline = ttls().get(key);
         return deadline != null && deadline != -1 && deadline <= System.currentTimeMillis();
     }

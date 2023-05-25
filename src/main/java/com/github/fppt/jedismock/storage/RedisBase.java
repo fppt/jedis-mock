@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,12 +35,12 @@ public class RedisBase {
     private final Map<String, String> cachedLuaScripts = new HashMap<>();
 
     public Set<Slice> keys() {
-        Set<Slice> slices = keyValueStorage.values().keySet();
+        Iterator<Slice> slices = keyValueStorage.values().keySet().iterator();
         Set<Slice> result = new HashSet<>();
-        for (Slice key : slices) {
-            Long deadline = keyValueStorage.ttls().get(key);
-            if (deadline != null && deadline != -1 && deadline <= System.currentTimeMillis()) {
-                keyValueStorage.delete(key);
+        while (slices.hasNext()) {
+            Slice key = slices.next();
+            if (keyValueStorage.isKeyOutdated(key)) {
+                slices.remove();
             } else {
                 result.add(key);
             }
