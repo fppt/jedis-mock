@@ -9,7 +9,6 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.stream.Collectors;
@@ -59,7 +58,7 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
         final Slice key = params().get(0);
         final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
         if (mapDBObj.isEmpty()) return
-                Response.array(Collections.emptyList());
+                Response.EMPTY_ARRAY;
 
         NavigableSet<ZSetEntry> subset =
                 mapDBObj.subset(getStartBound(start.toString()), getEndBound(end.toString()));

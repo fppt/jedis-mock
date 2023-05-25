@@ -51,6 +51,14 @@ public class SRandMemberTest {
     }
 
     @TestTemplate
+    void randMemberOverNonExistentMustReturnEmptyList(Jedis jedis) {
+        //Checking negative, positive and zero range
+        for (int i = -3; i < 4; i++) {
+            Assertions.assertTrue(jedis.srandmember("foo", i).isEmpty());
+        }
+    }
+
+    @TestTemplate
     void randMemberReturnsDistinctElements(Jedis jedis) {
         Collection<String> set = Arrays.asList("a", "b", "c", "d", "e");
         jedis.sadd("foo", set.toArray(new String[0]));
@@ -84,5 +92,13 @@ public class SRandMemberTest {
         List<String> members = jedis.srandmember("foo", -100);
         Assertions.assertEquals(100, members.size());
         Assertions.assertTrue(set.containsAll(members));
+    }
+
+    @TestTemplate
+    void randMemberReturnOneElementAsSingletonList(Jedis jedis) {
+        jedis.sadd("key", "a");
+        Assertions.assertEquals(Collections.singletonList("a"), jedis.srandmember("key", 1));
+        Assertions.assertEquals(Collections.emptyList(), jedis.srandmember("key", 0));
+        Assertions.assertEquals(Collections.singletonList("a"), jedis.srandmember("key", -1));
     }
 }

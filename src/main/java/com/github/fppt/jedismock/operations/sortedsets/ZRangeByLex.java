@@ -9,7 +9,6 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.stream.Collectors;
@@ -45,7 +44,7 @@ class ZRangeByLex extends AbstractRedisOperation {
         }
 
         if (mapDBObj.isEmpty()) {
-            return Response.array(Collections.emptyList());
+            return Response.EMPTY_ARRAY;
         } else {
             //We assume that all the elements have the same score
             double score = mapDBObj.entries(false).first().getScore();

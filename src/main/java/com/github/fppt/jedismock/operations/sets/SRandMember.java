@@ -25,21 +25,27 @@ public class SRandMember extends AbstractRedisOperation {
     protected Slice response() {
         Slice key = params().get(0);
         RMSet set = base().getSet(key);
-        if (set == null) {
-            return Response.NULL;
-        }
         int number;
         if (params().size() > 1) {
+            if (set == null) {
+                return Response.EMPTY_ARRAY;
+            }
             number = convertToInteger(params().get(1).toString());
         } else {
+            if (set == null) {
+                return Response.NULL;
+            }
             number = 1;
         }
+
         //TODO: more effective algorithms should be used here,
         //avoiding conversion of set to list, shuffling all the elements etc.
         List<Slice> list = new ArrayList<>(set.getStoredData());
         if (number == 1) {
             int index = ThreadLocalRandom.current().nextInt(list.size());
-            return Response.bulkString(list.get(index));
+            return params().size() > 1 ?
+                    Response.array(Collections.singletonList(Response.bulkString(list.get(index)))) :
+                    Response.bulkString(list.get(index));
         } else if (number > 1) {
             Collections.shuffle(list);
             return Response.array(
@@ -50,9 +56,9 @@ public class SRandMember extends AbstractRedisOperation {
         } else {
             List<Slice> result =
                     ThreadLocalRandom.current().ints(-number, 0, list.size())
-                    .mapToObj(list::get)
-                    .map(Response::bulkString)
-                    .collect(Collectors.toList());
+                            .mapToObj(list::get)
+                            .map(Response::bulkString)
+                            .collect(Collectors.toList());
             return Response.array(result);
         }
     }

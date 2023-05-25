@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,6 +19,7 @@ public class Response {
     public static final Slice OK = Slice.create("+OK" + LINE_SEPARATOR);
     public static final Slice NULL = Slice.create("$-1" + LINE_SEPARATOR);
     public static final Slice SKIP = Slice.create("Skip this submission");
+    public static final Slice EMPTY_ARRAY = Response.array(Collections.emptyList());
 
     private Response() {}
 
