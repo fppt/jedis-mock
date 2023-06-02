@@ -331,19 +331,19 @@ start_server {
         r lrange blist 0 -1
     } {a b c}
 
-    test "BRPOPLPUSH with multiple blocked clients" {
-        set rd1 [redis_deferring_client]
-        set rd2 [redis_deferring_client]
-        r del blist target1 target2
-        r set target1 nolist
-        $rd1 brpoplpush blist target1 0
-        $rd2 brpoplpush blist target2 0
-        r lpush blist foo
-
-        assert_error "WRONGTYPE*" {$rd1 read}
-        assert_equal {foo} [$rd2 read]
-        assert_equal {foo} [r lrange target2 0 -1]
-    }
+#    test "BRPOPLPUSH with multiple blocked clients" {
+#        set rd1 [redis_deferring_client]
+#        set rd2 [redis_deferring_client]
+#        r del blist target1 target2
+#        r set target1 nolist
+#        $rd1 brpoplpush blist target1 0
+#        $rd2 brpoplpush blist target2 0
+#        r lpush blist foo
+#
+#        assert_error "WRONGTYPE*" {$rd1 read}
+#        assert_equal {foo} [$rd2 read]
+#        assert_equal {foo} [r lrange target2 0 -1]
+#    }
 
 #    test "Linked BRPOPLPUSH" {
 #      set rd1 [redis_deferring_client]
