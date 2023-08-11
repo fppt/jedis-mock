@@ -19,21 +19,22 @@ public class OperationExecutorState {
     public final Set<Slice> watchedKeys = new HashSet<>();
     private boolean watchedKeysAffected = false;
     private int selectedRedisBase = 0;
+    private String clientName;
 
-    public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases){
+    public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases) {
         this.owner = owner;
         this.redisBases = redisBases;
     }
 
-    public RedisBase base(){
+    public RedisBase base() {
         return redisBases.computeIfAbsent(selectedRedisBase, key -> new RedisBase());
     }
 
-    public RedisClient owner(){
+    public RedisClient owner() {
         return owner;
     }
 
-    public List<RedisOperation> tx(){
+    public List<RedisOperation> tx() {
         return tx;
     }
 
@@ -41,16 +42,18 @@ public class OperationExecutorState {
         this.selectedRedisBase = selectedRedisBase;
     }
 
-    public void transactionMode(boolean isTransactionModeOn){
+    public void transactionMode(boolean isTransactionModeOn) {
         this.isTransactionModeOn.set(isTransactionModeOn);
     }
 
-    public boolean isTransactionModeOn(){
+    public boolean isTransactionModeOn() {
         return isTransactionModeOn.get();
     }
 
-    public void newTransaction(){
-        if(isTransactionModeOn.get()) throw new IllegalStateException("Redis mock does not support more than one transaction");
+    public void newTransaction() {
+        if (isTransactionModeOn.get()) {
+            throw new IllegalStateException("Redis mock does not support more than one transaction");
+        }
         transactionMode(true);
     }
 
@@ -96,5 +99,21 @@ public class OperationExecutorState {
 
     public int getSelected() {
         return selectedRedisBase;
+    }
+
+    public int getPort() {
+        return owner.getPort();
+    }
+
+    public String getHost() {
+        return owner.getAddress();
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+
+    public String getClientName() {
+        return clientName;
     }
 }

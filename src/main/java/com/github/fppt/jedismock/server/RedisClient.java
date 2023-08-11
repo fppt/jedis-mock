@@ -106,7 +106,15 @@ public class RedisClient implements Runnable {
         onClose.accept(this);
     }
 
-    ServiceOptions options() {
+    public ServiceOptions options() {
         return options;
+    }
+
+    public int getPort() {
+        return socket.getLocalPort();
+    }
+
+    public String getAddress() {
+        return socket.getInetAddress().getHostAddress();
     }
 }

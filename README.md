@@ -20,6 +20,7 @@ When used as a mock, it allows you to test behaviour dependent on Redis without 
 encourages developers to write more tests and run them more often.
 * Redis running in TestContainers is a "black box". We cannot verify what was actually called. 
   We cannot interfere with the reply. All this we can do with testing mock/proxy.
+* We can use cluster connection APIs (e. g. `JedisCluster`) without spinning up 3 instances of Redis.
 * If you wish, you can use Jedis-Mock *together* with TestContainers, delegating command execution 
   to a real Redis instance, intercepting some of the calls when needed.
 
@@ -62,6 +63,29 @@ RedisClient redisClient = RedisClient
 ```
 
 From here test as needed.
+
+## Cluster mode support
+
+Sometimes you need to use cluster connection APIs in your tests. Jedis-Mock can emulate "cluster mode" by mocking a single node holding all the hash slots (0-16383) so that common connectivity libraries can successfully connect and work. Just use `withClusterModeEnabled()` for `ServiceOptions`:
+
+```java
+server = RedisServer
+        .newRedisServer()
+        .setOptions(ServiceOptions.defaultOptions().withClusterModeEnabled())
+        .start();
+
+//JedisCluster connection:
+Set<HostAndPort> jedisClusterNodes = new HashSet<>();
+jedisClusterNodes.add(new HostAndPort(server.getHost(), server.getBindPort()));
+JedisCluster jedisCluster = new JedisCluster(jedisClusterNodes);
+
+
+//Lettuce connection:
+RedisClusterClient redisClient = RedisClusterClient
+        .create(String.format("redis://%s:%s", server.getHost(), server.getBindPort()));
+```
+
+Note that support of `CLUSTER` subcommands is limited to the  minimum that is necessary for successful usage of `JedisCluster`/`RedisClusterClient`.
 
 ## Using `RedisCommandInterceptor`
 

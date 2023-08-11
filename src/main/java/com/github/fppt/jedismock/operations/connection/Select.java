@@ -21,6 +21,9 @@ public class Select implements RedisOperation {
     @Override
     public Slice execute() {
         int selectedRedisBase = Integer.parseInt(new String(params.get(0).data()));
+        if (state.owner().options().isClusterModeEnabled()) {
+            return Response.error("ERR SELECT is not allowed in cluster mode");
+        }
         state.changeActiveRedisBase(selectedRedisBase);
         return Response.OK;
     }

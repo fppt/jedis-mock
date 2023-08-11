@@ -13,7 +13,7 @@
 
 ## Cluster
 
-:x: cluster<br>
+:heavy_check_mark: cluster<br>
 :x: readonly<br>
 :x: readwrite<br>
 

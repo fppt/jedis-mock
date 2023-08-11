@@ -9,23 +9,36 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ServiceOptions {
     private final RedisCommandInterceptor commandInterceptor;
+    private final boolean clusterMode;
 
     private ServiceOptions(
-            RedisCommandInterceptor commandInterceptor) {
+            RedisCommandInterceptor commandInterceptor, boolean clusterMode) {
         this.commandInterceptor = commandInterceptor;
-
+        this.clusterMode = clusterMode;
     }
 
     public RedisCommandInterceptor getCommandInterceptor() {
         return commandInterceptor;
     }
 
+    public boolean isClusterModeEnabled() {
+        return clusterMode;
+    }
+
+    /**
+     * Enables cluster mode for Jedis Mock, compatible with JedisCluster and RedisClusterClient from Lettuce.
+     */
+    public ServiceOptions withClusterModeEnabled() {
+        return new ServiceOptions(commandInterceptor, true);
+    }
+
     public static ServiceOptions defaultOptions() {
-        return new ServiceOptions(MockExecutor::proceed);
+        return new ServiceOptions(MockExecutor::proceed, false);
     }
 
     /**
      * A special type of interceptor which mocks only given number of command invocation and then breaks the connection.
+     *
      * @param n a number of commands to execute before the connection break.
      */
     public static ServiceOptions executeOnly(int n) {
@@ -36,7 +49,7 @@ public class ServiceOptions {
             } else {
                 return MockExecutor.proceed(state, name, params);
             }
-        });
+        }, false);
     }
 
     /**
@@ -44,9 +57,9 @@ public class ServiceOptions {
      * overriding the standard behaviour.
      *
      * @param commandInterceptor - function which takes execution state, operation name and parameters
-     *                          and overrides behavior of RedisOperationExecutor.
+     *                           and overrides behavior of RedisOperationExecutor.
      */
     public static ServiceOptions withInterceptor(RedisCommandInterceptor commandInterceptor) {
-        return new ServiceOptions(commandInterceptor);
+        return new ServiceOptions(commandInterceptor, false);
     }
 }
