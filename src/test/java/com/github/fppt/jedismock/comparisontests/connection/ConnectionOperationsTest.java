@@ -29,6 +29,11 @@ public class ConnectionOperationsTest {
     }
 
     @TestTemplate
+    public void echo(Jedis jedis) {
+        assertEquals("foobar", jedis.echo("foobar"));
+    }
+
+    @TestTemplate
     public void whenSettingClientName_EnsureOkResponseIsReturned(Jedis jedis) {
         assertNull(jedis.clientGetname());
         assertEquals("OK", jedis.clientSetname("P.Myo"));
