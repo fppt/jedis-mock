@@ -10,7 +10,6 @@ import java.util.List;
 
 @RedisCommand("getdel")
 public class GetDel extends AbstractRedisOperation {
-
     public GetDel(RedisBase base, List<Slice> params) {
         super(base, params);
     }
@@ -22,5 +21,4 @@ public class GetDel extends AbstractRedisOperation {
         }
         return Response.bulkString(slice);
     }
-
 }
