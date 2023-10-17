@@ -8,6 +8,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ZRangeParams;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,6 +52,16 @@ public class TestZRange {
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithPositiveStartAndNegativeEndRange(Jedis jedis) {
         assertEquals(Arrays.asList("aaaa", "babb", "bbbb", "bcbb"), jedis.zrange(ZSET_KEY, 1, -1));
+    }
+
+    @TestTemplate
+    public void whenUsingZrange_EnsureItReturnsEmptyListWhenOutOfRangeStartIndex(Jedis jedis) {
+        assertEquals(Collections.emptyList(), jedis.zrange(ZSET_KEY, 6, -1));
+    }
+
+    @TestTemplate
+    public void whenUsingZrange_EnsureItReturnsEmptyListWhenOutOfRangeEndIndex(Jedis jedis) {
+        assertEquals(Collections.emptyList(), jedis.zrange(ZSET_KEY, 1, -6));
     }
 
     @TestTemplate

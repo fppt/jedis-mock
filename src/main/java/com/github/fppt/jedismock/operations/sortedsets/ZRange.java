@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,7 +56,9 @@ class ZRange extends AbstractByScoreOperation {
             return zRevRangeByLex.response();
         }
 
-        calculateIndexes(mapDBObj);
+        if (!calculateIndexes(mapDBObj)) {
+            return Response.array(new ArrayList<>());
+        }
 
         boolean finalWithScores = withScores;
 
@@ -63,7 +66,8 @@ class ZRange extends AbstractByScoreOperation {
                 .skip(start)
                 .limit(end - start + 1)
                 .flatMap(e -> finalWithScores
-                        ? Stream.of(e.getValue(), Slice.create(Double.toString(e.getScore())))
+                        ? Stream.of(e.getValue(),
+                          Slice.create(Double.toString(e.getScore())))
                         : Stream.of(e.getValue()))
                 .map(Response::bulkString)
                 .collect(Collectors.toList());
@@ -71,7 +75,7 @@ class ZRange extends AbstractByScoreOperation {
         return Response.array(values);
     }
 
-    private void calculateIndexes(RMZSet map) {
+    private boolean calculateIndexes(RMZSet map) {
         start = convertToInteger(params().get(1).toString());
         end = convertToInteger(params().get(2).toString());
 
@@ -92,6 +96,8 @@ class ZRange extends AbstractByScoreOperation {
         if (end >= map.size()) {
             end = map.size() - 1;
         }
+
+        return start <= map.size() && start <= end;
     }
 
     private void parseArgs() {

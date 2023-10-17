@@ -25,12 +25,21 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
         super(base, params);
     }
 
-    private static double toDouble(String value) {
+    public static double toDouble(String value) {
+        if ("+inf".equalsIgnoreCase(value)) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if ("-inf".equalsIgnoreCase(value)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
         try {
+
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            throw new WrongValueTypeException("Valid start must be a number or start with '" + EXCLUSIVE_PREFIX + "' or be equal to '"
-                    + LOWEST_POSSIBLE_SCORE + "'");
+            throw new WrongValueTypeException("*not*float*");
+//            throw new WrongValueTypeException("Valid start must be a number or start with '" + EXCLUSIVE_PREFIX + "' or be equal to '"
+//                    + LOWEST_POSSIBLE_SCORE + "'");
         }
     }
 
@@ -95,4 +104,5 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
 
         return Response.array(list);
     }
+
 }

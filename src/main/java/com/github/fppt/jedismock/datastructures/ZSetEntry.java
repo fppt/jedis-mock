@@ -13,7 +13,7 @@ public final class ZSetEntry implements Comparable<ZSetEntry> {
 
     private final Slice value;
 
-    ZSetEntry(double score, Slice value) {
+    public ZSetEntry(double score, Slice value) {
         Objects.requireNonNull(value);
         this.score = score;
         this.value = value;

@@ -2,17 +2,14 @@ package com.github.fppt.jedismock.operations.sortedsets;
 
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-import static com.github.fppt.jedismock.Utils.convertToDouble;
-
 @RedisCommand("zadd")
-class ZAdd extends AbstractRedisOperation {
+class ZAdd extends AbstractByScoreOperation {
 
     ZAdd(RedisBase base, List<Slice> params) {
         super(base, params);
@@ -28,7 +25,7 @@ class ZAdd extends AbstractRedisOperation {
             Slice value = params().get(i + 1);
 
             // Score must be a double. Will throw an exception if it's not.
-            double s = convertToDouble(score.toString());
+            double s = toDouble(score.toString());
 
             Double prevScore = mapDBObj.put(value, s);
             if (prevScore == null) count++;
