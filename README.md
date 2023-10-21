@@ -6,7 +6,7 @@
 
 Jedis-Mock is a simple in-memory mock of Redis for Java testing, which can also work as test proxy. 
 Despite its name, it works on network protocol level and can be used with any Redis client 
-(be it `Jedis`, `Lettuce` or others).
+(be it [Jedis](https://github.com/redis/jedis), [Lettuce](https://github.com/lettuce-io/lettuce-core), [Redisson](https://github.com/redisson/redisson) or others).
 
 When used as a mock, it allows you to test behaviour dependent on Redis without having to deploy an instance of Redis.
 
@@ -60,6 +60,13 @@ Jedis jedis = new Jedis(server.getHost(), server.getBindPort());
 RedisClient redisClient = RedisClient
         .create(String.format("redis://%s:%s",
         server.getHost(), server.getBindPort()));
+
+//Redisson connection:
+Config config = new Config();
+config.useSingleServer().setAddress(
+        String.format("redis://%s:%d",
+        redisServer.getHost(), redisServer.getBindPort()));
+RedissonClient client = Redisson.create(config);
 ```
 
 From here test as needed.
