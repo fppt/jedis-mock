@@ -184,7 +184,7 @@
 :heavy_check_mark: sinterstore<br>
 :heavy_check_mark: sismember<br>
 :heavy_check_mark: smembers<br>
-:x: smismember<br>
+:heavy_check_mark: smismember<br>
 :heavy_check_mark: smove<br>
 :heavy_check_mark: spop<br>
 :heavy_check_mark: srandmember<br>
