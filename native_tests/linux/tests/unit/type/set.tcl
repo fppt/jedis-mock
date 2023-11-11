@@ -266,125 +266,125 @@ foreach type {single multiple single_multiple} {
 #        assert_equal 0 [r sintercard 1 non-existing-key limit 10]
 #    }
 #
-#    foreach {type} {regular intset} {
-#        # Create sets setN{t} where N = 1..5
-#        if {$type eq "regular"} {
-#            set smallenc listpack
-#            set bigenc hashtable
-#        } else {
-#            set smallenc intset
-#            set bigenc intset
-#        }
-#        # Sets 1, 2 and 4 are big; sets 3 and 5 are small.
-#        array set encoding "1 $bigenc 2 $bigenc 3 $smallenc 4 $bigenc 5 $smallenc"
-#
-#        for {set i 1} {$i <= 5} {incr i} {
-#            r del [format "set%d{t}" $i]
-#        }
-#        for {set i 0} {$i < 200} {incr i} {
-#            r sadd set1{t} $i
-#            r sadd set2{t} [expr $i+195]
-#        }
-#        foreach i {199 195 1000 2000} {
-#            r sadd set3{t} $i
-#        }
-#        for {set i 5} {$i < 200} {incr i} {
-#            r sadd set4{t} $i
-#        }
-#        r sadd set5{t} 0
-#
-#        # To make sure the sets are encoded as the type we are testing -- also
-#        # when the VM is enabled and the values may be swapped in and out
-#        # while the tests are running -- an extra element is added to every
-#        # set that determines its encoding.
-#        set large 200
-#        if {$type eq "regular"} {
-#            set large foo
-#        }
-#
-#        for {set i 1} {$i <= 5} {incr i} {
-#            r sadd [format "set%d{t}" $i] $large
-#        }
-#
-#        test "Generated sets must be encoded correctly - $type" {
-#            for {set i 1} {$i <= 5} {incr i} {
-#                assert_encoding $encoding($i) [format "set%d{t}" $i]
-#            }
-#        }
-#
-#        test "SINTER with two sets - $type" {
-#            assert_equal [list 195 196 197 198 199 $large] [lsort [r sinter set1{t} set2{t}]]
-#        }
-#
+    foreach {type} {regular intset} {
+        # Create sets setN{t} where N = 1..5
+        if {$type eq "regular"} {
+            set smallenc listpack
+            set bigenc hashtable
+        } else {
+            set smallenc intset
+            set bigenc intset
+        }
+        # Sets 1, 2 and 4 are big; sets 3 and 5 are small.
+        array set encoding "1 $bigenc 2 $bigenc 3 $smallenc 4 $bigenc 5 $smallenc"
+
+        for {set i 1} {$i <= 5} {incr i} {
+            r del [format "set%d{t}" $i]
+        }
+        for {set i 0} {$i < 200} {incr i} {
+            r sadd set1{t} $i
+            r sadd set2{t} [expr $i+195]
+        }
+        foreach i {199 195 1000 2000} {
+            r sadd set3{t} $i
+        }
+        for {set i 5} {$i < 200} {incr i} {
+            r sadd set4{t} $i
+        }
+        r sadd set5{t} 0
+
+        # To make sure the sets are encoded as the type we are testing -- also
+        # when the VM is enabled and the values may be swapped in and out
+        # while the tests are running -- an extra element is added to every
+        # set that determines its encoding.
+        set large 200
+        if {$type eq "regular"} {
+            set large foo
+        }
+
+        for {set i 1} {$i <= 5} {incr i} {
+            r sadd [format "set%d{t}" $i] $large
+        }
+
+        test "Generated sets must be encoded correctly - $type" {
+            for {set i 1} {$i <= 5} {incr i} {
+                assert_encoding $encoding($i) [format "set%d{t}" $i]
+            }
+        }
+
+        test "SINTER with two sets - $type" {
+            assert_equal [list 195 196 197 198 199 $large] [lsort [r sinter set1{t} set2{t}]]
+        }
+
 #        test "SINTERCARD with two sets - $type" {
 #            assert_equal 6 [r sintercard 2 set1{t} set2{t}]
 #            assert_equal 6 [r sintercard 2 set1{t} set2{t} limit 0]
 #            assert_equal 3 [r sintercard 2 set1{t} set2{t} limit 3]
 #            assert_equal 6 [r sintercard 2 set1{t} set2{t} limit 10]
 #        }
-#
-#        test "SINTERSTORE with two sets - $type" {
-#            r sinterstore setres{t} set1{t} set2{t}
-#            assert_encoding $smallenc setres{t}
-#            assert_equal [list 195 196 197 198 199 $large] [lsort [r smembers setres{t}]]
-#        }
-#
-#        test "SINTERSTORE with two sets, after a DEBUG RELOAD - $type" {
-#            r debug reload
-#            r sinterstore setres{t} set1{t} set2{t}
-#            assert_encoding $smallenc setres{t}
-#            assert_equal [list 195 196 197 198 199 $large] [lsort [r smembers setres{t}]]
-#        } {} {needs:debug}
-#
-#        test "SUNION with two sets - $type" {
-#            set expected [lsort -uniq "[r smembers set1{t}] [r smembers set2{t}]"]
-#            assert_equal $expected [lsort [r sunion set1{t} set2{t}]]
-#        }
-#
-#        test "SUNIONSTORE with two sets - $type" {
-#            r sunionstore setres{t} set1{t} set2{t}
-#            assert_encoding $bigenc setres{t}
-#            set expected [lsort -uniq "[r smembers set1{t}] [r smembers set2{t}]"]
-#            assert_equal $expected [lsort [r smembers setres{t}]]
-#        }
 
-#        test "SINTER against three sets - $type" {
-#            assert_equal [list 195 199 $large] [lsort [r sinter set1{t} set2{t} set3{t}]]
-#        }
-#
+        test "SINTERSTORE with two sets - $type" {
+            r sinterstore setres{t} set1{t} set2{t}
+            assert_encoding $smallenc setres{t}
+            assert_equal [list 195 196 197 198 199 $large] [lsort [r smembers setres{t}]]
+        }
+
+        test "SINTERSTORE with two sets, after a DEBUG RELOAD - $type" {
+            r debug reload
+            r sinterstore setres{t} set1{t} set2{t}
+            assert_encoding $smallenc setres{t}
+            assert_equal [list 195 196 197 198 199 $large] [lsort [r smembers setres{t}]]
+        } {} {needs:debug}
+
+        test "SUNION with two sets - $type" {
+            set expected [lsort -uniq "[r smembers set1{t}] [r smembers set2{t}]"]
+            assert_equal $expected [lsort [r sunion set1{t} set2{t}]]
+        }
+
+        test "SUNIONSTORE with two sets - $type" {
+            r sunionstore setres{t} set1{t} set2{t}
+            assert_encoding $bigenc setres{t}
+            set expected [lsort -uniq "[r smembers set1{t}] [r smembers set2{t}]"]
+            assert_equal $expected [lsort [r smembers setres{t}]]
+        }
+
+        test "SINTER against three sets - $type" {
+            assert_equal [list 195 199 $large] [lsort [r sinter set1{t} set2{t} set3{t}]]
+        }
+
 #        test "SINTERCARD against three sets - $type" {
 #            assert_equal 3 [r sintercard 3 set1{t} set2{t} set3{t}]
 #            assert_equal 3 [r sintercard 3 set1{t} set2{t} set3{t} limit 0]
 #            assert_equal 2 [r sintercard 3 set1{t} set2{t} set3{t} limit 2]
 #            assert_equal 3 [r sintercard 3 set1{t} set2{t} set3{t} limit 10]
 #        }
-#
-#        test "SINTERSTORE with three sets - $type" {
-#            r sinterstore setres{t} set1{t} set2{t} set3{t}
-#            assert_equal [list 195 199 $large] [lsort [r smembers setres{t}]]
-#        }
+
+        test "SINTERSTORE with three sets - $type" {
+            r sinterstore setres{t} set1{t} set2{t} set3{t}
+            assert_equal [list 195 199 $large] [lsort [r smembers setres{t}]]
+        }
 
         test "SUNION with non existing keys - $type" {
             set expected [lsort -uniq "[r smembers set1{t}] [r smembers set2{t}]"]
             assert_equal $expected [lsort [r sunion nokey1{t} set1{t} set2{t} nokey2{t}]]
         }
 
-#        test "SDIFF with two sets - $type" {
-#            assert_equal {0 1 2 3 4} [lsort [r sdiff set1{t} set4{t}]]
-#        }
-#
-#        test "SDIFF with three sets - $type" {
-#            assert_equal {1 2 3 4} [lsort [r sdiff set1{t} set4{t} set5{t}]]
-#        }
-#
-#        test "SDIFFSTORE with three sets - $type" {
-#            r sdiffstore setres{t} set1{t} set4{t} set5{t}
-#            # When we start with intsets, we should always end with intsets.
-#            if {$type eq {intset}} {
-#                assert_encoding intset setres{t}
-#            }
-#            assert_equal {1 2 3 4} [lsort [r smembers setres{t}]]
-#        }
+        test "SDIFF with two sets - $type" {
+            assert_equal {0 1 2 3 4} [lsort [r sdiff set1{t} set4{t}]]
+        }
+
+        test "SDIFF with three sets - $type" {
+            assert_equal {1 2 3 4} [lsort [r sdiff set1{t} set4{t} set5{t}]]
+        }
+
+        test "SDIFFSTORE with three sets - $type" {
+            r sdiffstore setres{t} set1{t} set4{t} set5{t}
+            # When we start with intsets, we should always end with intsets.
+            if {$type eq {intset}} {
+                assert_encoding intset setres{t}
+            }
+            assert_equal {1 2 3 4} [lsort [r smembers setres{t}]]
+        }
 
         test "SINTER/SUNION/SDIFF with three same sets - $type" {
             set expected [lsort "[r smembers set1{t}]"]
@@ -392,7 +392,7 @@ foreach type {single multiple single_multiple} {
             assert_equal $expected [lsort [r sunion set1{t} set1{t} set1{t}]]
             assert_equal {} [lsort [r sdiff set1{t} set1{t} set1{t}]]
         }
-#    }
+    }
 
     test "SINTERSTORE with two listpack sets where result is intset" {
         r del setres{t} set1{t} set2{t}
@@ -763,13 +763,13 @@ foreach type {single multiple single_multiple} {
         intset   {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20}
         listpack {a 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20}
     } {
-#    test "SPOP new implementation: code path #1 $type" {
-#        create_set myset $content
-#        assert_encoding $type myset
-#        set res [r spop myset 30]
-#        assert {[lsort $content] eq [lsort $res]}
-#        assert_equal {0} [r exists myset]
-#    }
+    test "SPOP new implementation: code path #1 $type" {
+        create_set myset $content
+        assert_encoding $type myset
+        set res [r spop myset 30]
+        assert {[lsort $content] eq [lsort $res]}
+        assert_equal {0} [r exists myset]
+    }
 
     test "SPOP new implementation: code path #2 $type" {
         create_set myset $content
