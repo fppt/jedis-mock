@@ -823,10 +823,10 @@ foreach type {single multiple single_multiple} {
         r srandmember nonexisting_key 100
     } {}
 
-#    test "SRANDMEMBER count overflow" {
-#        r sadd myset a
-#        assert_error {*value is out of range*} {r srandmember myset -9223372036854775808}
-#    } {}
+    test "SRANDMEMBER count overflow" {
+        r sadd myset a
+        assert_error {*value is out of range*} {r srandmember myset -9223372036854775808}
+    } {}
 
     # Make sure we can distinguish between an empty array and a null response
     r readraw 1
