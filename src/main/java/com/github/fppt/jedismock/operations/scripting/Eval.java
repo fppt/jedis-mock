@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaError;
+import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
@@ -69,7 +70,7 @@ public class Eval extends AbstractRedisOperation {
 
     private static List<LuaValue> getLuaValues(List<Slice> slices) {
         return slices.stream()
-                .map(Slice::toString)
+                .map(Slice::data)
                 .map(LuaValue::valueOf)
                 .collect(Collectors.toList());
     }
@@ -85,7 +86,7 @@ public class Eval extends AbstractRedisOperation {
 
         switch (result.typename()) {
             case "string":
-                return Response.bulkString(Slice.create(result.tojstring()));
+                return Response.bulkString(Slice.create(((LuaString) result).m_bytes));
             case "number":
                 return Response.integer(result.tolong());
             case "table":

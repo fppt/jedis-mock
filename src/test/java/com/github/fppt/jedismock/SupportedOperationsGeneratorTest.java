@@ -10,6 +10,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,8 +21,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.reflections.util.ReflectionUtilsPredicates.withAnnotation;
@@ -34,11 +33,9 @@ public class SupportedOperationsGeneratorTest {
     private static final String HEADING_LEVEL2 = "## ";
     private static final String SYMBOL_SUPPORTED = ":heavy_check_mark:";
     private static final String SYMBOL_UNSUPPORTED = ":x:";
-    private static final String OPERATION_NAME_REGEX = "\\r\\n\\s*([^a-z\\s]+)";
-    private static final String ANSI_ESCAPE_CODE_REGEX = "\\x1b\\[[0-9;]*[a-zA-Z]";
-
     @Container
-    private final GenericContainer redis = new GenericContainer<>(DockerImageName.parse("redis:6.2-alpine"));
+    private final GenericContainer<?> redis =
+            new GenericContainer<>(DockerImageName.parse("redis:7.2-alpine")).withExposedPorts(6379);
 
     private final static Set<String> implementedOperations;
 
@@ -61,39 +58,41 @@ public class SupportedOperationsGeneratorTest {
     }
 
     @Test
-    public void generate() throws IOException, InterruptedException {
+    public void generate() throws IOException {
         redis.start();
 
-        Pattern pattern = Pattern.compile(OPERATION_NAME_REGEX);
         List<String> lines = new ArrayList<>();
         lines.add(HEADING_LEVEL1 + "Supported operations:");
-        for (OperationCategory category : OperationCategory.values()) {
-            String command = String.format("echo help @%s | redis-cli | sed 's/%s//g'",
-                    category.getAnnotationName(), ANSI_ESCAPE_CODE_REGEX);
-            final GenericContainer.ExecResult result = redis.execInContainer(
-                    "sh", "-c", command);
 
-            Matcher matcher = pattern.matcher(result.getStdout());
-            Set<String> categoryOperations = new HashSet<>();
-            while (matcher.find()) {
-                categoryOperations.add(matcher.group(1).toLowerCase());
-            }
-            if (categoryOperations.isEmpty()) {
-                continue;
-            }
+        Set<String> mentioned = new HashSet<>();
 
-            lines.add("");
-            lines.add(HEADING_LEVEL2 + category);
-            lines.add("");
-            lines.addAll(categoryOperations.stream()
-                    .sorted()
-                    .map(op -> implementedOperations.contains(op) ?
-                            SYMBOL_SUPPORTED + SEPARATOR + op + LINE_SEPARATOR :
-                            SYMBOL_UNSUPPORTED + SEPARATOR + op + LINE_SEPARATOR
-                    )
-                    .collect(Collectors.toList()));
+        try (Jedis jedis = new Jedis(redis.getHost(), redis.getFirstMappedPort())) {
+            for (OperationCategory category : OperationCategory.values()) {
+                final List<String> categoryOperations = jedis.aclCat(category.getAnnotationName());
+
+
+                lines.add("");
+                lines.add(HEADING_LEVEL2 + category);
+                lines.add("");
+                lines.addAll(categoryOperations.stream()
+                        .map(s ->
+                                {
+                                    int indexOfPipe = s.indexOf('|');
+                                    return indexOfPipe > 0 ? s.substring(0, indexOfPipe) : s;
+                                }
+                        )
+                        .filter(s -> !mentioned.contains(s))
+                        .peek(mentioned::add)
+                        .sorted()
+                        .map(op -> implementedOperations.contains(op) ?
+                                SYMBOL_SUPPORTED + SEPARATOR + op + LINE_SEPARATOR :
+                                SYMBOL_UNSUPPORTED + SEPARATOR + op + LINE_SEPARATOR
+                        )
+                        .collect(Collectors.toList()));
+            }
         }
-
         writeToFile(lines);
+
+
     }
 }

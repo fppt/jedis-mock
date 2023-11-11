@@ -1,21 +1,56 @@
 # Supported operations:
 
+## Administration
+
+:x: acl<br>
+:x: bgrewriteaof<br>
+:x: bgsave<br>
+:heavy_check_mark: client<br>
+:heavy_check_mark: cluster<br>
+:x: config<br>
+:x: debug<br>
+:x: failover<br>
+:x: lastsave<br>
+:x: latency<br>
+:x: module<br>
+:x: monitor<br>
+:x: pfdebug<br>
+:x: pfselftest<br>
+:x: psync<br>
+:x: replconf<br>
+:x: replicaof<br>
+:x: role<br>
+:x: save<br>
+:x: shutdown<br>
+:x: slaveof<br>
+:x: slowlog<br>
+:x: sync<br>
+
+## Bitmaps
+
+:x: bitcount<br>
+:x: bitfield<br>
+:x: bitfield_ro<br>
+:x: bitop<br>
+:x: bitpos<br>
+:heavy_check_mark: getbit<br>
+:heavy_check_mark: setbit<br>
+
 ## Connection
 
+:x: asking<br>
 :heavy_check_mark: auth<br>
-:heavy_check_mark: client<br>
+:x: command<br>
 :heavy_check_mark: echo<br>
 :heavy_check_mark: hello<br>
 :heavy_check_mark: ping<br>
 :heavy_check_mark: quit<br>
-:x: reset<br>
-:heavy_check_mark: select<br>
-
-## Cluster
-
-:heavy_check_mark: cluster<br>
 :x: readonly<br>
 :x: readwrite<br>
+:x: reset<br>
+:heavy_check_mark: select<br>
+:x: wait<br>
+:x: waitaof<br>
 
 ## Geo
 
@@ -24,7 +59,9 @@
 :x: geohash<br>
 :x: geopos<br>
 :x: georadius<br>
+:x: georadius_ro<br>
 :x: georadiusbymember<br>
+:x: georadiusbymember_ro<br>
 :x: geosearch<br>
 :x: geosearchstore<br>
 
@@ -55,17 +92,16 @@
 
 ## Keys
 
-:x: asking<br>
-:x: bitfield_ro<br>
 :x: copy<br>
+:heavy_check_mark: dbsize<br>
 :heavy_check_mark: del<br>
 :x: dump<br>
 :heavy_check_mark: exists<br>
 :heavy_check_mark: expire<br>
 :heavy_check_mark: expireat<br>
-:x: georadius_ro<br>
-:x: georadiusbymember_ro<br>
-:x: host:<br>
+:x: expiretime<br>
+:heavy_check_mark: flushall<br>
+:heavy_check_mark: flushdb<br>
 :heavy_check_mark: keys<br>
 :x: migrate<br>
 :x: move<br>
@@ -73,29 +109,24 @@
 :heavy_check_mark: persist<br>
 :heavy_check_mark: pexpire<br>
 :heavy_check_mark: pexpireat<br>
-:x: pfdebug<br>
-:x: pfselftest<br>
-:x: post<br>
+:x: pexpiretime<br>
 :heavy_check_mark: pttl<br>
 :x: randomkey<br>
 :heavy_check_mark: rename<br>
 :x: renamenx<br>
-:x: replconf<br>
 :x: restore<br>
 :x: restore-asking<br>
 :heavy_check_mark: scan<br>
-:heavy_check_mark: sort<br>
-:x: substr<br>
+:x: swapdb<br>
 :x: touch<br>
 :heavy_check_mark: ttl<br>
 :heavy_check_mark: type<br>
 :heavy_check_mark: unlink<br>
-:x: wait<br>
-:x: xsetid<br>
 
 ## Lists
 
 :x: blmove<br>
+:x: blmpop<br>
 :heavy_check_mark: blpop<br>
 :heavy_check_mark: brpop<br>
 :heavy_check_mark: brpoplpush<br>
@@ -103,6 +134,7 @@
 :heavy_check_mark: linsert<br>
 :heavy_check_mark: llen<br>
 :x: lmove<br>
+:x: lmpop<br>
 :heavy_check_mark: lpop<br>
 :heavy_check_mark: lpos<br>
 :heavy_check_mark: lpush<br>
@@ -115,6 +147,8 @@
 :heavy_check_mark: rpoplpush<br>
 :heavy_check_mark: rpush<br>
 :heavy_check_mark: rpushx<br>
+:heavy_check_mark: sort<br>
+:x: sort_ro<br>
 
 ## Pub/Sub
 
@@ -122,44 +156,22 @@
 :heavy_check_mark: publish<br>
 :heavy_check_mark: pubsub<br>
 :heavy_check_mark: punsubscribe<br>
+:x: spublish<br>
+:x: ssubscribe<br>
 :heavy_check_mark: subscribe<br>
+:x: sunsubscribe<br>
 :heavy_check_mark: unsubscribe<br>
 
 ## Scripting
 
 :heavy_check_mark: eval<br>
+:x: eval_ro<br>
 :heavy_check_mark: evalsha<br>
+:x: evalsha_ro<br>
+:x: fcall<br>
+:x: fcall_ro<br>
+:x: function<br>
 :heavy_check_mark: script<br>
-
-## Server
-
-:x: acl<br>
-:x: bgrewriteaof<br>
-:x: bgsave<br>
-:x: command<br>
-:x: config<br>
-:heavy_check_mark: dbsize<br>
-:x: debug<br>
-:x: failover<br>
-:heavy_check_mark: flushall<br>
-:heavy_check_mark: flushdb<br>
-:heavy_check_mark: info<br>
-:x: lastsave<br>
-:x: latency<br>
-:x: lolwut<br>
-:x: memory<br>
-:x: module<br>
-:x: monitor<br>
-:x: psync<br>
-:x: replicaof<br>
-:x: role<br>
-:x: save<br>
-:x: shutdown<br>
-:x: slaveof<br>
-:x: slowlog<br>
-:x: swapdb<br>
-:x: sync<br>
-:heavy_check_mark: time<br>
 
 ## Sets
 
@@ -168,6 +180,7 @@
 :heavy_check_mark: sdiff<br>
 :heavy_check_mark: sdiffstore<br>
 :heavy_check_mark: sinter<br>
+:x: sintercard<br>
 :heavy_check_mark: sinterstore<br>
 :heavy_check_mark: sismember<br>
 :heavy_check_mark: smembers<br>
@@ -182,6 +195,7 @@
 
 ## Sorted Sets
 
+:x: bzmpop<br>
 :x: bzpopmax<br>
 :x: bzpopmin<br>
 :heavy_check_mark: zadd<br>
@@ -191,8 +205,10 @@
 :x: zdiffstore<br>
 :x: zincrby<br>
 :x: zinter<br>
+:x: zintercard<br>
 :x: zinterstore<br>
 :x: zlexcount<br>
+:x: zmpop<br>
 :x: zmscore<br>
 :x: zpopmax<br>
 :x: zpopmin<br>
@@ -230,19 +246,15 @@
 :x: xread<br>
 :x: xreadgroup<br>
 :x: xrevrange<br>
+:x: xsetid<br>
 :x: xtrim<br>
 
 ## Strings
 
 :heavy_check_mark: append<br>
-:x: bitcount<br>
-:x: bitfield<br>
-:x: bitop<br>
-:x: bitpos<br>
 :heavy_check_mark: decr<br>
 :heavy_check_mark: decrby<br>
 :heavy_check_mark: get<br>
-:heavy_check_mark: getbit<br>
 :heavy_check_mark: getdel<br>
 :x: getex<br>
 :x: getrange<br>
@@ -250,17 +262,17 @@
 :heavy_check_mark: incr<br>
 :heavy_check_mark: incrby<br>
 :heavy_check_mark: incrbyfloat<br>
+:x: lcs<br>
 :heavy_check_mark: mget<br>
 :heavy_check_mark: mset<br>
 :heavy_check_mark: msetnx<br>
 :heavy_check_mark: psetex<br>
 :heavy_check_mark: set<br>
-:heavy_check_mark: setbit<br>
 :heavy_check_mark: setex<br>
 :heavy_check_mark: setnx<br>
 :heavy_check_mark: setrange<br>
-:x: stralgo<br>
 :heavy_check_mark: strlen<br>
+:x: substr<br>
 
 ## Transactions
 

@@ -1,22 +1,21 @@
 package com.github.fppt.jedismock.util;
 
 public enum OperationCategory {
+    ADMIN("Administration", "admin"),
     BITMAPS("Bitmaps", "bitmap"),
     CONNECTION("Connection", "connection"),
-    CLUSTER("Cluster", "cluster"),
     GEO("Geo", "geo"),
     HASHES("Hashes", "hash"),
     HYPERLOGLOG("HyperLogLog", "hyperloglog"),
-    KEYS("Keys", "generic"),
+    KEYS("Keys", "keyspace"),
     LISTS("Lists", "list"),
     PUBSUB("Pub/Sub", "pubsub"),
     SCRIPTING("Scripting", "scripting"),
-    SERVER("Server", "server"),
     SETS("Sets", "set"),
-    SORTEDSETS("Sorted Sets", "sorted_set"),
+    SORTEDSETS("Sorted Sets", "sortedset"),
     STREAMS("Streams", "stream"),
     STRINGS("Strings", "string"),
-    TRANSACTIONS("Transactions", "transactions");
+    TRANSACTIONS("Transactions", "transaction");
 
     private final String name;
     private final String annotationName;

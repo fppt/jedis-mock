@@ -39,9 +39,10 @@ public class SScanTest {
 
     @TestTemplate
     public void sscanReturnsPartialSet(Jedis jedis) {
-        String[] values = new String[20];
-        for (int i = 0; i < 20; i++) {
-            values[i] = (21 - i) + "_value_" + i;
+        final int elementsNumber = 1120;
+        String[] values = new String[elementsNumber];
+        for (int i = 0; i < elementsNumber; i++) {
+            values[i] = (elementsNumber + 1 - i) + "_value_" + i;
         }
         jedis.sadd(key, values);
 
@@ -67,9 +68,11 @@ public class SScanTest {
 
     @TestTemplate
     public void sscanIterates(Jedis jedis) {
-        String[] values = new String[45];
-        for (int i = 0; i < 45; i++) {
-            values[i] = (45 - i) + "_value_" + i;
+        final int numOfElements = 1145;
+
+        String[] values = new String[numOfElements];
+        for (int i = 0; i < numOfElements; i++) {
+            values[i] = (numOfElements - i) + "_value_" + i;
         }
         jedis.sadd(key, values);
 
