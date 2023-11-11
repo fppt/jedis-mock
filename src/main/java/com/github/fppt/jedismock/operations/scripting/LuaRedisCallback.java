@@ -75,7 +75,7 @@ public class LuaRedisCallback {
             throwOnUnsupported(operation);
             Slice result = operation.execute();
             if (Response.NULL.equals(result)) {
-                return LuaValue.NONE;
+                return LuaValue.FALSE;
             } else {
                 byte[] data = result.data();
                 return toLuaValue(new RedisInputStream(new ByteArrayInputStream(data)));

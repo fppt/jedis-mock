@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.comparisontests.scripting;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -273,4 +274,23 @@ public class EvalTest {
         assertNull(res);
     }
 
+    @TestTemplate
+    public void callReturnsFalseFromNonExistingKey(Jedis jedis) {
+        Object result = jedis.eval(
+                "local val = redis.call('get', KEYS[1]); return val ~= false; ",
+                Collections.singletonList("an-example-key"),
+                Collections.emptyList()
+        );
+        Assertions.assertNull(result);
+    }
+
+    @TestTemplate
+    public void callReturnsNonFalseForExistingKey(Jedis jedis) {
+        jedis.set("an-example-key", "17");
+        Object result = jedis.eval("local val = redis.call('get', KEYS[1]); return val ~= false; ",
+                Collections.singletonList("an-example-key"),
+                Collections.emptyList()
+        );
+        Assertions.assertEquals(1L, result);
+    }
 }
