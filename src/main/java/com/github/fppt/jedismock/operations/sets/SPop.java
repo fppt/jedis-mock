@@ -1,11 +1,10 @@
 package com.github.fppt.jedismock.operations.sets;
 
-import com.github.fppt.jedismock.datastructures.RMSet;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
-import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,34 +19,40 @@ class SPop extends AbstractRedisOperation {
         super(base, params);
     }
 
-    private List<Slice> popper(Set<Slice> collection, int number) {
+    private List<Slice> popper(Set<Slice> collection, int numberToBeRemoved) {
         List<Slice> result = new ArrayList<>();
         Iterator<Slice> it = collection.iterator();
-        while (number > 0 && it.hasNext()) {
-            Slice v = it.next();
-            result.add(Response.bulkString(v));
+
+        while (numberToBeRemoved-- > 0 && it.hasNext()) {
+            result.add(Response.bulkString(it.next()));
             it.remove();
-            number--;
         }
+
         return result;
     }
 
     protected Slice response() {
         Slice key = params().get(0);
-        int number = params().size() > 1 ?
-                convertToInteger(params().get(1).toString()) : 1;
+        Set<Slice> set = getSetFromBaseOrCreateEmpty(key).getStoredData();
 
-        final RMSet setDBObj = getSetFromBaseOrCreateEmpty(key);
-        Set<Slice> data = setDBObj.getStoredData();
-        if (data.isEmpty()) return
-                params().size() > 1 ?
-                        Response.EMPTY_ARRAY :
-                        Response.NULL;
-        List<Slice> v = popper(data, number);
+        int numberOfElementsToBeRemoved = params().size() > 1
+                ? convertToInteger(params().get(1).toString())
+                : 1;
+
+        if (set.isEmpty()) {
+            return params().size() > 1 ? Response.EMPTY_ARRAY : Response.NULL;
+        }
+
+        List<Slice> removedElements = popper(set, numberOfElementsToBeRemoved);
+
+        if (set.isEmpty()) {
+            base().deleteValue(key);
+        }
+
         if (params().size() > 1) {
-            return Response.array(v);
+            return Response.array(removedElements);
         } else {
-            return v.get(0);
+            return removedElements.get(0);
         }
     }
 }

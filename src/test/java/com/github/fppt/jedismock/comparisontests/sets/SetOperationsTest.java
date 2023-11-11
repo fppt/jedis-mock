@@ -108,7 +108,9 @@ public class SetOperationsTest {
     public void poppingZeroAndOneKey(Jedis jedis) {
         String key = "key-pop";
         jedis.sadd(key, "a");
-        assertEquals(1, jedis.spop(key, 1).size());
+        assertTrue(jedis.exists(key));
+        assertEquals(Collections.singleton("a"), jedis.spop(key, 1));
+        assertFalse(jedis.exists(key));
         assertEquals(0, jedis.spop(key, 0).size());
     }
 
