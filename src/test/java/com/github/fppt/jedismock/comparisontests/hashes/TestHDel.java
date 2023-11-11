@@ -40,4 +40,15 @@ public class TestHDel {
         assertEquals(2, res);
         assertTrue(jedis.hgetAll("foo").isEmpty());
     }
+
+    @TestTemplate
+    void whenHDeletingWithNoArguments_EnsureErrorReturn(Jedis jedis) {
+        Map<String, String> hash = new HashMap<>();
+        hash.put("key1", "1");
+        hash.put("key2", "2");
+        jedis.hset("foo", hash);
+        assertThrows(RuntimeException.class,
+                () -> jedis.hdel("foo"));
+        assertEquals(2, jedis.hlen("foo"));
+    }
 }
