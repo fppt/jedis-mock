@@ -8,7 +8,9 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.resps.Tuple;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,33 +43,6 @@ public class SortedSetOperationsTest {
         long result = jedis.zcard(key);
 
         assertEquals(2L, result);
-    }
-
-    @TestTemplate
-    public void zremRemovesKey(Jedis jedis) {
-        String key = "mykey";
-        Map<String, Double> members = new HashMap<>();
-        members.put("myvalue1", 10d);
-        members.put("myvalue2", 20d);
-
-        long result = jedis.zadd(key, members);
-
-        assertEquals(2L, result);
-
-        List<String> results = jedis.zrange(key, 0, -1);
-
-        assertEquals(2, results.size());
-        assertEquals("myvalue1", results.get(0));
-        assertEquals("myvalue2", results.get(1));
-
-        result = jedis.zrem(key, "myvalue1");
-
-        assertEquals(1L, result);
-
-        results = jedis.zrange(key, 0, -1);
-
-        assertEquals(1, results.size());
-        assertEquals("myvalue2", results.get(0));
     }
 
     @TestTemplate

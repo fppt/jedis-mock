@@ -28,6 +28,10 @@ public class RMZSet implements RMDataStructure {
         return scores.get(value);
     }
 
+    public boolean hasMember(Slice member) {
+        return scores.containsKey(member);
+    }
+
     public boolean remove(Slice value) {
         final Double previous = scores.remove(value);
         if (previous == null) {
@@ -70,4 +74,7 @@ public class RMZSet implements RMDataStructure {
         return "zset";
     }
 
+    public int indexOf(Double score, Slice member) {
+        return entries.headSet(new ZSetEntry(score, member)).size();
+    }
 }

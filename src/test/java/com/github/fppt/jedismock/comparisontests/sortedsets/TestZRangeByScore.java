@@ -6,6 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.params.ZRangeParams;
 import redis.clients.jedis.resps.Tuple;
 
 import java.util.Arrays;
@@ -159,8 +160,6 @@ public class TestZRangeByScore {
         assertEquals(10, jedis.zrange(ZSET_KEY, 0, -1).size());
 
         //then
-        //  assertEquals(new HashSet(asList("three", "four")),
-        //          jedis.zrangeByScore(ZSET_KEY, 2, 5, 1, 2));
         assertEquals(asList(
                         new Tuple("three", 3.),
                         new Tuple("four", 4.)),
@@ -213,4 +212,91 @@ public class TestZRangeByScore {
         assertEquals(Collections.singletonList("bar"),
                 jedis.zrangeByScore("foo", 0, 42, 0, -1));
     }
+
+    @TestTemplate
+    void testZRangeByScoreInclusiveRange(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, Double.NEGATIVE_INFINITY, "a");
+        jedis.zadd(ZSET_KEY, 1, "b");
+        jedis.zadd(ZSET_KEY, 2, "c");
+        jedis.zadd(ZSET_KEY, 3, "d");
+        jedis.zadd(ZSET_KEY, 4, "e");
+        jedis.zadd(ZSET_KEY, 5, "f");
+        jedis.zadd(ZSET_KEY, Double.POSITIVE_INFINITY, "g");
+        assertEquals(Arrays.asList("a", "b", "c"), jedis.zrangeByScore(ZSET_KEY, "-inf", "2"));
+        assertEquals(Arrays.asList("b", "c", "d"), jedis.zrangeByScore(ZSET_KEY, 0, 3));
+        assertEquals(Arrays.asList("d", "e", "f"), jedis.zrangeByScore(ZSET_KEY, 3, 6));
+        assertEquals(Arrays.asList("e", "f", "g"), jedis.zrangeByScore(ZSET_KEY, 4, Double.POSITIVE_INFINITY));
+    }
+
+    @TestTemplate
+    void testZRangeByScoreInclusive(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1, "b");
+        jedis.zadd(ZSET_KEY, 2, "c");
+        jedis.zadd(ZSET_KEY, 3, "d");
+        jedis.zadd(ZSET_KEY, 4, "e");
+        jedis.zadd(ZSET_KEY, 5, "f");
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "4", "2"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "6", "+inf"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "-inf", "-6"));
+    }
+
+    @TestTemplate
+    void testZRangeByScoreExclusiveRange(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, Double.NEGATIVE_INFINITY, "a");
+        jedis.zadd(ZSET_KEY, 1, "b");
+        jedis.zadd(ZSET_KEY, 2, "c");
+        jedis.zadd(ZSET_KEY, 3, "d");
+        jedis.zadd(ZSET_KEY, 4, "e");
+        jedis.zadd(ZSET_KEY, 5, "f");
+        jedis.zadd(ZSET_KEY, Double.POSITIVE_INFINITY, "g");
+        assertEquals(singletonList("b"), jedis.zrangeByScore(ZSET_KEY, "(-inf", "(2"));
+        assertEquals(Arrays.asList("b", "c"), jedis.zrangeByScore(ZSET_KEY, "(0", "(3"));
+        assertEquals(Arrays.asList("e", "f"), jedis.zrangeByScore(ZSET_KEY, "(3", "(6"));
+        assertEquals(singletonList("f"), jedis.zrangeByScore(ZSET_KEY, "(4", "(+inf"));
+    }
+
+    @TestTemplate
+    void testZRangeByScoreExclusive(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1, "b");
+        jedis.zadd(ZSET_KEY, 2, "c");
+        jedis.zadd(ZSET_KEY, 3, "d");
+        jedis.zadd(ZSET_KEY, 4, "e");
+        jedis.zadd(ZSET_KEY, 5, "f");
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "(4", "(2"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "2", "(2"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "(2", "2"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "(6", "(+inf"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "(-inf", "(-6"));
+    }
+
+    @TestTemplate
+    void testZRangeByScoreEmptyInnerRange(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1, "b");
+        jedis.zadd(ZSET_KEY, 2, "c");
+        jedis.zadd(ZSET_KEY, 3, "d");
+        jedis.zadd(ZSET_KEY, 4, "e");
+        jedis.zadd(ZSET_KEY, 5, "f");
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "2.4", "2.6"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "(2.4", "2.6"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "2.4", "(2.6"));
+        assertEquals(Collections.emptyList(), jedis.zrangeByScore(ZSET_KEY, "(2.4", "(2.6"));
+    }
+
+    @TestTemplate
+    void testZRangeByScoreNonValueMin(Jedis jedis) {
+        assertThrows(RuntimeException.class,
+                () -> jedis.zrangeByScore("fooz", "str", "2.6"));
+    }
+
+    @TestTemplate
+    void testZRangeNoLimitWithScore(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1, "one");
+        jedis.zadd(ZSET_KEY, 2, "two");
+        jedis.zadd(ZSET_KEY, 3, "three");
+        jedis.zadd(ZSET_KEY, 4, "four");
+        jedis.zadd(ZSET_KEY, 5, "five");
+        assertEquals(Collections.singletonList(new Tuple("five", 5.)),
+                jedis.zrangeByScoreWithScores(ZSET_KEY, 2, 6, 3, -1));
+    }
+
 }

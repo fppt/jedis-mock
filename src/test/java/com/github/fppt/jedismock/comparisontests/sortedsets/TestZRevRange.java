@@ -8,6 +8,7 @@ import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -50,5 +51,10 @@ public class TestZRevRange {
     @TestTemplate
     public void whenUsingZrevrange_EnsureItReturnsListInRightOrderWithPositiveStartAndNegativeEndRange(Jedis jedis) {
         assertEquals(Arrays.asList("bbbb", "babb", "aaaa", "cccc"), new ArrayList<>(jedis.zrevrange(ZSET_KEY, 1, -1)));
+    }
+
+    @TestTemplate
+    public void whenUsingZrevrange_EnsureItReturnsEmptyListWhenGiveWrongStartOrStop(Jedis jedis) {
+        assertEquals(Collections.emptyList(), jedis.zrevrange(ZSET_KEY, -50, -100));
     }
 }

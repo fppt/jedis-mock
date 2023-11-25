@@ -1,20 +1,23 @@
 package com.github.fppt.jedismock.operations.lists;
 
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RedisCommand("blpop")
 class BLPop extends BPop {
+
     BLPop(OperationExecutorState state, List<Slice> params) {
         super(state, params);
     }
 
     @Override
-    AbstractRedisOperation popper(List<Slice> params) {
-        return new LPop(base(), params);
+    public Slice popper(List<Slice> params) {
+        Slice result = new LPop(base(), params).execute();
+        return Response.array(Arrays.asList(Response.bulkString(params.get(0)), result));
     }
 }

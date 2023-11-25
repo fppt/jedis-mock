@@ -1,31 +1,23 @@
 package com.github.fppt.jedismock.operations.sortedsets;
 
-import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.datastructures.ZSetEntry;
+import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.NavigableSet;
 
-import static com.github.fppt.jedismock.Utils.convertToInteger;
+import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.BYLEX;
+import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.BYSCORE;
+import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.LIMIT;
+import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.REV;
+import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.WITHSCORES;
 
 @RedisCommand("zrange")
-class ZRange extends AbstractByScoreOperation {
-
-    private static final String WITH_SCORES = "WITHSCORES";
-    private static final String IS_REV = "REV";
-    private static final String IS_BYSCORE = "BYSCORE";
-    private static final String IS_BYLEX = "BYLEX";
-
-    private boolean withScores = false;
-    private boolean isRev = false;
-    private boolean isByScore = false;
-    private boolean isByLex = false;
-    private int start = 0;
-    private int end = 0;
+class ZRange extends AbstractZRangeByIndex {
 
     ZRange(RedisBase base, List<Slice> params) {
         super(base, params);
@@ -33,81 +25,43 @@ class ZRange extends AbstractByScoreOperation {
 
     @Override
     protected Slice response() {
-        Slice key = params().get(0);
-        final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
+        key = params().get(0);
+        mapDBObj = getZSetFromBaseOrCreateEmpty(key);
 
-        parseArgs();
-
-        if (isByScore && !isRev) {
+        if (options.contains(BYSCORE) && !options.contains(REV)) {
             ZRangeByScore zRangeByScore = new ZRangeByScore(base(), params());
             return zRangeByScore.response();
         }
-        if (isByScore) {
+        if (options.contains(BYSCORE)) {
             ZRevRangeByScore zRevRangeByScore = new ZRevRangeByScore(base(), params());
             return zRevRangeByScore.response();
         }
-        if (isByLex && !isRev) {
+        if (options.contains(BYLEX) && options.contains(WITHSCORES)) {
+            throw new ArgumentException("ERR syntax error, WITHSCORES not supported in combination with BYLEX");
+        }
+        if (options.contains(BYLEX) && !options.contains(REV)) {
             ZRangeByLex zRangeByLex = new ZRangeByLex(base(), params());
             return zRangeByLex.response();
         }
-        if (isByLex) {
+        if (options.contains(BYLEX)) {
             ZRevRangeByLex zRevRangeByLex = new ZRevRangeByLex(base(), params());
             return zRevRangeByLex.response();
         }
+        if (options.contains(LIMIT) && count != -1) {
+            throw new ArgumentException("ERR syntax error, LIMIT is only supported in combination with either BYSCORE or BYLEX");
+        }
+        if (options.contains(REV)) {
+            ZRevRange zRevRange = new ZRevRange(base(), params());
+            return zRevRange.response();
+        }
 
-        calculateIndexes(mapDBObj);
+        if (checkWrongIndex()) {
+            return Response.EMPTY_ARRAY;
+        }
 
-        boolean finalWithScores = withScores;
+        NavigableSet<ZSetEntry> entries = getRange(getStartBound(Slice.create(String.valueOf(startIndex))), getEndBound(Slice.create(String.valueOf(endIndex))));
 
-        final List<Slice> values = mapDBObj.entries(isRev).stream()
-                .skip(start)
-                .limit(end - start + 1)
-                .flatMap(e -> finalWithScores
-                        ? Stream.of(e.getValue(), Slice.create(Double.toString(e.getScore())))
-                        : Stream.of(e.getValue()))
-                .map(Response::bulkString)
-                .collect(Collectors.toList());
-
-        return Response.array(values);
+        return getSliceFromRange(entries);
     }
 
-    private void calculateIndexes(RMZSet map) {
-        start = convertToInteger(params().get(1).toString());
-        end = convertToInteger(params().get(2).toString());
-
-        if (start < 0) {
-            start = map.size() + start;
-            if (start < 0) {
-                start = 0;
-            }
-        }
-
-        if (end < 0) {
-            end = map.size() + end;
-            if (end < 0) {
-                end = -1;
-            }
-        }
-
-        if (end >= map.size()) {
-            end = map.size() - 1;
-        }
-    }
-
-    private void parseArgs() {
-        for (Slice param : params()) {
-            if (WITH_SCORES.equalsIgnoreCase(param.toString())) {
-                withScores = true;
-            }
-            if (IS_REV.equalsIgnoreCase(param.toString())) {
-                isRev = true;
-            }
-            if (IS_BYSCORE.equalsIgnoreCase(param.toString())) {
-                isByScore = true;
-            }
-            if (IS_BYLEX.equalsIgnoreCase(param.toString())) {
-                isByLex = true;
-            }
-        }
-    }
 }
