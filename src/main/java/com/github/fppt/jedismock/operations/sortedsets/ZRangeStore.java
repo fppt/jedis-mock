@@ -6,7 +6,7 @@ import com.github.fppt.jedismock.datastructures.ZSetEntry;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +20,11 @@ import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Opt
 
 @RedisCommand("zrangestore")
 class ZRangeStore extends AbstractZRangeByIndex {
+    private final Object lock;
 
-    ZRangeStore(RedisBase base, List<Slice> params) {
-        super(base, params);
+    ZRangeStore(OperationExecutorState state, List<Slice> params) {
+        super(state.base(), params);
+        this.lock = state.lock();
     }
 
     @Override
@@ -105,6 +107,7 @@ class ZRangeStore extends AbstractZRangeByIndex {
         base().deleteValue(keyDest);
         if (resultZSet.size() > 0) {
             base().putValue(keyDest, resultZSet);
+            lock.notifyAll();
         }
         return Response.integer(resultZSet.size());
     }

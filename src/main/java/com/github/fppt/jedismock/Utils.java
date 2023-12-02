@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
+
 import java.io.Closeable;
 
 /**
@@ -16,7 +17,7 @@ public class Utils {
         }
     }
 
-    public static long convertToLong(String value){
+    public static long convertToLong(String value) {
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
@@ -24,7 +25,7 @@ public class Utils {
         }
     }
 
-    public static byte convertToByte(String value){
+    public static byte convertToByte(String value) {
         try {
             byte bit = Byte.parseByte(value);
             if (bit != 0 && bit != 1) {
@@ -36,17 +37,17 @@ public class Utils {
         }
     }
 
-    public static int convertToNonNegativeInteger(String value){
+    public static int convertToNonNegativeInteger(String value) {
         try {
             int pos = Integer.parseInt(value);
-            if(pos < 0) throw new NumberFormatException("Int less than 0");
+            if (pos < 0) throw new NumberFormatException("Int less than 0");
             return pos;
         } catch (NumberFormatException e) {
             throw new WrongValueTypeException("ERR bit offset is not an integer or out of range");
         }
     }
 
-    public static int convertToInteger(String value){
+    public static int convertToInteger(String value) {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
@@ -54,7 +55,7 @@ public class Utils {
         }
     }
 
-    public static double convertToDouble(String value){
+    public static double convertToDouble(String value) {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
@@ -62,14 +63,11 @@ public class Utils {
         }
     }
 
-    public static String createRegexFromGlob(String glob)
-    {
+    public static String createRegexFromGlob(String glob) {
         StringBuilder out = new StringBuilder("^");
-        for(int i = 0; i < glob.length(); ++i)
-        {
+        for (int i = 0; i < glob.length(); ++i) {
             final char c = glob.charAt(i);
-            switch(c)
-            {
+            switch (c) {
                 case '*':
                     out.append(".*");
                     break;
@@ -91,5 +89,9 @@ public class Utils {
         }
         out.append('$');
         return out.toString();
+    }
+
+    public static long toNanoTimeout(String value) {
+        return (long) (convertToDouble(value) * 1_000_000_000L);
     }
 }

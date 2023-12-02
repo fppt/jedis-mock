@@ -5,7 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.datastructures.ZSetEntry;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 abstract class ZStore extends AbstractByScoreOperation {
+    private final Object lock;
 
     protected static final String IS_WEIGHTS = "WEIGHTS";
     protected static final String IS_AGGREGATE = "AGGREGATE";
@@ -29,8 +30,9 @@ abstract class ZStore extends AbstractByScoreOperation {
 
     protected boolean withScores = false;
 
-    ZStore(RedisBase base, List<Slice> params) {
-        super(base, params);
+    ZStore(OperationExecutorState state, List<Slice> params) {
+        super(state.base(), params);
+        this.lock = state.lock();
     }
 
     abstract protected RMZSet getResult(RMZSet zset1, RMZSet zset2, double weight);
@@ -169,6 +171,7 @@ abstract class ZStore extends AbstractByScoreOperation {
         RMZSet mapDBObj = getFinishedZSet();
         if (!mapDBObj.isEmpty()) {
             base().putValue(keyDest, mapDBObj);
+            lock.notifyAll();
         }
         return mapDBObj.size();
     }

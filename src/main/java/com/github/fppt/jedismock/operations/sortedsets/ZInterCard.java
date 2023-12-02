@@ -3,7 +3,7 @@ package com.github.fppt.jedismock.operations.sortedsets;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 @RedisCommand("zintercard")
 class ZInterCard extends AbstractZInter {
 
-    ZInterCard(RedisBase base, List<Slice> params) {
-        super(base, params);
+    ZInterCard(OperationExecutorState state, List<Slice> params) {
+        super(state, params);
     }
 
     @Override

@@ -5,7 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -24,14 +24,16 @@ class ZAdd extends AbstractByScoreOperation {
     enum Options {
         XX, NX, LT, GT, CH, INCR
     }
+    private final Object lock;
 
     private final EnumSet<Options> options = EnumSet.noneOf(Options.class);
 
     private int countAdd = 0;
     private int countChange = 0;
 
-    ZAdd(RedisBase base, List<Slice> params) {
-        super(base, params);
+    ZAdd(OperationExecutorState state, List<Slice> params) {
+        super(state.base(), params);
+        this.lock = state.lock();
     }
 
     @Override
@@ -69,7 +71,7 @@ class ZAdd extends AbstractByScoreOperation {
             if (countChange + countAdd > 0) {
                 mapDBObj.put(member, newScore);
                 base().putValue(key, mapDBObj);
-
+                lock.notifyAll();
                 return Response.bulkString(Slice.create(String.valueOf(newScore)));
             }
         }
@@ -96,6 +98,7 @@ class ZAdd extends AbstractByScoreOperation {
         }
         if (countAdd + countChange > 0) {
             base().putValue(key, mapDBObj);
+            lock.notifyAll();
         }
         return options.contains(CH) ? Response.integer(countAdd + countChange) :
                 Response.integer(countAdd);
@@ -129,12 +132,16 @@ class ZAdd extends AbstractByScoreOperation {
 
     private void parseParams() {
         Iterator<Slice> i = params().iterator();
-        while (i.hasNext()) {
+        i.next();
+        boolean quit = false;
+        while (i.hasNext() && !quit) {
             String opt = i.next().toString();
+            quit = true;
             for (Options value : Options.values()) {
                 if (value.toString().equalsIgnoreCase(opt)) {
                     options.add(value);
                     i.remove();
+                    quit = false;
                     break;
                 }
             }

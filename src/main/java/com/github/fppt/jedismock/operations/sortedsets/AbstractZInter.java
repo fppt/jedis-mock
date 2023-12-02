@@ -3,14 +3,14 @@ package com.github.fppt.jedismock.operations.sortedsets;
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.datastructures.ZSetEntry;
-import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
 abstract class AbstractZInter extends ZStore {
 
-    AbstractZInter(RedisBase base, List<Slice> params) {
-        super(base, params);
+    AbstractZInter(OperationExecutorState state, List<Slice> params) {
+        super(state, params);
     }
 
     protected RMZSet getResult(RMZSet zset1, RMZSet zset2, double weight) {
