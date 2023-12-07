@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class PSubscribeTest {
@@ -50,9 +50,9 @@ public class PSubscribeTest {
         try (TestPSubscription subscription = new TestPSubscription(hostAndPort.getHost(), hostAndPort.getPort(), pattern)) {
             Awaitility.await().until(() -> jedis.pubsubNumPat() > 0);
             jedis.publish(channel, message);
-            assertEquals(pattern, subscription.getSubscriber().latestPattern());
-            assertEquals(channel, subscription.getSubscriber().latestChannel());
-            assertEquals(message, subscription.getSubscriber().latestMessage());
+            assertThat(subscription.getSubscriber().latestPattern()).isEqualTo(pattern);
+            assertThat(subscription.getSubscriber().latestChannel()).isEqualTo(channel);
+            assertThat(subscription.getSubscriber().latestMessage()).isEqualTo(message);
         }
     }
 }

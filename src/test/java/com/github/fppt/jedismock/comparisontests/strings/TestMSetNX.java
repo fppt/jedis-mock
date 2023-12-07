@@ -6,9 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestMSetNX {
@@ -19,8 +17,8 @@ public class TestMSetNX {
 
     @TestTemplate
     public void msetnx(Jedis jedis) {
-        assertEquals(1, jedis.msetnx("key1", "Hello", "key2", "there"));
-        assertEquals(0, jedis.msetnx("key2", "new", "key3", "world"));
-        assertEquals(Arrays.asList("Hello", "there", null), jedis.mget("key1", "key2", "key3"));
+        assertThat(jedis.msetnx("key1", "Hello", "key2", "there")).isEqualTo(1);
+        assertThat(jedis.msetnx("key2", "new", "key3", "world")).isEqualTo(0);
+        assertThat(jedis.mget("key1", "key2", "key3")).containsExactly("Hello", "there", null);
     }
 }

@@ -7,9 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.resps.KeyedZSetElement;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestBZPopMax {
@@ -31,7 +30,7 @@ public class TestBZPopMax {
         KeyedZSetElement result = jedis.bzpopmax(0, ZSET_KEY_2, ZSET_KEY_1, "aaa");
         KeyedZSetElement expected = new KeyedZSetElement(ZSET_KEY_1, "c", 2.0);
 
-        assertEquals(expected, result);
+        assertThat(result).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -46,18 +45,18 @@ public class TestBZPopMax {
         KeyedZSetElement result = jedis.bzpopmax(0, ZSET_KEY_2, ZSET_KEY_1, "aaa");
         KeyedZSetElement expected = new KeyedZSetElement(ZSET_KEY_2, "f", 5.0);
 
-        assertEquals(expected, result);
+        assertThat(result).isEqualTo(expected);
     }
 
     @TestTemplate
     public void testBZPopMaxFromEmptySortedSetAndTimeOut(Jedis jedis) {
         long timeout = 1;
         long startTime = System.nanoTime();
-        assertThrows(NullPointerException.class, () ->
-                jedis.bzpopmax(timeout, ZSET_KEY_2, ZSET_KEY_1, "aaa")
-        );
+        assertThatThrownBy(() ->
+                jedis.bzpopmax(timeout, ZSET_KEY_2, ZSET_KEY_1, "aaa"))
+                .isInstanceOf(NullPointerException.class);
         long finishTime = System.nanoTime();
-        assertTrue(finishTime - startTime >= timeout * 1_000_000_000);
+        assertThat(finishTime - startTime).isGreaterThanOrEqualTo(timeout * 1_000_000_000);
     }
 
 }

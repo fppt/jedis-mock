@@ -9,8 +9,8 @@ import redis.clients.jedis.resps.Tuple;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZincrBy {
@@ -30,13 +30,13 @@ public class TestZincrBy {
         jedis.zadd(key, old_score, value);
 
         double result = jedis.zincrby(key, increment, value);
-        assertEquals(old_score + increment, result);
+        assertThat(result).isEqualTo(old_score + increment);
 
         List<Tuple> results = jedis.zrangeWithScores(key, 0, -1);
 
-        assertEquals(1, results.size());
-        assertEquals(value, results.get(0).getElement());
-        assertEquals(old_score + increment, results.get(0).getScore());
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getElement()).isEqualTo(value);
+        assertThat(results.get(0).getScore()).isEqualTo(old_score + increment);
     }
 
     @TestTemplate
@@ -46,13 +46,13 @@ public class TestZincrBy {
         String value = "myvalue";
 
         double result = jedis.zincrby(key, increment, value);
-        assertEquals(increment, result);
+        assertThat(result).isEqualTo(increment);
 
         List<Tuple> results = jedis.zrangeWithScores(key, 0, -1);
 
-        assertEquals(1, results.size());
-        assertEquals(value, results.get(0).getElement());
-        assertEquals(increment, results.get(0).getScore());
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getElement()).isEqualTo(value);
+        assertThat(results.get(0).getScore()).isEqualTo(increment);
     }
 
     @TestTemplate
@@ -68,19 +68,19 @@ public class TestZincrBy {
         String value4 = "value4";
 
         jedis.zadd(key, minusInfScore, value1);
-        assertThrows(RuntimeException.class,
-                () -> jedis.zincrby(key, plusInfIncrement, value1));
-        assertEquals(minusInfIncrement, jedis.zincrby(key, minusInfIncrement, value1));
+        assertThatThrownBy(() -> jedis.zincrby(key, plusInfIncrement, value1))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(jedis.zincrby(key, minusInfIncrement, value1)).isEqualTo(minusInfIncrement);
 
         jedis.zadd(key, plusInfScore, value2);
-        assertThrows(RuntimeException.class,
-                () -> jedis.zincrby(key, minusInfIncrement, value2));
-        assertEquals(plusInfIncrement, jedis.zincrby(key, plusInfIncrement, value2));
+        assertThatThrownBy(() -> jedis.zincrby(key, minusInfIncrement, value2))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(jedis.zincrby(key, plusInfIncrement, value2)).isEqualTo(plusInfIncrement);
 
         jedis.zadd(key, minusInfScore, value3);
-        assertEquals(minusInfIncrement, jedis.zincrby(key, 10d, value3));
+        assertThat(jedis.zincrby(key, 10d, value3)).isEqualTo(minusInfIncrement);
 
         jedis.zadd(key, plusInfScore, value4);
-        assertEquals(plusInfIncrement, jedis.zincrby(key, 10d, value4));
+        assertThat(jedis.zincrby(key, 10d, value4)).isEqualTo(plusInfIncrement);
     }
 }

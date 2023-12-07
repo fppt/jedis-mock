@@ -11,9 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class SUnionSUnionStoreTest {
@@ -40,8 +38,7 @@ public class SUnionSUnionStoreTest {
 
 
         Set<String> result = jedis.sunion(key1, key2, key3);
-        assertEquals(6, result.size());
-        assertEquals(expectedUnion, result);
+        assertThat(result).containsExactlyElementsOf(expectedUnion);
     }
 
     @TestTemplate
@@ -63,16 +60,16 @@ public class SUnionSUnionStoreTest {
         String destination = "set3";
 
         Long elementsInUnion = jedis.sunionstore(destination, key1, key2, key3);
-        assertEquals(6, elementsInUnion);
+        assertThat(elementsInUnion).isEqualTo(6);
 
-        assertEquals(expectedUnion, jedis.smembers(destination));
+        assertThat(jedis.smembers(destination)).isEqualTo(expectedUnion);
     }
 
     @TestTemplate
     public void deletesDestinationIfResultIsEmpty(Jedis jedis) {
         jedis.sadd("dest", "a", "b");
-        assertTrue(jedis.exists("dest"));
+        assertThat(jedis.exists("dest")).isTrue();
         jedis.sinterstore("dest", "src", "other");
-        assertFalse(jedis.exists("dest"));
+        assertThat(jedis.exists("dest")).isFalse();
     }
 }

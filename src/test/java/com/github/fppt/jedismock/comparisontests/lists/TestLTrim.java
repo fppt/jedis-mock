@@ -7,7 +7,8 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static java.lang.String.join;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestLTrim {
@@ -147,8 +148,8 @@ public class TestLTrim {
 
     private void verify(Jedis jedis, int start, int stop, String expected) {
         String result = jedis.ltrim(key, start, stop);
-        assertEquals("OK", result);
-        assertEquals(expected, String.join(",", jedis.lrange(key, 0, -1)));
+        assertThat(result).isEqualTo("OK");
+        assertThat(join(",", jedis.lrange(key, 0, -1))).isEqualTo(expected);
     }
 
 }

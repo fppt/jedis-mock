@@ -10,11 +10,10 @@ import redis.clients.jedis.resps.Tuple;
 
 import java.util.List;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static java.lang.Double.MAX_VALUE;
+import static java.lang.Double.MIN_VALUE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static redis.clients.jedis.params.ZRangeParams.zrangeByScoreParams;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRangeWithByScoreArg {
@@ -28,8 +27,8 @@ public class TestZRangeWithByScoreArg {
 
     @TestTemplate
     public void whenUsingZrangeByScore_EnsureItReturnsEmptySetForNonDefinedKey(Jedis jedis) {
-        assertEquals(emptyList(), jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)));
-        assertEquals(emptyList(), jedis.zrange(ZSET_KEY + " WITHSCORES", ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)));
+        assertThat(jedis.zrange(ZSET_KEY, zrangeByScoreParams(MIN_VALUE, MAX_VALUE))).isEmpty();
+        assertThat(jedis.zrange(ZSET_KEY + " WITHSCORES", zrangeByScoreParams(MIN_VALUE, MAX_VALUE))).isEmpty();
     }
 
     @TestTemplate
@@ -37,13 +36,11 @@ public class TestZRangeWithByScoreArg {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 1, "two");
         jedis.zadd(ZSET_KEY, 1, "three");
-        assertTrue(asList("one", "two", "three").containsAll(
-                jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE))));
-        assertTrue(asList(new Tuple("one", 1.),
-                new Tuple("two", 1.), new Tuple("three", 1.)).containsAll(
-                jedis.zrangeWithScores(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE))));
+        assertThat(jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)))
+                .contains("one", "two", "three");
+        assertThat(jedis.zrangeWithScores(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)))
+                .contains(new Tuple("one", 1.), new Tuple("two", 1.), new Tuple("three", 1.));
     }
-
 
     @TestTemplate
     public void whenUsingZrangeByScore_EnsureItReturnsSetWhenLowestAndHighestScoresSpecified(Jedis jedis) {
@@ -51,16 +48,15 @@ public class TestZRangeWithByScoreArg {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 2, "two");
         jedis.zadd(ZSET_KEY, 3, "three");
-        assertEquals(3, jedis.zrange(ZSET_KEY, 0, -1).size());
+        assertThat(jedis.zrange(ZSET_KEY, 0, -1)).hasSize(3);
 
         // when
         final List<String> zrangeByScoreResult = jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE));
 
         // then
-        assertEquals(asList("one", "two", "three"), zrangeByScoreResult);
-        assertEquals(asList(new Tuple("one", 1.),
-                new Tuple("two", 2.), new Tuple("three", 3.)),
-                jedis.zrangeWithScores(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, Double.MAX_VALUE)));
+        assertThat(zrangeByScoreResult).containsExactly("one", "two", "three");
+        assertThat(jedis.zrangeWithScores(ZSET_KEY, zrangeByScoreParams(MIN_VALUE, MAX_VALUE))).containsExactly(new Tuple("one", 1.),
+                new Tuple("two", 2.), new Tuple("three", 3.));
 
     }
 
@@ -70,13 +66,13 @@ public class TestZRangeWithByScoreArg {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 2, "two");
         jedis.zadd(ZSET_KEY, 3, "three");
-        assertEquals(3, jedis.zrange(ZSET_KEY, 0, -1).size());
+        assertThat(jedis.zrange(ZSET_KEY, 0, -1)).hasSize(3);
 
         // when
         final List<String> zrangeByScoreResult = jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, 2));
 
         // then
-        assertEquals(asList("one", "two"), zrangeByScoreResult);
+        assertThat(zrangeByScoreResult).containsExactly("one", "two");
 
     }
 
@@ -86,12 +82,11 @@ public class TestZRangeWithByScoreArg {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 2, "two");
         jedis.zadd(ZSET_KEY, 3, "three");
-        assertEquals(3, jedis.zrange(ZSET_KEY, 0, -1).size());
+        assertThat(jedis.zrange(ZSET_KEY, 0, -1)).hasSize(3);
 
         // then
-        assertEquals(singletonList("one"), jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, 1.99)));
-        assertEquals(singletonList(new Tuple("one", 1.)),
-                jedis.zrangeWithScores(ZSET_KEY, ZRangeParams.zrangeByScoreParams(Double.MIN_VALUE, 1.99)));
+        assertThat(jedis.zrange(ZSET_KEY, zrangeByScoreParams(MIN_VALUE, 1.99))).containsExactly("one");
+        assertThat(jedis.zrangeWithScores(ZSET_KEY, zrangeByScoreParams(MIN_VALUE, 1.99))).containsExactly(new Tuple("one", 1.));
     }
 
     @TestTemplate
@@ -107,17 +102,14 @@ public class TestZRangeWithByScoreArg {
         jedis.zadd(ZSET_KEY, 8, "eight");
         jedis.zadd(ZSET_KEY, 9, "nine");
         jedis.zadd(ZSET_KEY, 10, "ten");
-        assertEquals(10, jedis.zrange(ZSET_KEY, 0, -1).size());
+        assertThat(jedis.zrange(ZSET_KEY, 0, -1)).hasSize(10);
 
         //then
-        assertEquals(asList("five", "six", "seven", "eight"),
-                jedis.zrangeByScore(ZSET_KEY, 5, 8));
-        assertEquals(asList(
-                new Tuple("five", 5.),
+        assertThat(jedis.zrangeByScore(ZSET_KEY, 5, 8)).containsExactly("five", "six", "seven", "eight");
+        assertThat(jedis.zrangeWithScores(ZSET_KEY, zrangeByScoreParams(5, 8))).containsExactly(new Tuple("five", 5.),
                 new Tuple("six", 6.),
                 new Tuple("seven", 7.),
-                new Tuple("eight", 8.)),
-                jedis.zrangeWithScores(ZSET_KEY, ZRangeParams.zrangeByScoreParams(5, 8)));
+                new Tuple("eight", 8.));
     }
 
 
@@ -131,12 +123,9 @@ public class TestZRangeWithByScoreArg {
         jedis.zadd(ZSET_KEY, 2, "two");
 
         //then
-        assertEquals(asList("minusone", "zero", "one"),
-                jedis.zrange(ZSET_KEY, ZRangeParams.zrangeByScoreParams(-1, 1)));
-        assertEquals(asList(
-                new Tuple("minusone", -1.),
+        assertThat(jedis.zrange(ZSET_KEY, zrangeByScoreParams(-1, 1))).containsExactly("minusone", "zero", "one");
+        assertThat(jedis.zrangeWithScores(ZSET_KEY, zrangeByScoreParams(-1, 1))).containsExactly(new Tuple("minusone", -1.),
                 new Tuple("zero", 0.),
-                new Tuple("one", 1.)),
-                jedis.zrangeWithScores(ZSET_KEY, ZRangeParams.zrangeByScoreParams(-1, 1)));
+                new Tuple("one", 1.));
     }
 }

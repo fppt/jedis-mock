@@ -9,7 +9,7 @@ import redis.clients.jedis.Jedis;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZMScore {
@@ -25,7 +25,7 @@ public class TestZMScore {
     public void testZScoreNotExistKey(Jedis jedis) {
         List<Double> expected = new ArrayList<>();
         expected.add(null);
-        assertEquals(expected, jedis.zmscore(ZSET_KEY, "a"));
+        assertThat(jedis.zmscore(ZSET_KEY, "a")).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -36,7 +36,7 @@ public class TestZMScore {
         expected.add(1.0);
         expected.add(null);
         expected.add(2.0);
-        assertEquals(expected, jedis.zmscore(ZSET_KEY, "a", "c", "b"));
+        assertThat(jedis.zmscore(ZSET_KEY, "a", "c", "b")).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -44,6 +44,6 @@ public class TestZMScore {
         jedis.zadd(ZSET_KEY, 2, "a");
         List<Double> expected = new ArrayList<>();
         expected.add(2.0);
-        assertEquals(expected, jedis.zmscore(ZSET_KEY, "a"));
+        assertThat(jedis.zmscore(ZSET_KEY, "a")).isEqualTo(expected);
     }
 }

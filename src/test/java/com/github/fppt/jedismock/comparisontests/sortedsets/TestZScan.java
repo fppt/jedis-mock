@@ -12,7 +12,7 @@ import redis.clients.jedis.resps.Tuple;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZScan {
@@ -32,9 +32,8 @@ public class TestZScan {
         ScanResult<Tuple> result = jedis.zscan(ZSET_KEY, "0", new ScanParams().match("*3"));
         ScanResult<Tuple> expected = new ScanResult<>("0",
                 Collections.singletonList(new Tuple("a3", 3.0)));
-        assertEquals(expected.getCursor(), result.getCursor());
-        assertEquals(expected.getResult().size(), result.getResult().size());
-        assertEquals(expected.getResult(), result.getResult());
+        assertThat(result.getCursor()).isEqualTo(expected.getCursor());
+        assertThat(result.getResult()).isEqualTo(expected.getResult());
     }
 
     @TestTemplate
@@ -51,8 +50,7 @@ public class TestZScan {
                         new Tuple("a7", 7.0),
                         new Tuple("a8", 8.0),
                         new Tuple("a9", 9.0)));
-        assertEquals(expected.getCursor(), result.getCursor());
-        assertEquals(expected.getResult().size(), result.getResult().size());
-        assertEquals(expected.getResult(), result.getResult());
+        assertThat(result.getCursor()).isEqualTo(expected.getCursor());
+        assertThat(result.getResult()).isEqualTo(expected.getResult());
     }
 }

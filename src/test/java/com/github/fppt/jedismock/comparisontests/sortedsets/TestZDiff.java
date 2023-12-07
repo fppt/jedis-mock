@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.resps.Tuple;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map;
@@ -16,7 +15,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZDiff {
@@ -31,7 +30,7 @@ public class TestZDiff {
 
     @TestTemplate
     public void testZDiffNotExistKeyToNotExistDest(Jedis jedis) {
-        assertEquals(Collections.emptySet(), jedis.zdiff(ZSET_KEY_1));
+        assertThat(jedis.zdiff(ZSET_KEY_1)).isEmpty();
     }
 
     @TestTemplate
@@ -42,7 +41,7 @@ public class TestZDiff {
         Set<Tuple> expected = new TreeSet<>();
         expected.add(new Tuple("a", 1.0));
         expected.add(new Tuple("b", 2.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -56,7 +55,7 @@ public class TestZDiff {
         Set<Tuple> results = jedis.zdiffWithScores(ZSET_KEY_1, ZSET_KEY_2);
         Set<Tuple> expected = new TreeSet<>();
         expected.add(new Tuple("2", 2.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 
     public static String randomValue(int n) {
@@ -155,7 +154,7 @@ public class TestZDiff {
             resultSorted.sort(null);
             List<String> sSorted = new ArrayList<>(s.keySet());
             sSorted.sort(null);
-            assertEquals(resultSorted, sSorted);
+            assertThat(resultSorted).isEqualTo(sSorted);
         }
     }
 }

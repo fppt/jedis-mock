@@ -10,7 +10,8 @@ import redis.clients.jedis.resps.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZPopMin {
@@ -29,9 +30,9 @@ public class TestZPopMin {
         jedis.zadd(ZSET_KEY, 1, "b");
         jedis.zadd(ZSET_KEY, 2, "c");
 
-        assertEquals(new Tuple("a", 0.0), jedis.zpopmin(ZSET_KEY));
-        assertEquals(new Tuple("b", 1.0), jedis.zpopmin(ZSET_KEY));
-        assertEquals(new Tuple("c", 2.0), jedis.zpopmin(ZSET_KEY));
+        assertThat(jedis.zpopmin(ZSET_KEY)).isEqualTo(new Tuple("a", 0.0));
+        assertThat(jedis.zpopmin(ZSET_KEY)).isEqualTo(new Tuple("b", 1.0));
+        assertThat(jedis.zpopmin(ZSET_KEY)).isEqualTo(new Tuple("c", 2.0));
     }
 
     @TestTemplate
@@ -44,29 +45,29 @@ public class TestZPopMin {
         expected.add(new Tuple("a", 0.0));
         expected.add(new Tuple("b", 1.0));
 
-        assertEquals(expected, jedis.zpopmin(ZSET_KEY, 2));
+        assertThat(jedis.zpopmin(ZSET_KEY, 2)).isEqualTo(expected);
     }
 
     @TestTemplate
     public void testZPopMinFromEmptyKey(Jedis jedis) {
-        assertNull(jedis.zpopmin(ZSET_KEY));
+        assertThat(jedis.zpopmin(ZSET_KEY)).isNull();
     }
 
     @TestTemplate
     public void testZPopMinWithNegativeCount(Jedis jedis) {
         jedis.set(ZSET_KEY, "foo");
-        assertThrows(RuntimeException.class,
-                () -> jedis.zpopmin(ZSET_KEY, -1));
+        assertThatThrownBy(() -> jedis.zpopmin(ZSET_KEY, -1))
+                .isInstanceOf(RuntimeException.class);
 
         jedis.del(ZSET_KEY);
-        assertThrows(RuntimeException.class,
-                () -> jedis.zpopmin(ZSET_KEY, -2));
+        assertThatThrownBy(() -> jedis.zpopmin(ZSET_KEY, -2))
+                .isInstanceOf(RuntimeException.class);
 
         jedis.zadd(ZSET_KEY, 1, "a");
         jedis.zadd(ZSET_KEY, 2, "b");
         jedis.zadd(ZSET_KEY, 3, "c");
-        assertThrows(RuntimeException.class,
-                () -> jedis.zpopmin(ZSET_KEY, -3));
+        assertThatThrownBy(() -> jedis.zpopmin(ZSET_KEY, -3))
+                .isInstanceOf(RuntimeException.class);
 
     }
 

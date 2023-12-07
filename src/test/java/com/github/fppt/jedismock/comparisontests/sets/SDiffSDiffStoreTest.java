@@ -11,9 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class SDiffSDiffStoreTest {
@@ -37,8 +35,7 @@ public class SDiffSDiffStoreTest {
 
 
         Set<String> result = jedis.sdiff(key1, key2);
-        assertEquals(2, result.size());
-        assertEquals(expectedDifference, result);
+        assertThat(result).containsExactlyElementsOf(expectedDifference);
     }
 
     @TestTemplate
@@ -59,8 +56,7 @@ public class SDiffSDiffStoreTest {
 
 
         Set<String> result = jedis.sdiff(key1, key2, key3);
-        assertEquals(2, result.size());
-        assertEquals(expectedDifference, result);
+        assertThat(result).containsExactlyElementsOf(expectedDifference);
     }
 
     @TestTemplate
@@ -79,9 +75,9 @@ public class SDiffSDiffStoreTest {
         String destination = "set3";
 
         Long elementsInDifference = jedis.sdiffstore(destination, key1, key2);
-        assertEquals(2, elementsInDifference);
+        assertThat(elementsInDifference).isEqualTo(2);
 
-        assertEquals(expectedDifference, jedis.smembers(destination));
+        assertThat(jedis.smembers(destination)).isEqualTo(expectedDifference);
     }
 
 
@@ -90,8 +86,8 @@ public class SDiffSDiffStoreTest {
         jedis.sadd("dest", "a", "b");
         jedis.sadd("src", "c");
         jedis.sadd("other", "c", "d");
-        assertTrue(jedis.exists("dest"));
+        assertThat(jedis.exists("dest")).isTrue();
         jedis.sdiffstore("dest", "src", "other");
-        assertFalse(jedis.exists("dest"));
+        assertThat(jedis.exists("dest")).isFalse();
     }
 }

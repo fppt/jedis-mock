@@ -5,7 +5,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestFlushOperations {
@@ -13,9 +13,9 @@ public class TestFlushOperations {
     void whenFlushDBCalled_ensureKeysAreErased(Jedis jedis) {
         jedis.set("foo", "val1");
         jedis.set("bar", "val2");
-        assertEquals(2, jedis.dbSize());
+        assertThat(jedis.dbSize()).isEqualTo(2);
         jedis.flushDB();
-        assertEquals(0, jedis.dbSize());
+        assertThat(jedis.dbSize()).isEqualTo(0);
     }
 
     @TestTemplate
@@ -24,12 +24,12 @@ public class TestFlushOperations {
             jedis.select(i);
             jedis.set("foo" + i, "val1");
             jedis.set("bar" + i, "val2");
-            assertEquals(2, jedis.dbSize());
+            assertThat(jedis.dbSize()).isEqualTo(2);
         }
         jedis.flushAll();
         for (int i = 0; i < 3; i++) {
             jedis.select(i);
-            assertEquals(0, jedis.dbSize());
+            assertThat(jedis.dbSize()).isEqualTo(0);
         }
     }
 }

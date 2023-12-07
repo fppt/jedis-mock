@@ -7,12 +7,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ZRangeParams;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Integer.MIN_VALUE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import static redis.clients.jedis.params.ZRangeParams.zrangeByLexParams;
+import static redis.clients.jedis.params.ZRangeParams.zrangeParams;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRange {
@@ -27,50 +30,50 @@ public class TestZRange {
         jedis.zadd(ZSET_KEY, 1, "cccc");
         jedis.zadd(ZSET_KEY, 3, "bcbb");
         jedis.zadd(ZSET_KEY, 3, "babb");
-        assertEquals(5L, jedis.zcount(ZSET_KEY, Integer.MIN_VALUE, Integer.MAX_VALUE));
+        assertThat(jedis.zcount(ZSET_KEY, MIN_VALUE, MAX_VALUE)).isEqualTo(5L);
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsEverythingInRightOrderWithPlusMinusMaxInteger(Jedis jedis) {
-        assertEquals(Arrays.asList("cccc", "aaaa", "babb", "bbbb", "bcbb"), jedis.zrange(ZSET_KEY, Integer.MIN_VALUE, Integer.MAX_VALUE));
+        assertThat(jedis.zrange(ZSET_KEY, MIN_VALUE, MAX_VALUE)).containsExactly("cccc", "aaaa", "babb", "bbbb", "bcbb");
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithPositiveRange(Jedis jedis) {
-        assertEquals(Arrays.asList("aaaa", "babb", "bbbb"), jedis.zrange(ZSET_KEY, 1, 3));
+        assertThat(jedis.zrange(ZSET_KEY, 1, 3)).containsExactly("aaaa", "babb", "bbbb");
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithNegativeRange(Jedis jedis) {
-        assertEquals(Arrays.asList("babb", "bbbb", "bcbb"), jedis.zrange(ZSET_KEY, -3, -1));
+        assertThat(jedis.zrange(ZSET_KEY, -3, -1)).containsExactly("babb", "bbbb", "bcbb");
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithNegativeStartAndPositiveEndRange(Jedis jedis) {
-        assertEquals(Arrays.asList("cccc", "aaaa", "babb"), jedis.zrange(ZSET_KEY, -5, 2));
+        assertThat(jedis.zrange(ZSET_KEY, -5, 2)).containsExactly("cccc", "aaaa", "babb");
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInRightOrderWithPositiveStartAndNegativeEndRange(Jedis jedis) {
-        assertEquals(Arrays.asList("aaaa", "babb", "bbbb", "bcbb"), jedis.zrange(ZSET_KEY, 1, -1));
+        assertThat(jedis.zrange(ZSET_KEY, 1, -1)).containsExactly("aaaa", "babb", "bbbb", "bcbb");
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsEmptyListWhenOutOfRangeStartIndex(Jedis jedis) {
-        assertEquals(Collections.emptyList(), jedis.zrange(ZSET_KEY, 6, -1));
+        assertThat(jedis.zrange(ZSET_KEY, 6, -1)).isEmpty();
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsEmptyListWhenOutOfRangeEndIndex(Jedis jedis) {
-        assertEquals(Collections.emptyList(), jedis.zrange(ZSET_KEY, 1, -6));
+        assertThat(jedis.zrange(ZSET_KEY, 1, -6)).isEmpty();
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsListInLexicographicOrderForSameScore(Jedis jedis) {
         jedis.zadd("foo", 42, "def");
         jedis.zadd("foo", 42, "abc");
-        assertEquals(Arrays.asList("abc", "def"), jedis.zrange("foo", 0, -1));
-        assertEquals(Arrays.asList("def", "abc"), jedis.zrange("foo", ZRangeParams.zrangeParams(0, -1).rev()));
+        assertThat(jedis.zrange("foo", 0, -1)).containsExactly("abc", "def");
+        assertThat(jedis.zrange("foo", zrangeParams(0, -1).rev())).containsExactly("def", "abc");
     }
 
     @TestTemplate
@@ -79,18 +82,18 @@ public class TestZRange {
         jedis.zadd("foo", 2, "two");
         jedis.zadd("foo", 3, "three");
         final List<String> list = jedis.zrange("foo", ZRangeParams.zrangeByScoreParams(3, 1).rev());
-        assertEquals(Arrays.asList("three", "two", "one"), list);
+        assertThat(list).containsExactly("three", "two", "one");
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsErrorWhenByLexAndWithscores(Jedis jedis) {
-        assertThrows(RuntimeException.class,
-                () -> jedis.zrangeWithScores(ZSET_KEY, ZRangeParams.zrangeByLexParams("1", "-6")));
+        assertThatThrownBy(() -> jedis.zrangeWithScores(ZSET_KEY, zrangeByLexParams("1", "-6")))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @TestTemplate
     public void whenUsingZrange_EnsureItReturnsErrorWhenLimitNotByLexNotByScore(Jedis jedis) {
-        assertThrows(RuntimeException.class,
-                () -> jedis.zrange(ZSET_KEY, new ZRangeParams(1, -6).limit(1, 1)));
+        assertThatThrownBy(() -> jedis.zrange(ZSET_KEY, new ZRangeParams(1, -6).limit(1, 1)))
+                .isInstanceOf(RuntimeException.class);
     }
 }

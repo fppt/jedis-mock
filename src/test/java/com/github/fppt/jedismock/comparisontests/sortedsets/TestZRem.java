@@ -10,8 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRem {
@@ -30,35 +29,28 @@ public class TestZRem {
         members.put("myvalue2", 20d);
 
         long result = jedis.zadd(ZSET_KEY, members);
-
-        assertEquals(2L, result);
+        assertThat(result).isEqualTo(2L);
 
         List<String> results = jedis.zrange(ZSET_KEY, 0, -1);
-
-        assertEquals(2, results.size());
-        assertEquals("myvalue1", results.get(0));
-        assertEquals("myvalue2", results.get(1));
+        assertThat(results).containsExactly("myvalue1", "myvalue2");
 
         result = jedis.zrem(ZSET_KEY, "myvalue1");
-
-        assertEquals(1L, result);
+        assertThat(result).isEqualTo(1L);
 
         results = jedis.zrange(ZSET_KEY, 0, -1);
-
-        assertEquals(1, results.size());
-        assertEquals("myvalue2", results.get(0));
+        assertThat(results).containsExactly("myvalue2");
     }
 
     @TestTemplate
     public void testZRemLastValue(Jedis jedis) {
         jedis.zadd(ZSET_KEY, 1, "aaa");
-        assertEquals(1, jedis.zrem(ZSET_KEY, "aaa"));
-        assertFalse(jedis.exists(ZSET_KEY));
+        assertThat(jedis.zrem(ZSET_KEY, "aaa")).isEqualTo(1);
+        assertThat(jedis.exists(ZSET_KEY)).isFalse();
     }
 
     @TestTemplate
     public void testZRemKeyNotExist(Jedis jedis) {
-        assertEquals(0, jedis.zrem(ZSET_KEY, "aaa"));
-        assertFalse(jedis.exists(ZSET_KEY));
+        assertThat(jedis.zrem(ZSET_KEY, "aaa")).isEqualTo(0);
+        assertThat(jedis.exists(ZSET_KEY)).isFalse();
     }
 }

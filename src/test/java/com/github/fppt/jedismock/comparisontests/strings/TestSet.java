@@ -7,9 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.SetParams;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestSet {
@@ -38,7 +36,7 @@ public class TestSet {
     @TestTemplate
     void testSetXXKey(Jedis jedis) {
         jedis.set("xx", "foo");
-        assertEquals("foo", jedis.get("xx"));
+        assertThat(jedis.get("xx")).isEqualTo("foo");
     }
 
     // SET key value EX s
@@ -103,36 +101,36 @@ public class TestSet {
     public void testSetNonUTF8binary(Jedis jedis) {
         byte[] msg = new byte[]{(byte) 0xbe};
         jedis.set("foo".getBytes(), msg);
-        assertArrayEquals(msg, jedis.get("foo".getBytes()));
+        assertThat(jedis.get("foo".getBytes())).containsExactlyInAnyOrder(msg);
     }
 
     @TestTemplate
     public void testSetEmptyString(Jedis jedis) {
         jedis.set("foo", "");
-        assertEquals("", jedis.get("foo"));
+        assertThat(jedis.get("foo")).isEqualTo("");
     }
 
     private void testSetValueExpires(Jedis jedis, SetParams setParams) throws InterruptedException {
-        assertEquals("OK", jedis.set(SET_KEY, SET_VALUE, setParams));
-        assertEquals(SET_VALUE, jedis.get(SET_KEY));
+        assertThat(jedis.set(SET_KEY, SET_VALUE, setParams)).isEqualTo("OK");
+        assertThat(jedis.get(SET_KEY)).isEqualTo(SET_VALUE);
         Thread.sleep(1100);
-        assertNull(jedis.get(SET_KEY));
+        assertThat(jedis.get(SET_KEY)).isNull();
     }
 
     private void testSetNXWithParams(Jedis jedis, SetParams setParams) {
-        assertEquals("OK", jedis.set(SET_KEY, SET_VALUE, setParams));
-        assertEquals(SET_VALUE, jedis.get(SET_KEY));
-        assertNull(jedis.set(SET_KEY, SET_ANOTHER_VALUE, setParams));
-        assertEquals(SET_VALUE, jedis.get(SET_KEY));
-        assertEquals(1, jedis.del(SET_KEY));
+        assertThat(jedis.set(SET_KEY, SET_VALUE, setParams)).isEqualTo("OK");
+        assertThat(jedis.get(SET_KEY)).isEqualTo(SET_VALUE);
+        assertThat(jedis.set(SET_KEY, SET_ANOTHER_VALUE, setParams)).isNull();
+        assertThat(jedis.get(SET_KEY)).isEqualTo(SET_VALUE);
+        assertThat(jedis.del(SET_KEY)).isEqualTo(1);
     }
 
     private void testSetXXWithParams(Jedis jedis, SetParams setParams) {
-        assertNull(jedis.set(SET_KEY, SET_VALUE, setParams));
-        assertNull(jedis.get(SET_KEY));
-        assertEquals("OK", jedis.set(SET_KEY, SET_ANOTHER_VALUE));
-        assertEquals("OK", jedis.set(SET_KEY, SET_VALUE, setParams));
-        assertEquals(SET_VALUE, jedis.get(SET_KEY));
-        assertEquals(1, jedis.del(SET_KEY));
+        assertThat(jedis.set(SET_KEY, SET_VALUE, setParams)).isNull();
+        assertThat(jedis.get(SET_KEY)).isNull();
+        assertThat(jedis.set(SET_KEY, SET_ANOTHER_VALUE)).isEqualTo("OK");
+        assertThat(jedis.set(SET_KEY, SET_VALUE, setParams)).isEqualTo("OK");
+        assertThat(jedis.get(SET_KEY)).isEqualTo(SET_VALUE);
+        assertThat(jedis.del(SET_KEY)).isEqualTo(1);
     }
 }

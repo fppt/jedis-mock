@@ -8,11 +8,11 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.resps.ScanResult;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
 
 @ExtendWith(ComparisonBase.class)
 public class SScanTest {
@@ -31,10 +31,11 @@ public class SScanTest {
         }
         jedis.sadd(key, values);
 
-        ScanResult<String> result = jedis.sscan(key, ScanParams.SCAN_POINTER_START, new ScanParams().count(30));
+        ScanResult<String> result = jedis.sscan(key, SCAN_POINTER_START, new ScanParams().count(30));
 
-        assertEquals(20, result.getResult().size());
-        assertTrue(result.getResult().contains(values[1]));
+        assertThat(result.getResult())
+                .contains(values[1])
+                .hasSize(20);
     }
 
     @TestTemplate
@@ -47,7 +48,7 @@ public class SScanTest {
         jedis.sadd(key, values);
 
         ScanResult<String> result = jedis.sscan(key, ScanParams.SCAN_POINTER_START, new ScanParams().count(13));
-        assertNotEquals(ScanParams.SCAN_POINTER_START, result.getCursor());
+        assertThat(result.getCursor()).isNotEqualTo(SCAN_POINTER_START);
     }
 
     @TestTemplate
@@ -58,12 +59,11 @@ public class SScanTest {
         }
         jedis.sadd(key, values);
 
-        ScanResult<String> result = jedis.sscan(key, ScanParams.SCAN_POINTER_START,
+        ScanResult<String> result = jedis.sscan(key, SCAN_POINTER_START,
                 new ScanParams().match("21_value_0"));
 
-        assertEquals(ScanParams.SCAN_POINTER_START, result.getCursor());
-        assertEquals(1, result.getResult().size());
-        assertTrue(result.getResult().contains(values[0]));
+        assertThat(result.getCursor()).isEqualTo(SCAN_POINTER_START);
+        assertThat(result.getResult()).containsExactly(values[0]);
     }
 
     @TestTemplate
@@ -85,8 +85,8 @@ public class SScanTest {
             results.addAll(result.getResult());
             count++;
         } while (!ScanParams.SCAN_POINTER_START.equals(cursor));
-        assertEquals(new HashSet<>(Arrays.asList(values)), results);
-        assertTrue(count > 1);
+        assertThat(results).containsExactlyInAnyOrder(values);
+        assertThat(count).isGreaterThan(1);
 
     }
 }

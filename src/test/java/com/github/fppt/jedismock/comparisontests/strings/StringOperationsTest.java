@@ -14,7 +14,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static java.lang.Integer.parseInt;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class StringOperationsTest {
@@ -31,9 +33,9 @@ public class StringOperationsTest {
         String key = "key";
         String value = "value";
 
-        assertNull(jedis.get(key));
+        assertThat(jedis.get(key)).isNull();
         jedis.set(key, value);
-        assertEquals(value, jedis.get(key));
+        assertThat(jedis.get(key)).isEqualTo(value);
     }
 
     @TestTemplate
@@ -43,7 +45,7 @@ public class StringOperationsTest {
         int[] count = new int[]{1, 5, 6, 2, -9, -2, 10, 11, 5, -2, -2};
 
         jedis.set(key, "0");
-        assertEquals(0, Integer.parseInt(jedis.get(key)));
+        assertThat(parseInt(jedis.get(key))).isEqualTo(0);
 
         //Increase counts concurrently
 
@@ -60,7 +62,7 @@ public class StringOperationsTest {
         pool.invokeAll(callables);
         pool.shutdownNow();
         //Check final count
-        assertEquals(25, Integer.parseInt(jedis.get(key)));
+        assertThat(parseInt(jedis.get(key))).isEqualTo(25);
     }
 
     @TestTemplate
@@ -77,7 +79,7 @@ public class StringOperationsTest {
         ExecutorService pool = Executors.newCachedThreadPool();
         pool.invokeAll(callables);
         pool.shutdownNow();
-        assertEquals(5, Integer.parseInt(jedis.get("testKey")));
+        assertThat(parseInt(jedis.get("testKey"))).isEqualTo(5);
     }
 
     @TestTemplate
@@ -89,7 +91,7 @@ public class StringOperationsTest {
         jedis.incr(key);
         long ttl = jedis.ttl(key);
 
-        assertTrue(ttl > 0);
+        assertThat(ttl).isGreaterThan(0);
     }
 
     @TestTemplate
@@ -101,32 +103,34 @@ public class StringOperationsTest {
         jedis.incrBy(key, 10);
         long ttl = jedis.ttl(key);
 
-        assertTrue(ttl > 0);
+        assertThat(ttl).isGreaterThan(0);
     }
 
     @TestTemplate
     public void whenIncrementingWithIncrByFloat_ensureValuesAreCorrect(Jedis jedis) {
         jedis.set("key", "0");
         jedis.incrByFloat("key", 1.);
-        assertEquals("1", jedis.get("key"));
+        assertThat(jedis.get("key")).isEqualTo("1");
         jedis.incrByFloat("key", 1.5);
-        assertEquals("2.5", jedis.get("key"));
+        assertThat(jedis.get("key")).isEqualTo("2.5");
     }
 
     @TestTemplate
     public void whenIncrementingWithIncrBy_ensureValuesAreCorrect(Jedis jedis) {
         jedis.set("key", "0");
         jedis.incrBy("key", 1);
-        assertEquals("1", jedis.get("key"));
+        assertThat(jedis.get("key")).isEqualTo("1");
         jedis.incrBy("key", 2);
-        assertEquals("3", jedis.get("key"));
+        assertThat(jedis.get("key")).isEqualTo("3");
     }
 
     @TestTemplate
     public void whenIncrementingText_ensureException(Jedis jedis) {
         jedis.set("key", "foo");
-        assertThrows(JedisDataException.class, () -> jedis.incrBy("key", 1));
-        assertThrows(JedisDataException.class, () -> jedis.incrByFloat("key", 1.5));
+        assertThatThrownBy(() -> jedis.incrBy("key", 1))
+                .isInstanceOf(JedisDataException.class);
+        assertThatThrownBy(() -> jedis.incrByFloat("key", 1.5))
+                .isInstanceOf(JedisDataException.class);
     }
 
     @TestTemplate
@@ -138,7 +142,7 @@ public class StringOperationsTest {
         jedis.decr(key);
         long ttl = jedis.ttl(key);
 
-        assertTrue(ttl > 0);
+        assertThat(ttl).isGreaterThan(0);
     }
 
     @TestTemplate
@@ -150,37 +154,37 @@ public class StringOperationsTest {
         jedis.decrBy(key, 10);
         long ttl = jedis.ttl(key);
 
-        assertTrue(ttl > 0);
+        assertThat(ttl).isGreaterThan(0);
     }
 
     @TestTemplate
     public void testSetNXNonUTF8binary(Jedis jedis) {
         jedis.setnx("foo".getBytes(), msg);
-        assertArrayEquals(msg, jedis.get("foo".getBytes()));
+        assertThat(jedis.get("foo".getBytes())).containsExactlyInAnyOrder(msg);
     }
 
     @TestTemplate
     public void testSetEXNonUTF8binary(Jedis jedis) {
         jedis.setex("foo".getBytes(), 100, msg);
-        assertArrayEquals(msg, jedis.get("foo".getBytes()));
+        assertThat(jedis.get("foo".getBytes())).containsExactlyInAnyOrder(msg);
     }
 
     @TestTemplate
     public void testMsetNonUTF8binary(Jedis jedis) {
         jedis.mset("foo".getBytes(), msg);
-        assertArrayEquals(msg, jedis.get("foo".getBytes()));
+        assertThat(jedis.get("foo".getBytes())).containsExactlyInAnyOrder(msg);
     }
 
     @TestTemplate
     public void testGetSetNonUTF8binary(Jedis jedis) {
         jedis.getSet("foo".getBytes(), msg);
-        assertArrayEquals(msg, jedis.get("foo".getBytes()));
+        assertThat(jedis.get("foo".getBytes())).containsExactlyInAnyOrder(msg);
     }
 
     @TestTemplate
     public void testGetSetEmptyString(Jedis jedis) {
         jedis.getSet("foo", "");
-        assertEquals("", jedis.get("foo"));
+        assertThat(jedis.get("foo")).isEqualTo("");
     }
 
 }

@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class PubSubTest {
@@ -85,8 +85,8 @@ public class PubSubTest {
         try (TestSubscription subscription = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), channel)) {
             Awaitility.await().until(() -> jedis.pubsubChannels("*").contains(channel));
             jedis.publish(channel, message);
-            assertEquals(channel, subscription.getSubscriber().latestChannel());
-            assertEquals(message, subscription.getSubscriber().latestMessage());
+            assertThat(subscription.getSubscriber().latestChannel()).isEqualTo(channel);
+            assertThat(subscription.getSubscriber().latestMessage()).isEqualTo(message);
             //Verify that the message is received only once
             Awaitility.await().during(Duration.ofSeconds(1)).until(() -> subscription.getSubscriber().getMsgCount() == 1);
         }
@@ -99,11 +99,11 @@ public class PubSubTest {
         try (TestSubscription s1 = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "foo", "bar");
              TestSubscription s2 = new TestSubscription(hostAndPort.getHost(), hostAndPort.getPort(), "bar")) {
             Awaitility.await().until(() -> jedis.pubsubChannels("*").contains("bar"));
-            assertEquals(2, jedis.publish("bar", message));
-            assertEquals("bar", s1.getSubscriber().latestChannel());
-            assertEquals(message, s1.getSubscriber().latestMessage());
-            assertEquals("bar", s2.getSubscriber().latestChannel());
-            assertEquals(message, s2.getSubscriber().latestMessage());
+            assertThat(jedis.publish("bar", message)).isEqualTo(2);
+            assertThat(s1.getSubscriber().latestChannel()).isEqualTo("bar");
+            assertThat(s1.getSubscriber().latestMessage()).isEqualTo(message);
+            assertThat(s2.getSubscriber().latestChannel()).isEqualTo("bar");
+            assertThat(s2.getSubscriber().latestMessage()).isEqualTo(message);
         }
     }
 }

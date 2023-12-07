@@ -14,13 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
+
+import static org.assertj.core.api.Assertions.within;
 
 @ExtendWith(ComparisonBase.class)
 public class HashOperationsTest {
@@ -32,8 +30,6 @@ public class HashOperationsTest {
     private final String VALUE_2 = "value2";
     private final String FIELD_3 = "field3";
     private final String VALUE_3 = "value3";
-    private final String FIELD_4 = "field4";
-    private final String FIELD_5 = "field5";
 
     @BeforeEach
     public void setUp(Jedis jedis) {
@@ -46,38 +42,26 @@ public class HashOperationsTest {
         jedis.hset(key, "E", "3.14e1");
         jedis.hset(key, "F", "not-a-number");
 
-        assertEquals(3, jedis.hincrBy(key, "A", 3));
-        assertEquals(4.5, jedis.hincrByFloat(key, "A", 1.5), 0.00001);
-        assertEquals(-1.5, jedis.hincrByFloat(key, "B", -1.5), 0.00001);
+        assertThat(jedis.hincrBy(key, "A", 3)).isEqualTo(3);
+        assertThat(jedis.hincrByFloat(key, "A", 1.5)).isCloseTo(4.5, within(0.00001));
+        assertThat(jedis.hincrByFloat(key, "B", -1.5)).isCloseTo(-1.5, within(0.00001));
 
-        try {
-            jedis.hincrBy(key, "F", 1);
-            fail("Exception not thrown");
-        } catch (JedisDataException ignored) {
-            // Non-integer value
-        }
+        assertThatThrownBy(() -> jedis.hincrBy(key, "F", 1))
+                .isInstanceOf(JedisDataException.class);
 
-        try {
-            jedis.hincrBy(key, "E", 1);
-            fail("Exception not thrown");
-        } catch (JedisDataException ignored) {
-            // Non-integer value
-        }
+        assertThatThrownBy(() -> jedis.hincrBy(key, "E", 1))
+                .isInstanceOf(JedisDataException.class);
 
-        try {
-            jedis.hincrByFloat(key, "F", 1);
-            fail("Exception not thrown");
-        } catch (JedisDataException ignored) {
-            // Non-numeric value
-        }
+        assertThatThrownBy(() -> jedis.hincrByFloat(key, "F", 1))
+                .isInstanceOf(JedisDataException.class);
 
-        assertEquals(31.41, jedis.hincrByFloat(key, "E", 0.01), 0.00001);
+        assertThat(jedis.hincrByFloat(key, "E", 0.01)).isCloseTo(31.41, within(0.00001));
     }
 
     @TestTemplate
     public void whenHSettingOnTheSameKeys_EnsureReturnTypeIs1WhenKeysAreNew(Jedis jedis) {
-        assertEquals(1L, jedis.hset(HASH, FIELD_1, VALUE_1));
-        assertEquals(0L, jedis.hset(HASH, FIELD_1, VALUE_1));
+        assertThat(jedis.hset(HASH, FIELD_1, VALUE_1)).isEqualTo(1L);
+        assertThat(jedis.hset(HASH, FIELD_1, VALUE_1)).isEqualTo(0L);
     }
 
     @TestTemplate
@@ -86,9 +70,9 @@ public class HashOperationsTest {
         String hash = "my-hash";
         String value = "my-value";
 
-        assertNull(jedis.hget(hash, field));
+        assertThat(jedis.hget(hash, field)).isNull();
         jedis.hset(hash, field, value);
-        assertEquals(value, jedis.hget(hash, field));
+        assertThat(jedis.hget(hash, field)).isEqualTo(value);
     }
 
     @TestTemplate
@@ -97,9 +81,9 @@ public class HashOperationsTest {
         String hash = "my-hash";
         String value = "my-value";
 
-        assertNull(jedis.hget(hash, field));
+        assertThat(jedis.hget(hash, field)).isNull();
         jedis.hset(hash, field, value);
-        assertTrue(jedis.hexists(hash, field));
+        assertThat(jedis.hexists(hash, field)).isTrue();
     }
 
     @TestTemplate
@@ -109,22 +93,19 @@ public class HashOperationsTest {
 
         //Check first returns
         Map<String, String> result = jedis.hgetAll(HASH);
-        assertEquals(2, result.size());
-        assertEquals(VALUE_1, result.get(FIELD_1));
-        assertEquals(VALUE_2, result.get(FIELD_2));
+        assertThat(result).hasSize(2)
+                .contains(entry(FIELD_1, VALUE_1), entry(FIELD_2, VALUE_2));
 
         jedis.hset(HASH, FIELD_3, VALUE_3);
 
         //Check first returns
         result = jedis.hgetAll(HASH);
-        assertEquals(3, result.size());
-        assertEquals(VALUE_1, result.get(FIELD_1));
-        assertEquals(VALUE_2, result.get(FIELD_2));
-        assertEquals(VALUE_3, result.get(FIELD_3));
+        assertThat(result).hasSize(3)
+                .contains(entry(FIELD_1, VALUE_1), entry(FIELD_2, VALUE_2), entry(FIELD_3, VALUE_3));
 
         //Check empty case
         result = jedis.hgetAll("rubbish");
-        assertEquals(0, result.size());
+        assertThat(result).isEmpty();
     }
 
     @TestTemplate
@@ -137,13 +118,13 @@ public class HashOperationsTest {
         toCompare.add(FIELD_2);
 
         Set<String> result = jedis.hkeys(HASH);
-        assertEquals(result, toCompare);
+        assertThat(result).containsExactlyElementsOf(toCompare);
 
         toCompare.add(FIELD_3);
         jedis.hset(HASH, FIELD_3, VALUE_3);
 
         result = jedis.hkeys(HASH);
-        assertEquals(result, toCompare);
+        assertThat(result).containsExactlyElementsOf(toCompare);
     }
 
     @TestTemplate
@@ -156,13 +137,13 @@ public class HashOperationsTest {
         toCompare.add(VALUE_1);
         toCompare.add(VALUE_2);
         Set<String> result = new HashSet<>(jedis.hvals(key));
-        assertEquals(result, toCompare);
+        assertThat(result).containsExactlyElementsOf(toCompare);
 
         toCompare.add(VALUE_3);
         jedis.hset(key, FIELD_3, VALUE_3);
 
         result = new HashSet<>(jedis.hvals(key));
-        assertEquals(result, toCompare);
+        assertThat(result).containsExactlyElementsOf(toCompare);
     }
 
     @TestTemplate
@@ -172,13 +153,13 @@ public class HashOperationsTest {
 
         long result = jedis.hlen(HASH);
 
-        assertEquals(2, result);
+        assertThat(result).isEqualTo(2);
     }
 
     @TestTemplate
     void whenHLenIsCalledOnNonExistingKey_zeroIsReturned(Jedis jedis) {
         Long non_existent = jedis.hlen("non_existent");
-        assertEquals(0, non_existent);
+        assertThat(non_existent).isEqualTo(0);
     }
 
     @TestTemplate
@@ -187,14 +168,11 @@ public class HashOperationsTest {
         jedis.hset(HASH, FIELD_2, VALUE_2);
         jedis.hset(HASH, FIELD_3, VALUE_3);
 
+        String FIELD_4 = "field4";
+        String FIELD_5 = "field5";
         List<String> result = jedis.hmget(HASH, FIELD_1, FIELD_2, FIELD_5, FIELD_3, FIELD_4);
 
-        assertEquals(5, result.size());
-        assertEquals(VALUE_1, result.get(0));
-        assertEquals(VALUE_2, result.get(1));
-        assertNull(result.get(2));
-        assertEquals(VALUE_3, result.get(3));
-        assertNull(result.get(4));
+        assertThat(result).containsExactly(VALUE_1, VALUE_2, null, VALUE_3, null);
     }
 
     @TestTemplate
@@ -204,47 +182,49 @@ public class HashOperationsTest {
         map.put(FIELD_2, VALUE_2);
 
         jedis.hmset(HASH, map);
-        assertEquals(VALUE_1, jedis.hget(HASH, FIELD_1));
-        assertEquals(VALUE_2, jedis.hget(HASH, FIELD_2));
+        assertThat(jedis.hget(HASH, FIELD_1)).isEqualTo(VALUE_1);
+        assertThat(jedis.hget(HASH, FIELD_2)).isEqualTo(VALUE_2);
 
         map.put(FIELD_2, VALUE_1);
         jedis.hmset(HASH, map);
-        assertEquals(VALUE_1, jedis.hget(HASH, FIELD_1));
-        assertEquals(VALUE_1, jedis.hget(HASH, FIELD_2));
+        assertThat(jedis.hget(HASH, FIELD_1)).isEqualTo(VALUE_1);
+        assertThat(jedis.hget(HASH, FIELD_2)).isEqualTo(VALUE_1);
     }
 
     @TestTemplate
     public void whenUsingHsetnx_EnsureValueIsOnlyPutIfOtherValueDoesNotExist(Jedis jedis) {
-        assertNull(jedis.hget(HASH, FIELD_3));
-        assertEquals(1, jedis.hsetnx(HASH, FIELD_3, VALUE_1));
-        assertEquals(VALUE_1, jedis.hget(HASH, FIELD_3));
-        assertEquals(0, jedis.hsetnx(HASH, FIELD_3, VALUE_2));
-        assertEquals(VALUE_1, jedis.hget(HASH, FIELD_3));
+        assertThat(jedis.hget(HASH, FIELD_3)).isNull();
+        assertThat(jedis.hsetnx(HASH, FIELD_3, VALUE_1)).isEqualTo(1);
+        assertThat(jedis.hget(HASH, FIELD_3)).isEqualTo(VALUE_1);
+        assertThat(jedis.hsetnx(HASH, FIELD_3, VALUE_2)).isEqualTo(0);
+        assertThat(jedis.hget(HASH, FIELD_3)).isEqualTo(VALUE_1);
     }
 
     @TestTemplate
     public void whenIncrementingWithHIncrByFloat_ensureValuesAreCorrect(Jedis jedis) {
         jedis.hset("key", "subkey", "0");
         jedis.hincrByFloat("key", "subkey", 1.);
-        assertEquals("1", jedis.hget("key", "subkey"));
+        assertThat(jedis.hget("key", "subkey")).isEqualTo("1");
         jedis.hincrByFloat("key", "subkey", 1.5);
-        assertEquals("2.5", jedis.hget("key", "subkey"));
+        assertThat(jedis.hget("key", "subkey")).isEqualTo("2.5");
     }
 
     @TestTemplate
     public void whenIncrementingWithHIncrBy_ensureValuesAreCorrect(Jedis jedis) {
         jedis.hset("key", "subkey", "0");
         jedis.hincrBy("key", "subkey", 1);
-        assertEquals("1", jedis.hget("key", "subkey"));
+        assertThat(jedis.hget("key", "subkey")).isEqualTo("1");
         jedis.hincrBy("key", "subkey", 2);
-        assertEquals("3", jedis.hget("key", "subkey"));
+        assertThat(jedis.hget("key", "subkey")).isEqualTo("3");
     }
 
     @TestTemplate
     public void whenHIncrementingText_ensureException(Jedis jedis) {
         jedis.hset("key", "subkey", "foo");
-        assertThrows(JedisDataException.class, () -> jedis.hincrBy("key", "subkey", 1));
-        assertThrows(JedisDataException.class, () -> jedis.hincrByFloat("key", "subkey", 1.5));
+        assertThatThrownBy(() -> jedis.hincrBy("key", "subkey", 1))
+                .isInstanceOf(JedisDataException.class);
+        assertThatThrownBy(() -> jedis.hincrByFloat("key", "subkey", 1.5))
+                .isInstanceOf(JedisDataException.class);
     }
 
     @TestTemplate
@@ -254,16 +234,16 @@ public class HashOperationsTest {
         hash.put("k2", "v2");
         final Long added = jedis.hset("key", hash);
 
-        assertEquals(2, added);
+        assertThat(added).isEqualTo(2);
 
         // identity
         final Long added1 = jedis.hset("key", hash);
-        assertEquals(0, added1);
+        assertThat(added1).isEqualTo(0);
 
         // update
         hash.put("k2", "v3");
         final Long added2 = jedis.hset("key", hash);
-        assertEquals(0, added2);
+        assertThat(added2).isEqualTo(0);
     }
 
     @TestTemplate
@@ -272,10 +252,10 @@ public class HashOperationsTest {
         hash.put("key1", "1");
         jedis.hset("foo", hash);
         jedis.expire("foo", 1000000L);
-        assertNotEquals(-1L, jedis.ttl("foo"));
+        assertThat(jedis.ttl("foo")).isNotEqualTo(-1L);
         hash.replace("key1", "2");
         jedis.hset("foo", hash);
-        assertNotEquals(-1L, jedis.ttl("foo"));
+        assertThat(jedis.ttl("foo")).isNotEqualTo(-1L);
     }
 
     @TestTemplate
@@ -283,7 +263,8 @@ public class HashOperationsTest {
         Map<String, String> hash = new HashMap<>();
         hash.put("key1", "1");
         jedis.hset("foo", hash);
-        assertThrows(JedisDataException.class, () -> jedis.get("foo"));
+        assertThatThrownBy(() -> jedis.get("foo"))
+                .isInstanceOf(JedisDataException.class);
     }
 
     @TestTemplate
@@ -291,13 +272,13 @@ public class HashOperationsTest {
         byte[] msg = new byte[]{(byte) 0xbe};
         jedis.hset("foo".getBytes(), "bar".getBytes(), msg);
         byte[] newMsg = jedis.hget("foo".getBytes(), "bar".getBytes());
-        assertArrayEquals(msg, newMsg);
+        assertThat(newMsg).containsExactlyInAnyOrder(msg);
     }
 
     @TestTemplate
     public void testHsetEmptyString(Jedis jedis) {
         jedis.hset("foo", "bar", "");
-        assertEquals("", jedis.hget("foo", "bar"));
+        assertThat(jedis.hget("foo", "bar")).isEqualTo("");
     }
 
     @TestTemplate
@@ -307,7 +288,7 @@ public class HashOperationsTest {
         Arrays.fill(buf, 'a');
         String value = new String(buf);
         jedis.hset("foo", "bar", value);
-        assertEquals(value, jedis.hget("foo", "bar"));
+        assertThat(jedis.hget("foo", "bar")).isEqualTo(value);
     }
 
 

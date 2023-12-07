@@ -8,11 +8,10 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ZParams;
 import redis.clients.jedis.resps.Tuple;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZInter {
@@ -27,14 +26,14 @@ public class TestZInter {
 
     @TestTemplate
     public void testZInterNotExistKeyToNotExistDest(Jedis jedis) {
-        assertEquals(Collections.emptySet(), jedis.zinter(new ZParams(), ZSET_KEY_1));
+        assertThat(jedis.zinter(new ZParams(), ZSET_KEY_1)).isEmpty();
     }
 
     @TestTemplate
     public void testZInterWithEmptySet(Jedis jedis) {
         jedis.zadd(ZSET_KEY_1, 1, "a");
         jedis.zadd(ZSET_KEY_1, 2, "b");
-        assertEquals(Collections.emptySet(), jedis.zinterWithScores(new ZParams(), ZSET_KEY_1, ZSET_KEY_2));
+        assertThat(jedis.zinterWithScores(new ZParams(), ZSET_KEY_1, ZSET_KEY_2)).isEmpty();
     }
 
     @TestTemplate
@@ -49,7 +48,7 @@ public class TestZInter {
         Set<Tuple> expected = new TreeSet<>();
         expected.add(new Tuple("1", 2.0));
         expected.add(new Tuple("3", 6.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -64,7 +63,7 @@ public class TestZInter {
         Set<Tuple> expected = new TreeSet<>();
         expected.add(new Tuple("b", 7.0));
         expected.add(new Tuple("c", 12.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -80,7 +79,7 @@ public class TestZInter {
         Set<Tuple> expected = new TreeSet<>();
         expected.add(new Tuple("b", 1.0));
         expected.add(new Tuple("c", 2.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -96,6 +95,6 @@ public class TestZInter {
         Set<Tuple> expected = new TreeSet<>();
         expected.add(new Tuple("b", 2.0));
         expected.add(new Tuple("c", 3.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 }

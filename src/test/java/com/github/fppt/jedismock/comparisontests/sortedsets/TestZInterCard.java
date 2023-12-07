@@ -6,8 +6,8 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZInterCard {
@@ -22,16 +22,16 @@ public class TestZInterCard {
 
     @TestTemplate
     public void testZInterCardNotExistKeyToNotExistDest(Jedis jedis) {
-        assertEquals(0, jedis.zintercard(ZSET_KEY_1));
-        assertEquals(0, jedis.zintercard(0, ZSET_KEY_1));
+        assertThat(jedis.zintercard(ZSET_KEY_1)).isEqualTo(0);
+        assertThat(jedis.zintercard(0, ZSET_KEY_1)).isEqualTo(0);
     }
 
     @TestTemplate
     public void testZInterCardWithEmptySet(Jedis jedis) {
         jedis.zadd(ZSET_KEY_1, 1, "a");
         jedis.zadd(ZSET_KEY_1, 2, "b");
-        assertEquals(0, jedis.zintercard(ZSET_KEY_1, ZSET_KEY_2));
-        assertEquals(0, jedis.zintercard(0, ZSET_KEY_1, ZSET_KEY_2));
+        assertThat(jedis.zintercard(ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(0);
+        assertThat(jedis.zintercard(0, ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(0);
     }
 
     @TestTemplate
@@ -42,8 +42,8 @@ public class TestZInterCard {
         jedis.zadd(ZSET_KEY_2, 1, "1");
         jedis.zadd(ZSET_KEY_2, 3, "3");
         jedis.zadd(ZSET_KEY_2, 4, "4");
-        assertEquals(2, jedis.zintercard(ZSET_KEY_1, ZSET_KEY_2));
-        assertEquals(2, jedis.zintercard(0, ZSET_KEY_1, ZSET_KEY_2));
+        assertThat(jedis.zintercard(ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(2);
+        assertThat(jedis.zintercard(0, ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(2);
     }
 
     @TestTemplate
@@ -54,10 +54,10 @@ public class TestZInterCard {
         jedis.zadd(ZSET_KEY_2, 1, "1");
         jedis.zadd(ZSET_KEY_2, 3, "3");
         jedis.zadd(ZSET_KEY_2, 4, "4");
-        assertEquals(2, jedis.zintercard(ZSET_KEY_1, ZSET_KEY_2));
-        assertEquals(2, jedis.zintercard(0, ZSET_KEY_1, ZSET_KEY_2));
-        assertEquals(1, jedis.zintercard(1, ZSET_KEY_1, ZSET_KEY_2));
-        assertEquals(2, jedis.zintercard(10, ZSET_KEY_1, ZSET_KEY_2));
+        assertThat(jedis.zintercard(ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(2);
+        assertThat(jedis.zintercard(0, ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(2);
+        assertThat(jedis.zintercard(1, ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(1);
+        assertThat(jedis.zintercard(10, ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(2);
     }
 
 
@@ -67,8 +67,8 @@ public class TestZInterCard {
         jedis.zadd(ZSET_KEY_1, 2, "2");
         jedis.zadd(ZSET_KEY_2, 1, "1");
         jedis.zadd(ZSET_KEY_2, 4, "4");
-        assertEquals(1, jedis.zintercard(ZSET_KEY_1, ZSET_KEY_2));
-        assertThrows(RuntimeException.class,
-                () -> jedis.zintercard(-10, ZSET_KEY_1, ZSET_KEY_2));
+        assertThat(jedis.zintercard(ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(1);
+        assertThatThrownBy(() -> jedis.zintercard(-10, ZSET_KEY_1, ZSET_KEY_2))
+                .isInstanceOf(RuntimeException.class);
     }
 }

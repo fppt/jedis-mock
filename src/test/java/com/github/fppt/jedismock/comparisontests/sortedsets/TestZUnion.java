@@ -8,11 +8,10 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ZParams;
 import redis.clients.jedis.resps.Tuple;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZUnion {
@@ -27,7 +26,7 @@ public class TestZUnion {
 
     @TestTemplate
     public void testZUnionNotExistKeyToNotExistDest(Jedis jedis) {
-        assertEquals(Collections.emptySet(), jedis.zunion(new ZParams(), ZSET_KEY_1));
+        assertThat(jedis.zunion(new ZParams(), ZSET_KEY_1)).isEmpty();
     }
 
     @TestTemplate
@@ -36,8 +35,7 @@ public class TestZUnion {
         jedis.zadd(ZSET_KEY_1, 2, "b");
         Set<Tuple> results = jedis.zunionWithScores(new ZParams(), ZSET_KEY_1, ZSET_KEY_2);
 
-        assertTrue(results.contains(new Tuple("a", 1.0)));
-        assertTrue(results.contains(new Tuple("b", 2.0)));
+        assertThat(results).contains(new Tuple("a", 1.0), new Tuple("b", 2.0));
     }
 
     @TestTemplate
@@ -54,7 +52,7 @@ public class TestZUnion {
         expected.add(new Tuple("2", 2.0));
         expected.add(new Tuple("4", 4.0));
         expected.add(new Tuple("3", 6.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -71,7 +69,7 @@ public class TestZUnion {
         expected.add(new Tuple("b", 7.0));
         expected.add(new Tuple("d", 9.0));
         expected.add(new Tuple("c", 12.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -89,7 +87,7 @@ public class TestZUnion {
         expected.add(new Tuple("b", 1.0));
         expected.add(new Tuple("c", 2.0));
         expected.add(new Tuple("d", 3.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 
     @TestTemplate
@@ -107,6 +105,6 @@ public class TestZUnion {
         expected.add(new Tuple("b", 2.0));
         expected.add(new Tuple("c", 3.0));
         expected.add(new Tuple("d", 3.0));
-        assertEquals(expected, results);
+        assertThat(results).isEqualTo(expected);
     }
 }

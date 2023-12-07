@@ -10,12 +10,11 @@ import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TestJedisClusterConnect {
 
@@ -43,17 +42,17 @@ public class TestJedisClusterConnect {
         String[] planets = new String[]{"Mars", "Jupyter", "Venus", "Earth", "Mercury", "Saturn"};
         try (JedisCluster jedis = new JedisCluster(jedisClusterNodes)) {
             jedis.sadd("planets", planets);
-            assertEquals(new HashSet<>(Arrays.asList(planets)),
-                    jedis.smembers("planets"));
-            assertEquals(1, jedis.getClusterNodes().size());
+            assertThat(jedis.smembers("planets")).containsExactlyInAnyOrder(planets);
+            assertThat(jedis.getClusterNodes()).hasSize(1);
         }
     }
 
     @Test
     void selectOperationDoesNotWorkInClusterMode() {
         try (Jedis jedis = new Jedis(new HostAndPort(server.getHost(), server.getBindPort()))) {
-            String msg = assertThrows(JedisDataException.class, () -> jedis.select(1)).getMessage();
-            assertEquals("ERR SELECT is not allowed in cluster mode", msg);
+            assertThatThrownBy(() -> jedis.select(1))
+                    .isInstanceOf(JedisDataException.class)
+                    .hasMessage("ERR SELECT is not allowed in cluster mode");
         }
     }
 }

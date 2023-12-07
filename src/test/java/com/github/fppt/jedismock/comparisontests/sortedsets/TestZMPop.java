@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.args.SortedSetOption;
 import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.util.KeyValue;
 
@@ -13,9 +12,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import static redis.clients.jedis.args.SortedSetOption.MAX;
+import static redis.clients.jedis.args.SortedSetOption.MIN;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZMPop {
@@ -30,7 +31,7 @@ public class TestZMPop {
 
     @TestTemplate
     public void testZMPopKeyNotExist(Jedis jedis) {
-        assertNull(jedis.zmpop(SortedSetOption.MIN, "aaa"));
+        assertThat(jedis.zmpop(MIN, "aaa")).isNull();
     }
 
     @TestTemplate
@@ -39,10 +40,10 @@ public class TestZMPop {
         jedis.zadd(ZSET_KEY, 2, "two");
         jedis.zadd(ZSET_KEY, 3, "three");
         KeyValue<String, List<Tuple>> expected = new KeyValue<>(ZSET_KEY, Collections.singletonList(new Tuple("one", 1.0)));
-        assertEquals(expected, jedis.zmpop(SortedSetOption.MIN, ZSET_KEY));
+        assertThat(jedis.zmpop(MIN, ZSET_KEY)).isEqualTo(expected);
 
         List<Tuple> tupleList = Arrays.asList(new Tuple("two", 2.), new Tuple("three", 3.));
-        assertEquals(tupleList, jedis.zrangeWithScores(ZSET_KEY, 0, -1));
+        assertThat(jedis.zrangeWithScores(ZSET_KEY, 0, -1)).isEqualTo(tupleList);
     }
 
     @TestTemplate
@@ -52,14 +53,14 @@ public class TestZMPop {
         KeyValue<String, List<Tuple>> expected = new KeyValue<>(ZSET_KEY,
                 Arrays.asList(new Tuple("three", 3.0),
                               new Tuple("two", 2.0)));
-        assertEquals(expected, jedis.zmpop(SortedSetOption.MAX, 10, ZSET_KEY));
+        assertThat(jedis.zmpop(MAX, 10, ZSET_KEY)).isEqualTo(expected);
     }
 
     @TestTemplate
     public void testZMPopKeyNegativeCount(Jedis jedis) {
-        assertThrows(RuntimeException.class, () ->
-                jedis.zmpop(SortedSetOption.MIN, -1, "aaa")
-        );
+        assertThatThrownBy(() ->
+                jedis.zmpop(MIN, -1, "aaa"))
+                .isInstanceOf(RuntimeException.class);
     }
 
 }

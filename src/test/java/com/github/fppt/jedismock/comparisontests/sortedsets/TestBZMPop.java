@@ -21,9 +21,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import static redis.clients.jedis.args.SortedSetOption.MIN;
 
 @ExtendWith(ComparisonBase.class)
 public class TestBZMPop {
@@ -43,7 +44,7 @@ public class TestBZMPop {
 
     @TestTemplate
     public void testBZMPopKeyNotExist(Jedis jedis) {
-            assertNull(jedis.bzmpop(1, SortedSetOption.MIN, "aaa"));
+        assertThat(jedis.bzmpop(1, MIN, "aaa")).isNull();
     }
 
     @TestTemplate
@@ -52,10 +53,10 @@ public class TestBZMPop {
         jedis.zadd(ZSET_KEY, 2, "two");
         jedis.zadd(ZSET_KEY, 3, "three");
         KeyValue<String, List<Tuple>> expected = new KeyValue<>(ZSET_KEY, Collections.singletonList(new Tuple("one", 1.0)));
-        assertEquals(expected, jedis.bzmpop(1, SortedSetOption.MIN, ZSET_KEY));
+        assertThat(jedis.bzmpop(1, MIN, ZSET_KEY)).isEqualTo(expected);
 
         List<Tuple> tupleList = Arrays.asList(new Tuple("two", 2.), new Tuple("three", 3.));
-        assertEquals(tupleList, jedis.zrangeWithScores(ZSET_KEY, 0, -1));
+        assertThat(jedis.zrangeWithScores(ZSET_KEY, 0, -1)).isEqualTo(tupleList);
     }
 
     @TestTemplate
@@ -65,14 +66,14 @@ public class TestBZMPop {
         jedis.zadd(ZSET_KEY, 2, "c");
         jedis.zadd(ZSET_KEY, 3, "d");
         KeyValue<String, List<Tuple>> expected = new KeyValue<>(ZSET_KEY, Collections.singletonList(new Tuple("a", 0.0)));
-        assertEquals(expected, jedis.bzmpop(5, SortedSetOption.MIN, ZSET_KEY));
+        assertThat(jedis.bzmpop(5, SortedSetOption.MIN, ZSET_KEY)).isEqualTo(expected);
     }
 
     @TestTemplate
     public void testBZMPopNegativeCount(Jedis jedis) {
-        assertThrows(RuntimeException.class, () ->
-                jedis.bzmpop(1, SortedSetOption.MIN, -1, "aaa")
-        );
+        assertThatThrownBy(() ->
+                jedis.bzmpop(1, MIN, -1, "aaa"))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @TestTemplate
@@ -84,13 +85,13 @@ public class TestBZMPop {
         Future<?> future = blockingThread.submit(() -> {
             KeyValue<String, List<Tuple>> result = blockedClient.bzmpop(0, SortedSetOption.MIN, 10, key1);
             KeyValue<String, List<Tuple>> expected = new KeyValue<>(key1, Collections.singletonList(new Tuple("zset", 1.0)));
-            assertEquals(expected, result);
+            assertThat(result).isEqualTo(expected);
         });
 
         Future<?> future2 = blockingThread.submit(() -> {
             KeyValue<String, List<Tuple>> result = blockedClient2.bzmpop(0, SortedSetOption.MIN, 10, key2, key3);
             KeyValue<String, List<Tuple>> expected = new KeyValue<>(key3, Collections.singletonList(new Tuple("zset3", 2.0)));
-            assertEquals(expected, result);
+            assertThat(result).isEqualTo(expected);
         });
 
         jedis.zadd("0",100,"timeout_value");
@@ -111,7 +112,7 @@ public class TestBZMPop {
         Future<?> future = blockingThread.submit(() -> {
             KeyValue<String, List<Tuple>> result = blockedClient.bzmpop(0, SortedSetOption.MIN, 10, ZSET_KEY);
             KeyValue<String, List<Tuple>> expected = new KeyValue<>(ZSET_KEY, Collections.singletonList(new Tuple("bar", 1.0)));
-            assertEquals(expected, result);
+            assertThat(result).isEqualTo(expected);
         });
 
         Transaction multi = jedis.multi();
@@ -131,7 +132,7 @@ public class TestBZMPop {
         Future<?> future = blockingThread.submit(() -> {
             KeyValue<String, List<Tuple>> result = blockedClient.bzmpop(0, SortedSetOption.MIN, 1, key1, key2);
             KeyValue<String, List<Tuple>> expected = new KeyValue<>(key1, Collections.singletonList(new Tuple("a", 1.0)));
-            assertEquals(expected, result);
+            assertThat(result).isEqualTo(expected);
 
             KeyValue<String, List<Tuple>> result2 = blockedClient2.bzmpop(0, SortedSetOption.MAX, 10, key1, key2);
             KeyValue<String, List<Tuple>> expected2 = new KeyValue<>(key1, Arrays.asList(
@@ -139,7 +140,7 @@ public class TestBZMPop {
                     new Tuple("d", 4.0),
                     new Tuple("c", 3.0),
                     new Tuple("b", 2.0)));
-            assertEquals(expected2, result2);
+            assertThat(result2).isEqualTo(expected2);
 
         });
 

@@ -6,9 +6,10 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRemRangeByLex {
@@ -29,76 +30,67 @@ public class TestZRemRangeByLex {
         members.put("hill", 0d);
         members.put("omega", 0d);
         long result = jedis.zadd(key, members);
-        assertEquals(9L, result);
+        assertThat(result).isEqualTo(9L);
     }
 
     @TestTemplate
     public void testZRemRangeByLexInclusiveRangeNegInf(Jedis jedis) {
-        assertEquals(3, jedis.zremrangeByLex(key, "-", "[cool"));
-        assertEquals(Arrays.asList("down", "elephant", "foo", "great", "hill", "omega"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "-", "[cool")).isEqualTo(3);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("down", "elephant", "foo", "great", "hill", "omega");
     }
 
     @TestTemplate
     public void testZRemRangeByLexInclusiveRangeInclude(Jedis jedis) {
-        assertEquals(3, jedis.zremrangeByLex(key, "[bar", "[down"));
-        assertEquals(Arrays.asList("alpha", "elephant", "foo", "great", "hill", "omega"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "[bar", "[down")).isEqualTo(3);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("alpha", "elephant", "foo", "great", "hill", "omega");
     }
 
     @TestTemplate
     public void testZRemRangeByLexInclusiveRangePosInf(Jedis jedis) {
-        assertEquals(3, jedis.zremrangeByLex(key, "[g", "+"));
-        assertEquals(Arrays.asList("alpha", "bar", "cool", "down", "elephant", "foo"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "[g", "+")).isEqualTo(3);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("alpha", "bar", "cool", "down", "elephant", "foo");
     }
 
     @TestTemplate
     public void testZRemRangeByLexExclusiveRangeNegInf(Jedis jedis) {
-        assertEquals(2, jedis.zremrangeByLex(key, "-", "(cool"));
-        assertEquals(Arrays.asList("cool", "down", "elephant", "foo", "great", "hill", "omega"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "-", "(cool")).isEqualTo(2);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("cool", "down", "elephant", "foo", "great", "hill", "omega");
     }
 
     @TestTemplate
     public void testZRemRangeByLexExclusiveRangeInclude(Jedis jedis) {
-        assertEquals(1, jedis.zremrangeByLex(key, "(bar", "(down"));
-        assertEquals(Arrays.asList("alpha", "bar", "down", "elephant", "foo", "great", "hill", "omega"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "(bar", "(down")).isEqualTo(1);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("alpha", "bar", "down", "elephant", "foo", "great", "hill", "omega");
     }
 
     @TestTemplate
     public void testZRemRangeByLexExclusiveRangePosInf(Jedis jedis) {
-        assertEquals(2, jedis.zremrangeByLex(key, "(great", "+"));
-        assertEquals(Arrays.asList("alpha", "bar", "cool", "down", "elephant", "foo", "great"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "(great", "+")).isEqualTo(2);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("alpha", "bar", "cool", "down", "elephant", "foo", "great");
     }
 
     @TestTemplate
     public void testZRemRangeByLexInclusiveAndExclusiveRangeNegInf(Jedis jedis) {
-        assertEquals(0, jedis.zremrangeByLex(key, "-", "[aaaa"));
-        assertEquals(Arrays.asList("alpha", "bar", "cool", "down", "elephant", "foo", "great", "hill", "omega"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "-", "[aaaa")).isEqualTo(0);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("alpha", "bar", "cool", "down", "elephant", "foo", "great", "hill", "omega");
     }
 
     @TestTemplate
     public void testZRemRangeByLexInclusiveAndExclusiveRangeInclude(Jedis jedis) {
-        assertEquals(0, jedis.zremrangeByLex(key, "(az", "(b"));
-        assertEquals(Arrays.asList("alpha", "bar", "cool", "down", "elephant", "foo", "great", "hill", "omega"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "(az", "(b")).isEqualTo(0);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("alpha", "bar", "cool", "down", "elephant", "foo", "great", "hill", "omega");
     }
 
     @TestTemplate
     public void testZRemRangeByLexInclusiveAndExclusiveRangePosInf(Jedis jedis) {
-        assertEquals(0, jedis.zremrangeByLex(key, "(z", "+"));
-        assertEquals(Arrays.asList("alpha", "bar", "cool", "down", "elephant", "foo", "great", "hill", "omega"),
-                jedis.zrange(key, 0, -1));
+        assertThat(jedis.zremrangeByLex(key, "(z", "+")).isEqualTo(0);
+        assertThat(jedis.zrange(key, 0, -1)).containsExactly("alpha", "bar", "cool", "down", "elephant", "foo", "great", "hill", "omega");
     }
 
     @TestTemplate
     public void testZRemRangeByLexEmpty(Jedis jedis) {
-        assertEquals(9, jedis.zremrangeByLex(key, "-", "+"));
-        assertEquals(0, jedis.zcard(key));
-        assertFalse(jedis.exists(key));
+        assertThat(jedis.zremrangeByLex(key, "-", "+")).isEqualTo(9);
+        assertThat(jedis.zcard(key)).isEqualTo(0);
+        assertThat(jedis.exists(key)).isFalse();
     }
 }

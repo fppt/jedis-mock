@@ -7,10 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class HLLOperationsTest {
@@ -22,8 +20,8 @@ public class HLLOperationsTest {
     @TestTemplate
     public void testPfadd(Jedis jedis) {
         jedis.pfadd("my_hll", "a", "b", "c", "e", "d", "f");
-        assertEquals(jedis.pfcount("my_hll"), 6);
-        assertEquals(jedis.pfadd("my_hll", "a"), 0);
+        assertThat(jedis.pfcount("my_hll")).isEqualTo(6);
+        assertThat(jedis.pfadd("my_hll", "a")).isEqualTo(0);
     }
 
     @TestTemplate
@@ -31,7 +29,7 @@ public class HLLOperationsTest {
         String[] arr = {"a", "b", "c", "e", "d", "f"};
         for (int i = 0; i < 6; ++i) {
             jedis.pfadd("my_hll", arr[i]);
-            assertEquals(jedis.pfcount("my_hll"), i + 1);
+            assertThat(jedis.pfcount("my_hll")).isEqualTo(i + 1);
         }
     }
 
@@ -40,7 +38,7 @@ public class HLLOperationsTest {
         jedis.pfadd("hll1", "a", "b", "c", "d");
         jedis.pfadd("hll2", "d", "e", "f");
         jedis.pfmerge("hll3", "hll1", "hll2");
-        assertEquals(6, jedis.pfcount("hll3"));
+        assertThat(jedis.pfcount("hll3")).isEqualTo(6);
     }
 
     @TestTemplate
@@ -48,8 +46,8 @@ public class HLLOperationsTest {
         jedis.pfadd("foo1", "bar");
         byte[] buf = jedis.get("foo1".getBytes());
         jedis.set("foo2".getBytes(), buf);
-        assertEquals(1, jedis.pfcount("foo1"));
-        assertEquals(1, jedis.pfcount("foo2"));
+        assertThat(jedis.pfcount("foo1")).isEqualTo(1);
+        assertThat(jedis.pfcount("foo2")).isEqualTo(1);
     }
 
     @TestTemplate
@@ -58,21 +56,21 @@ public class HLLOperationsTest {
         byte[] buf = jedis.get("foo1".getBytes());
         jedis.set("foo2".getBytes(), buf);
         byte[] buf2 = jedis.get("foo2".getBytes());
-        assertArrayEquals(buf, buf2);
+        assertThat(buf2).containsExactlyInAnyOrder(buf);
     }
 
     @TestTemplate
     public void testFailingGetOperation(Jedis jedis) {
         jedis.set("not_a_hll", "bar");
-        assertTrue(
-                assertThrows(JedisDataException.class, () ->
-                        jedis.pfadd("not_a_hll", "value")).getMessage().startsWith("WRONGTYPE"));
+        assertThatThrownBy(() -> jedis.pfadd("not_a_hll", "value"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageStartingWith("WRONGTYPE");
     }
 
     @TestTemplate
     public void testGetSet(Jedis jedis) {
         jedis.pfadd("my_hll", "a", "b", "c", "e", "d", "f");
         jedis.set("another".getBytes(), jedis.get("my_hll".getBytes()));
-        assertEquals(jedis.pfcount("another"), 6);
+        assertThat(jedis.pfcount("another")).isEqualTo(6);
     }
 }

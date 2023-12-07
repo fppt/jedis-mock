@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestWatchUnwatch {
@@ -43,7 +42,7 @@ public class TestWatchUnwatch {
         runAsync(() -> anotherJedis.set(FIRST_KEY, ANOTHER_VALUE)).get();
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertNull(result);
+        assertThat(result).isNull();
     }
 
     @TestTemplate
@@ -54,7 +53,7 @@ public class TestWatchUnwatch {
         runAsync(() -> anotherJedis.set(FIRST_KEY, FIRST_VALUE)).get();
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertNull(result);
+        assertThat(result).isNull();
     }
 
     @TestTemplate
@@ -65,7 +64,7 @@ public class TestWatchUnwatch {
         Transaction transaction = jedis.multi();
         transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertNull(result);
+        assertThat(result).isNull();
     }
 
     @TestTemplate
@@ -76,7 +75,7 @@ public class TestWatchUnwatch {
         Transaction transaction = jedis.multi();
         transaction.set(SECOND_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertNull(result);
+        assertThat(result).isNull();
     }
 
     @TestTemplate
@@ -87,9 +86,8 @@ public class TestWatchUnwatch {
         runAsync(() -> anotherJedis.set(ANOTHER_KEY, ANOTHER_VALUE)).get();
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertEquals(1, result.size());
-        assertEquals("OK", result.get(0));
-        assertEquals(SECOND_VALUE, jedis.get(FIRST_KEY));
+        assertThat(result).containsExactly("OK");
+        assertThat(jedis.get(FIRST_KEY)).isEqualTo(SECOND_VALUE);
     }
 
     @TestTemplate
@@ -100,7 +98,7 @@ public class TestWatchUnwatch {
         Thread.sleep(200);
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertNull(result);
+        assertThat(result).isNull();
     }
 
     @TestTemplate
@@ -111,7 +109,7 @@ public class TestWatchUnwatch {
         Transaction transaction = jedis.multi();
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertNull(result);
+        assertThat(result).isNull();
     }
 
     @TestTemplate
@@ -122,7 +120,7 @@ public class TestWatchUnwatch {
         Transaction transaction = jedis.multi();
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertNull(result);
+        assertThat(result).isNull();
     }
 
     @TestTemplate
@@ -134,9 +132,8 @@ public class TestWatchUnwatch {
         Transaction transaction = jedis.multi();
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertEquals(1, result.size());
-        assertEquals("OK", result.get(0));
-        assertEquals(SECOND_VALUE, jedis.get(FIRST_KEY));
+        assertThat(result).containsExactly("OK");
+        assertThat(jedis.get(FIRST_KEY)).isEqualTo(SECOND_VALUE);
     }
 
     @TestTemplate
@@ -147,7 +144,7 @@ public class TestWatchUnwatch {
         Transaction transaction = jedis.multi();
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertNull(result);
+        assertThat(result).isNull();
     }
 
     @TestTemplate
@@ -156,8 +153,7 @@ public class TestWatchUnwatch {
         Transaction transaction = jedis.multi();
         transaction.set(FIRST_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
-        assertEquals(1, result.size());
-        assertEquals("OK", result.get(0));
+        assertThat(result).containsExactly("OK");
     }
 
 }

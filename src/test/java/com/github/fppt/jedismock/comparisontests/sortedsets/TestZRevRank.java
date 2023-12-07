@@ -6,7 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRevRank {
@@ -25,6 +25,6 @@ public class TestZRevRank {
 
     @TestTemplate
     public void getFirstRank(Jedis jedis) {
-        assertEquals(4, jedis.zrevrank(ZSET_KEY, "aaa"));
+        assertThat(jedis.zrevrank(ZSET_KEY, "aaa")).isEqualTo(4);
     }
 }

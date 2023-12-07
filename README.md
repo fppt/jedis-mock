@@ -104,7 +104,7 @@ RedisServer server = RedisServer
     .newRedisServer()
     .setOptions(ServiceOptions.withInterceptor((state, roName, params) -> {
         if ("get".equalsIgnoreCase(roName)) {
-            //You can can imitate any reply from Redis
+            //You can imitate any reply from Redis
             return Response.bulkString(Slice.create("MOCK_VALUE"));
         } else if ("echo".equalsIgnoreCase(roName)) {
             //You can write any verifications here

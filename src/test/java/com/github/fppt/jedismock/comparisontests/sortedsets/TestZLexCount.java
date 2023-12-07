@@ -6,10 +6,11 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZLexCount {
@@ -30,58 +31,58 @@ public class TestZLexCount {
         members.put("hill", 0d);
         members.put("omega", 0d);
         long result = jedis.zadd(ZSET_KEY, members);
-        assertEquals(9L, result);
+        assertThat(result).isEqualTo(9L);
     }
 
     @TestTemplate
     public void testZLexCountAllElements(Jedis jedis) {
-        assertEquals(9, jedis.zlexcount(ZSET_KEY, "-", "+"));
+        assertThat(jedis.zlexcount(ZSET_KEY, "-", "+")).isEqualTo(9);
     }
 
     @TestTemplate
     public void testZLexCountNoneElements(Jedis jedis) {
-        assertEquals(0, jedis.zlexcount(ZSET_KEY, "+", "-"));
+        assertThat(jedis.zlexcount(ZSET_KEY, "+", "-")).isEqualTo(0);
     }
 
     @TestTemplate
     public void testZLexCountStartPositiveInfinite(Jedis jedis) {
-        assertEquals(0, jedis.zlexcount(ZSET_KEY, "+", "[c"));
+        assertThat(jedis.zlexcount(ZSET_KEY, "+", "[c")).isEqualTo(0);
     }
 
     @TestTemplate
     public void testZLexCountFinishNegativeInfinite(Jedis jedis) {
-        assertEquals(0, jedis.zlexcount(ZSET_KEY, "[c", "-"));
+        assertThat(jedis.zlexcount(ZSET_KEY, "[c", "-")).isEqualTo(0);
     }
 
     @TestTemplate
     public void testZLexCountIncludeTwoBounds(Jedis jedis) {
-        assertEquals(5, jedis.zlexcount(ZSET_KEY, "[bar", "[foo"));
+        assertThat(jedis.zlexcount(ZSET_KEY, "[bar", "[foo")).isEqualTo(5);
     }
 
     @TestTemplate
     public void testZLexCountIncludeStartBound(Jedis jedis) {
-        assertEquals(4, jedis.zlexcount(ZSET_KEY, "[bar", "(foo"));
+        assertThat(jedis.zlexcount(ZSET_KEY, "[bar", "(foo")).isEqualTo(4);
     }
 
     @TestTemplate
     public void testZLexCountIncludeFinishBound(Jedis jedis) {
-        assertEquals(4, jedis.zlexcount(ZSET_KEY, "(bar", "[foo"));
+        assertThat(jedis.zlexcount(ZSET_KEY, "(bar", "[foo")).isEqualTo(4);
     }
 
     @TestTemplate
     public void testZLexCountNotIncludeBounds(Jedis jedis) {
-        assertEquals(3, jedis.zlexcount(ZSET_KEY, "(bar", "(foo"));
+        assertThat(jedis.zlexcount(ZSET_KEY, "(bar", "(foo")).isEqualTo(3);
     }
 
     @TestTemplate
     public void testZLexCountErrorMinValue(Jedis jedis) {
-        assertThrows(RuntimeException.class,
-                () -> jedis.zlexcount(ZSET_KEY, "bar", "(foo"));
+        assertThatThrownBy(() -> jedis.zlexcount(ZSET_KEY, "bar", "(foo"))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @TestTemplate
     public void testZLexCountErrorMaxValue(Jedis jedis) {
-        assertThrows(RuntimeException.class,
-                () -> jedis.zlexcount(ZSET_KEY, "(bar", "foo"));
+        assertThatThrownBy(() -> jedis.zlexcount(ZSET_KEY, "(bar", "foo"))
+                .isInstanceOf(RuntimeException.class);
     }
 }
