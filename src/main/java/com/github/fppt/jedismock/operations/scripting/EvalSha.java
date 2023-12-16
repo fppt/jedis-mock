@@ -7,7 +7,6 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @RedisCommand("evalsha")
@@ -32,10 +31,6 @@ public class EvalSha extends AbstractRedisOperation {
             return Response.error("NOSCRIPT No matching script. Please use EVAL.");
         }
         params().set(0, Slice.create(script));
-        try {
-            return new Eval(base(), params(), state).response();
-        } catch (NoSuchAlgorithmException e) {
-            return Response.error(e.getMessage());
-        }
+        return new Eval(base(), params(), state).response();
     }
 }

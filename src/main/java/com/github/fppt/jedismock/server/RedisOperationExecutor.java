@@ -17,7 +17,7 @@ public class RedisOperationExecutor {
     }
 
     public Slice execCommand(RedisCommand command) {
-        if (!(command.parameters().size() > 0)) {
+        if (command.parameters().isEmpty()) {
             throw new IllegalStateException();
         }
         List<Slice> params = command.parameters();

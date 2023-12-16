@@ -12,7 +12,7 @@ import java.util.List;
 @RedisCommand(value = "unsubscribe", transactional = false)
 public class Unsubscribe extends AbstractRedisOperation {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Unsubscribe.class);
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     public Unsubscribe(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);

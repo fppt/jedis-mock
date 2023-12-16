@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 @RedisCommand(value = "auth", transactional = false)
 public class Auth implements RedisOperation {
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     public Auth(OperationExecutorState state) {
         this.state = state;

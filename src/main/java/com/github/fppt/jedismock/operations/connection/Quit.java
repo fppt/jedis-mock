@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 @RedisCommand(value = "quit", transactional = false)
 public class Quit implements RedisOperation {
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     public Quit(OperationExecutorState state) {
         this.state = state;

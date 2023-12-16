@@ -18,7 +18,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,8 +33,7 @@ public class Eval extends AbstractRedisOperation {
     private final Globals globals = JsePlatform.standardGlobals();
     private final OperationExecutorState state;
 
-    public Eval(final RedisBase base, final List<Slice> params, final OperationExecutorState state)
-            throws NoSuchAlgorithmException {
+    public Eval(final RedisBase base, final List<Slice> params, final OperationExecutorState state) {
         super(base, params);
         this.state = state;
     }

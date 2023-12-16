@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by Xiaolu on 2015/4/21.
  */
-public class RedisService implements Callable<Void> {
+public final class RedisService implements Callable<Void> {
 
     private final ServerSocket server;
     private final Map<Integer, RedisBase> redisBases;

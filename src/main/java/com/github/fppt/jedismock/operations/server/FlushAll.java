@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 @RedisCommand(value = "flushall", transactional = false)
 class FlushAll implements RedisOperation {
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     FlushAll(OperationExecutorState state) {
         this.state = state;

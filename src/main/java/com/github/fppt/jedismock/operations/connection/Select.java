@@ -10,8 +10,8 @@ import java.util.List;
 
 @RedisCommand(value = "select", transactional = false)
 public class Select implements RedisOperation {
-    private OperationExecutorState state;
-    private List<Slice> params;
+    private final OperationExecutorState state;
+    private final List<Slice> params;
 
     public Select(OperationExecutorState state, List<Slice> params){
         this.params = params;

@@ -11,8 +11,8 @@ import java.util.List;
 
 @RedisCommand(value = "watch", transactional = false)
 public class Watch implements RedisOperation {
-    private OperationExecutorState state;
-    private List<Slice> keys;
+    private final OperationExecutorState state;
+    private final List<Slice> keys;
 
     Watch(OperationExecutorState state, List<Slice> keys) {
         this.state = state;

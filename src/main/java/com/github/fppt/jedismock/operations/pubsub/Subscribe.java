@@ -10,7 +10,7 @@ import java.util.List;
 
 @RedisCommand(value = "subscribe", transactional = false)
 public class Subscribe extends AbstractRedisOperation {
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     public Subscribe(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
