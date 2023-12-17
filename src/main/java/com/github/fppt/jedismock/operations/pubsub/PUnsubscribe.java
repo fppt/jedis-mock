@@ -12,7 +12,7 @@ import java.util.List;
 @RedisCommand(value = "punsubscribe", transactional = false)
 public class PUnsubscribe extends AbstractRedisOperation {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Unsubscribe.class);
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     public PUnsubscribe(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);

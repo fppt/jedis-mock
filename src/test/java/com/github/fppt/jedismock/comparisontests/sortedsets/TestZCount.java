@@ -7,8 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZCount {
@@ -22,7 +22,7 @@ public class TestZCount {
 
     @TestTemplate
     public void whenUsingZCount_EnsureItReturnsZeroForNonDefinedKey(Jedis jedis) {
-        assertEquals(0, jedis.zcount(ZSET_KEY, "-inf", "+inf"));
+        assertThat(jedis.zcount(ZSET_KEY, "-inf", "+inf")).isEqualTo(0);
     }
 
     @TestTemplate
@@ -30,8 +30,7 @@ public class TestZCount {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 1, "two");
         jedis.zadd(ZSET_KEY, 1, "three");
-        assertEquals(3,
-                jedis.zcount(ZSET_KEY, "-inf", "+inf"));
+        assertThat(jedis.zcount(ZSET_KEY, "-inf", "+inf")).isEqualTo(3);
     }
 
     @TestTemplate
@@ -40,10 +39,10 @@ public class TestZCount {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 2, "two");
         jedis.zadd(ZSET_KEY, 3, "three");
-        assertEquals(3, jedis.zcard(ZSET_KEY));
+        assertThat(jedis.zcard(ZSET_KEY)).isEqualTo(3);
 
         // then
-        assertEquals(2, jedis.zcount(ZSET_KEY, "-inf", "2"));
+        assertThat(jedis.zcount(ZSET_KEY, "-inf", "2")).isEqualTo(2);
 
     }
 
@@ -53,11 +52,11 @@ public class TestZCount {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 2, "two");
         jedis.zadd(ZSET_KEY, 3, "three");
-        assertEquals(3, jedis.zcard(ZSET_KEY));
+        assertThat(jedis.zcard(ZSET_KEY)).isEqualTo(3);
 
         // then
-        assertEquals(1, jedis.zcount(ZSET_KEY, "-inf", "(2"));
-        assertEquals(1, jedis.zcount(ZSET_KEY, "(2", "+inf"));
+        assertThat(jedis.zcount(ZSET_KEY, "-inf", "(2")).isEqualTo(1);
+        assertThat(jedis.zcount(ZSET_KEY, "(2", "+inf")).isEqualTo(1);
     }
 
     @TestTemplate
@@ -73,11 +72,10 @@ public class TestZCount {
         jedis.zadd(ZSET_KEY, 8, "eight");
         jedis.zadd(ZSET_KEY, 9, "nine");
         jedis.zadd(ZSET_KEY, 10, "ten");
-        assertEquals(10, jedis.zcard(ZSET_KEY));
+        assertThat(jedis.zcard(ZSET_KEY)).isEqualTo(10);
 
         //then
-        assertEquals(4,
-                jedis.zcount(ZSET_KEY, 5, 8));
+        assertThat(jedis.zcount(ZSET_KEY, 5, 8)).isEqualTo(4);
     }
 
 
@@ -91,7 +89,7 @@ public class TestZCount {
         jedis.zadd(ZSET_KEY, 2, "two");
 
         //then
-        assertEquals(3, jedis.zcount(ZSET_KEY, -1, 1));
+        assertThat(jedis.zcount(ZSET_KEY, -1, 1)).isEqualTo(3);
     }
 
     @TestTemplate
@@ -102,12 +100,12 @@ public class TestZCount {
         jedis.zadd(ZSET_KEY, 3, "three");
 
         // then
-        assertThrows(JedisDataException.class,
-                () -> jedis.zcount(ZSET_KEY, "(dd", "(sd"));
-        assertThrows(JedisDataException.class,
-                () -> jedis.zcount(ZSET_KEY, "1.e", "2.d"));
-        assertThrows(RuntimeException.class,
-                () -> jedis.zcount(ZSET_KEY, "FOO", "BAR"));
+        assertThatThrownBy(() -> jedis.zcount(ZSET_KEY, "(dd", "(sd"))
+                .isInstanceOf(JedisDataException.class);
+        assertThatThrownBy(() -> jedis.zcount(ZSET_KEY, "1.e", "2.d"))
+                .isInstanceOf(JedisDataException.class);
+        assertThatThrownBy(() -> jedis.zcount(ZSET_KEY, "FOO", "BAR"))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @TestTemplate
@@ -115,8 +113,7 @@ public class TestZCount {
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 2, "one");
         jedis.zadd(ZSET_KEY, 3, "one");
-        assertEquals(1,
-                jedis.zcount(ZSET_KEY, "-inf", "+inf"));
-        assertEquals(3, jedis.zscore(ZSET_KEY, "one"));
+        assertThat(jedis.zcount(ZSET_KEY, "-inf", "+inf")).isEqualTo(1);
+        assertThat(jedis.zscore(ZSET_KEY, "one")).isEqualTo(3);
     }
 }

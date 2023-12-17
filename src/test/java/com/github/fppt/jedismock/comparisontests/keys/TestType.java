@@ -6,8 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestType {
@@ -25,22 +24,20 @@ public class TestType {
 
     @TestTemplate
     void type(Jedis jedis) {
-        assertAll(
-                () -> assertEquals("none", jedis.type("not.exists")),
-                () -> assertEquals("string", jedis.type("key")),
-                () -> assertEquals("list", jedis.type("lkey")),
-                () -> assertEquals("set", jedis.type("skey")),
-                () -> assertEquals("zset", jedis.type("zkey")),
-                () -> assertEquals("hash", jedis.type("hkey")),
-                () -> assertEquals("string", jedis.type("bitmap")),
-                () -> assertEquals("string", jedis.type("hll"))
-        );
+        assertThat(jedis.type("not.exists")).isEqualTo("none");
+        assertThat(jedis.type("key")).isEqualTo("string");
+        assertThat(jedis.type("lkey")).isEqualTo("list");
+        assertThat(jedis.type("skey")).isEqualTo("set");
+        assertThat(jedis.type("zkey")).isEqualTo("zset");
+        assertThat(jedis.type("hkey")).isEqualTo("hash");
+        assertThat(jedis.type("bitmap")).isEqualTo("string");
+        assertThat(jedis.type("hll")).isEqualTo("string");
     }
 
     @TestTemplate
     void typeRespectsTTL(Jedis jedis) throws InterruptedException {
         jedis.pexpire("key", 50);
         Thread.sleep(100);
-        assertEquals("none", jedis.type("key"));
+        assertThat(jedis.type("key")).isEqualTo("none");
     }
 }

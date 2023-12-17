@@ -3,57 +3,63 @@ package com.github.fppt.jedismock.datastructures;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static com.github.fppt.jedismock.datastructures.Slice.create;
+import static com.github.fppt.jedismock.datastructures.ZSetEntry.MAX_SCORE;
+import static com.github.fppt.jedismock.datastructures.ZSetEntry.MAX_VALUE;
+import static com.github.fppt.jedismock.datastructures.ZSetEntry.MIN_SCORE;
+import static com.github.fppt.jedismock.datastructures.ZSetEntry.MIN_VALUE;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class RMZSetTest {
     @Test
     void compareScore() {
-        assertTrue(new ZSetEntry(1, Slice.create("a"))
-                .compareTo(new ZSetEntry(2, Slice.create("a"))) < 0);
+        assertThat(new ZSetEntry(1, create("a"))
+                .compareTo(new ZSetEntry(2, create("a")))).isLessThan(0);
     }
 
     @Test
     void compareLex() {
-        assertTrue(new ZSetEntry(1, Slice.create("a"))
-                .compareTo(new ZSetEntry(1, Slice.create("b"))) < 0);
+        assertThat(new ZSetEntry(1, create("a"))
+                .compareTo(new ZSetEntry(1, create("b")))).isLessThan(0);
     }
 
     @Test
     void compareEquals() {
-        assertEquals(0, new ZSetEntry(1, Slice.create("a"))
-                .compareTo(new ZSetEntry(1, Slice.create("a"))));
-        assertEquals(new ZSetEntry(1, Slice.create("a")), new ZSetEntry(1, Slice.create("a")));
+        assertThat(new ZSetEntry(1, create("a"))
+                .compareTo(new ZSetEntry(1, create("a")))).isEqualTo(0);
+        assertThat(new ZSetEntry(1, create("a"))).isEqualTo(new ZSetEntry(1, create("a")));
     }
 
     @Test
     void compareMinScore(){
-        assertTrue(new ZSetEntry(ZSetEntry.MIN_SCORE, Slice.create("a"))
-                .compareTo(new ZSetEntry(2, Slice.create("a"))) < 0);
+        assertThat(new ZSetEntry(MIN_SCORE, create("a"))
+                .compareTo(new ZSetEntry(2, create("a")))).isLessThan(0);
     }
 
     @Test
     void compareMaxScore(){
-        assertTrue(new ZSetEntry(ZSetEntry.MAX_SCORE, Slice.create("a"))
-                .compareTo(new ZSetEntry(2, Slice.create("a"))) > 0);
+        assertThat(new ZSetEntry(MAX_SCORE, create("a"))
+                .compareTo(new ZSetEntry(2, create("a")))).isGreaterThan(0);
     }
 
 
     @Test
     void compareMinLex(){
-        assertTrue(new ZSetEntry(1, ZSetEntry.MIN_VALUE)
-                .compareTo(new ZSetEntry(1, Slice.create("a"))) < 0);
+        assertThat(new ZSetEntry(1, MIN_VALUE)
+                .compareTo(new ZSetEntry(1, create("a")))).isLessThan(0);
     }
 
     @Test
     void compareMaxLex(){
-        assertTrue(new ZSetEntry(1, ZSetEntry.MAX_VALUE)
-                .compareTo(new ZSetEntry(1, Slice.create("Z"))) > 0);
+        assertThat(new ZSetEntry(1, MAX_VALUE)
+                .compareTo(new ZSetEntry(1, create("Z")))).isGreaterThan(0);
     }
 
     @Test
     void compareWithMaxLex(){
-        assertTrue(new ZSetEntry(1, Slice.create("Z"))
-                .compareTo(new ZSetEntry(1, ZSetEntry.MAX_VALUE)) < 0);
+        assertThat(new ZSetEntry(1, create("Z"))
+                .compareTo(new ZSetEntry(1, MAX_VALUE))).isLessThan(0);
     }
 
     @Test

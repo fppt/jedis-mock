@@ -6,8 +6,8 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 @ExtendWith(ComparisonBase.class)
 public class AdvanceConnectionOperationsTest {
@@ -29,22 +29,22 @@ public class AdvanceConnectionOperationsTest {
         //Mess With Default Cluster
         jedis.set(key1, val1);
         jedis.set(key2, val2);
-        assertEquals(val1, jedis.get(key1));
-        assertEquals(val2, jedis.get(key2));
+        assertThat(jedis.get(key1)).isEqualTo(val1);
+        assertThat(jedis.get(key2)).isEqualTo(val2);
 
         //Change to new DB
         jedis.select(2);
-        assertNull(jedis.get(key1));
-        assertNull(jedis.get(key2));
+        assertThat(jedis.get(key1)).isNull();
+        assertThat(jedis.get(key2)).isNull();
 
         jedis.set(key1, val3);
         jedis.set(key2, val3);
-        assertEquals(val3, jedis.get(key1));
-        assertEquals(val3, jedis.get(key2));
+        assertThat(jedis.get(key1)).isEqualTo(val3);
+        assertThat(jedis.get(key2)).isEqualTo(val3);
 
         //Change back and make sure original is unchanged
         jedis.select(0);
-        assertEquals(val1, jedis.get(key1));
-        assertEquals(val2, jedis.get(key2));
+        assertThat(jedis.get(key1)).isEqualTo(val1);
+        assertThat(jedis.get(key2)).isEqualTo(val2);
     }
 }

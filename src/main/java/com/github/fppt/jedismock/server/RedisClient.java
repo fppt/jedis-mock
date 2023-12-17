@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 /**
  * Created by Xiaolu on 2015/4/18.
  */
-public class RedisClient implements Runnable {
+public final class RedisClient implements Runnable {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisClient.class);
     private final AtomicBoolean running;
     private final RedisOperationExecutor executor;

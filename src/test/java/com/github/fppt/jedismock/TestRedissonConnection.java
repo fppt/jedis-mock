@@ -11,12 +11,8 @@ import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
 import java.io.IOException;
-import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestRedissonConnection {
     private static RedisServer redisServer;
@@ -40,26 +36,25 @@ public class TestRedissonConnection {
     @Test
     public void testStringMap() {
         RMap<String, String> map = client.getMap("stringMap");
-        assertNull(map.put("foo", "bar"));
-        assertEquals("bar", map.get("foo"));
-        assertEquals("bar", map.put("foo", "baz"));
+        assertThat(map.put("foo", "bar")).isNull();
+        assertThat(map.get("foo")).isEqualTo("bar");
+        assertThat(map.put("foo", "baz")).isEqualTo("bar");
     }
 
     @Test
     public void testIntegerMap() {
         RMap<String, Integer> map = client.getMap("intMap");
-        assertNull(map.put("foo", 42));
-        assertEquals(42, map.get("foo"));
-        assertEquals(42, map.put("foo", 43));
+        assertThat(map.put("foo", 42)).isNull();
+        assertThat(map.get("foo")).isEqualTo(42);
+        assertThat(map.put("foo", 43)).isEqualTo(42);
     }
 
     @Test
     public void testIntList() {
         RList<Integer> list = client.getList("intList");
-        assertTrue(list.add(11));
-        assertTrue(list.add(15));
-        assertEquals(2, list.size());
-        assertEquals(Arrays.asList(11, 15), list.readAll());
+        assertThat(list.add(11)).isTrue();
+        assertThat(list.add(15)).isTrue();
+        assertThat(list.readAll()).containsExactly(11, 15);
     }
 
     @Test
@@ -67,8 +62,8 @@ public class TestRedissonConnection {
         String key = "an-example-key";
         RLock rLock = client.getLock(key);
         rLock.lock();
-        assertTrue(rLock.isLocked());
+        assertThat(rLock.isLocked()).isTrue();
         rLock.unlock();
-        assertFalse(rLock.isLocked());
+        assertThat(rLock.isLocked()).isFalse();
     }
 }

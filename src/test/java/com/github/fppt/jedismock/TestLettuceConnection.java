@@ -9,8 +9,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestLettuceConnection {
 
@@ -29,7 +28,7 @@ public class TestLettuceConnection {
             connection.close();
             redisClient.shutdown();
 
-            assertEquals("Hello, Redis!", val);
+            assertThat(val).isEqualTo("Hello, Redis!");
         } finally {
             server.stop();
         }
@@ -50,11 +49,11 @@ public class TestLettuceConnection {
             RedisClusterCommands<String, String> syncCommands = connection.sync();
             syncCommands.set("key", "Hello, Redis cluster!");
             String val = syncCommands.get("key");
-            assertFalse(syncCommands.clusterMyId().isEmpty());
-            assertEquals(1, syncCommands.clusterSlots().size());
+            assertThat(syncCommands.clusterMyId()).isNotEmpty();
+            assertThat(syncCommands.clusterSlots()).hasSize(1);
             connection.close();
             redisClient.shutdown();
-            assertEquals("Hello, Redis cluster!", val);
+            assertThat(val).isEqualTo("Hello, Redis cluster!");
         } finally {
             server.stop();
         }

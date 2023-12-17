@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 @RedisCommand(value = "discard", transactional = false)
 public class Discard implements RedisOperation {
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     Discard(OperationExecutorState state){
         this.state = state;

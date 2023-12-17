@@ -13,8 +13,12 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.github.fppt.jedismock.commands.RedisCommandParser.parse;
+import static com.github.fppt.jedismock.server.Response.NULL;
+import static com.github.fppt.jedismock.server.Response.OK;
+import static com.github.fppt.jedismock.server.Response.doubleValue;
+import static com.github.fppt.jedismock.server.Response.integer;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Xiaolu on 2015/4/20.
@@ -27,7 +31,7 @@ public class TestRedisOperationExecutor {
     private RedisOperationExecutor executor;
 
     private static String bulkString(CharSequence param) {
-        return "$" + param.length() + CRLF + param.toString() + CRLF;
+        return "$" + param.length() + CRLF + param + CRLF;
     }
 
     private static String array(CharSequence... params) {
@@ -48,31 +52,31 @@ public class TestRedisOperationExecutor {
     }
 
     private void assertCommandEquals(String expect, String command) throws ParseErrorException {
-        assertEquals(bulkString(expect), executor.execCommand(RedisCommandParser.parse(command)).toString());
+        assertThat(executor.execCommand(parse(command)).toString()).isEqualTo(bulkString(expect));
     }
 
     private void assertCommandEquals(long expect, String command) throws ParseErrorException {
-        assertEquals(Response.integer(expect), executor.execCommand(RedisCommandParser.parse(command)));
+        assertThat(executor.execCommand(parse(command))).isEqualTo(integer(expect));
     }
 
     private void assertCommandEquals(double expect, String command) throws ParseErrorException {
-        assertEquals(Response.doubleValue(expect), executor.execCommand(RedisCommandParser.parse(command)));
+        assertThat(executor.execCommand(parse(command))).isEqualTo(doubleValue(expect));
     }
 
     private void assertCommandArrayEquals(String expectedArray, String command) throws ParseErrorException {
-        assertEquals(expectedArray, executor.execCommand(RedisCommandParser.parse(command)).toString());
+        assertThat(executor.execCommand(parse(command)).toString()).isEqualTo(expectedArray);
     }
 
     private void assertCommandNull(String command) throws ParseErrorException {
-        assertEquals(Response.NULL, executor.execCommand(RedisCommandParser.parse(command)));
+        assertThat(executor.execCommand(parse(command))).isEqualTo(NULL);
     }
 
     private void assertCommandOK(String command) throws ParseErrorException {
-        assertEquals(Response.OK, executor.execCommand(RedisCommandParser.parse(command)));
+        assertThat(executor.execCommand(parse(command))).isEqualTo(OK);
     }
 
     private void assertCommandError(String command) throws ParseErrorException {
-        assertEquals('-', executor.execCommand(RedisCommandParser.parse(command)).data()[0]);
+        assertThat(executor.execCommand(parse(command)).data()[0]).isEqualTo((byte) '-');
     }
 
     private String del(String key){ return executor.execCommand(RedisCommandParser.parse(array("DEL", key))).toString(); }
@@ -227,9 +231,9 @@ public class TestRedisOperationExecutor {
         assertCommandOK(array("SET", "ab", "abd"));
         assertCommandEquals(-1, array("pttl", "ab"));
         assertCommandEquals(1, array("expire", "ab", "2"));
-        assertTrue(executor.execCommand(RedisCommandParser.parse(array("pttl", "ab"))).compareTo(Response.integer(1900L)) > 0);
+        assertThat(executor.execCommand(parse(array("pttl", "ab"))).compareTo(integer(1900L))).isGreaterThan(0);
         Thread.sleep(1100);
-        assertTrue(executor.execCommand(RedisCommandParser.parse(array("pttl", "ab"))).compareTo(Response.integer(999L)) < 0);
+        assertThat(executor.execCommand(parse(array("pttl", "ab"))).compareTo(integer(999L))).isLessThan(0);
         Thread.sleep(1000);
         assertCommandEquals(-2, array("pttl", "ab"));
     }
@@ -331,8 +335,8 @@ public class TestRedisOperationExecutor {
     @Test
     public void testPsetex() throws ParseErrorException {
         assertCommandOK(array("pSETex", "ab", "99", "k"));
-        assertTrue(executor.execCommand(RedisCommandParser.parse(array("pttl", "ab"))).compareTo(Response.integer(90)) > 0);
-        assertTrue(executor.execCommand(RedisCommandParser.parse(array("pttl", "ab"))).compareTo(Response.integer(99)) <= 0);
+        assertThat(executor.execCommand(parse(array("pttl", "ab"))).compareTo(integer(90))).isGreaterThan(0);
+        assertThat(executor.execCommand(parse(array("pttl", "ab"))).compareTo(integer(99))).isLessThanOrEqualTo(0);
         assertCommandError(array("pSETex", "ab", "10a", "k"));
     }
 
@@ -357,8 +361,7 @@ public class TestRedisOperationExecutor {
         assertCommandOK(array("SET", "a", "abc"));
         assertCommandOK(array("SET", "b", "abd"));
 
-        assertEquals(array("abc", "abd", null),
-                executor.execCommand(RedisCommandParser.parse(array("mget", "a", "b", "c"))).toString());
+        assertThat(executor.execCommand(parse(array("mget", "a", "b", "c"))).toString()).isEqualTo(array("abc", "abd", null));
     }
 
     @Test
@@ -449,25 +452,19 @@ public class TestRedisOperationExecutor {
     public void testLpush() throws ParseErrorException {
         assertCommandEquals(1, array("lpush", "mylist", "!"));
         assertCommandEquals(3, array("lpush", "mylist", "world", "hello"));
-        assertEquals(array("hello", "world", "!"),
-                executor.execCommand(RedisCommandParser.parse(array("lrange", "mylist", "0", "-1"))).toString());
+        assertThat(executor.execCommand(parse(array("lrange", "mylist", "0", "-1"))).toString()).isEqualTo(array("hello", "world", "!"));
         assertCommandOK(array("set", "a", "v"));
         assertCommandError(array("lpush", "a", "1"));
     }
 
     @Test
     public void testLrange() throws ParseErrorException {
-        assertEquals(array(),
-                executor.execCommand(RedisCommandParser.parse(array("lrange", "mylist", "0", "-1"))).toString());
+        assertThat(executor.execCommand(parse(array("lrange", "mylist", "0", "-1"))).toString()).isEqualTo(array());
         assertCommandEquals(3, array("lpush", "mylist", "1", "2", "3"));
-        assertEquals(array("3", "2", "1"),
-                executor.execCommand(RedisCommandParser.parse(array("lrange", "mylist", "0", "-1"))).toString());
-        assertEquals(array("3", "2", "1"),
-                executor.execCommand(RedisCommandParser.parse(array("lrange", "mylist", "-10", "10"))).toString());
-        assertEquals(array("2"),
-                executor.execCommand(RedisCommandParser.parse(array("lrange", "mylist", "1", "-2"))).toString());
-        assertEquals(array(),
-                executor.execCommand(RedisCommandParser.parse(array("lrange", "mylist", "10", "-10"))).toString());
+        assertThat(executor.execCommand(parse(array("lrange", "mylist", "0", "-1"))).toString()).isEqualTo(array("3", "2", "1"));
+        assertThat(executor.execCommand(parse(array("lrange", "mylist", "-10", "10"))).toString()).isEqualTo(array("3", "2", "1"));
+        assertThat(executor.execCommand(parse(array("lrange", "mylist", "1", "-2"))).toString()).isEqualTo(array("2"));
+        assertThat(executor.execCommand(parse(array("lrange", "mylist", "10", "-10"))).toString()).isEqualTo(array());
         assertCommandError(array("lrange", "mylist", "a", "-1"));
         assertCommandOK(array("set", "a", "v"));
         assertCommandError(array("lrange", "a", "0", "-1"));
@@ -486,8 +483,7 @@ public class TestRedisOperationExecutor {
     public void testLpushx() throws ParseErrorException {
         assertCommandEquals(1, array("lpush", "a", "1"));
         assertCommandEquals(2, array("lpushx", "a", "2"));
-        assertEquals(array("2", "1"),
-                executor.execCommand(RedisCommandParser.parse(array("lrange", "a", "0", "-1"))).toString());
+        assertThat(executor.execCommand(parse(array("lrange", "a", "0", "-1"))).toString()).isEqualTo(array("2", "1"));
         assertCommandEquals(0, array("lpushx", "b", "1"));
         assertCommandOK(array("set", "a", "v"));
         assertCommandError(array("lpushx", "a", "1"));
@@ -521,8 +517,7 @@ public class TestRedisOperationExecutor {
     public void testRpush() throws ParseErrorException {
         assertCommandEquals(1, array("rpush", "mylist", "!"));
         assertCommandEquals(3, array("rpush", "mylist", "world", "hello"));
-        assertEquals(array("!", "world", "hello"),
-                executor.execCommand(RedisCommandParser.parse(array("lrange", "mylist", "0", "-1"))).toString());
+        assertThat(executor.execCommand(parse(array("lrange", "mylist", "0", "-1"))).toString()).isEqualTo(array("!", "world", "hello"));
         assertCommandOK(array("set", "a", "v"));
         assertCommandError(array("rpush", "a", "1"));
     }

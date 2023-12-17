@@ -6,7 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestHStrlen {
@@ -21,14 +21,14 @@ public class TestHStrlen {
         jedis.hset("myhash", "f2", "99");
         jedis.hset("myhash", "f3", "-256");
 
-        assertEquals(10, jedis.hstrlen("myhash", "f1"));
-        assertEquals(2, jedis.hstrlen("myhash", "f2"));
-        assertEquals(4, jedis.hstrlen("myhash", "f3"));
-        assertEquals(0, jedis.hstrlen("myhash", "no_such_field"));
+        assertThat(jedis.hstrlen("myhash", "f1")).isEqualTo(10);
+        assertThat(jedis.hstrlen("myhash", "f2")).isEqualTo(2);
+        assertThat(jedis.hstrlen("myhash", "f3")).isEqualTo(4);
+        assertThat(jedis.hstrlen("myhash", "no_such_field")).isEqualTo(0);
     }
 
     @TestTemplate
     public void hstrlenReturnsZeroForNonExistent(Jedis jedis) {
-        assertEquals(0, jedis.hstrlen("no_such_hash", "no_such_field"));
+        assertThat(jedis.hstrlen("no_such_hash", "no_such_field")).isEqualTo(0);
     }
 }

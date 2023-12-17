@@ -20,6 +20,7 @@ public class Response {
     public static final Slice NULL = Slice.create("$-1" + LINE_SEPARATOR);
     public static final Slice SKIP = Slice.create("Skip this submission");
     public static final Slice EMPTY_ARRAY = Response.array(Collections.emptyList());
+    public static final Slice NULL_ARRAY = Slice.create("*-1" + LINE_SEPARATOR);
 
     private Response() {}
 
@@ -49,7 +50,7 @@ public class Response {
     }
 
     public static Slice doubleValue(double v) {
-        return Slice.create(String.format(":%g%s", v, LINE_SEPARATOR));
+        return Slice.create(String.format(":%.0f%s", v, LINE_SEPARATOR));
     }
 
     public static Slice array(List<Slice> values) {

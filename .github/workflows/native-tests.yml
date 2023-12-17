@@ -73,3 +73,8 @@ jobs:
         if: always()
         run: ./testnative unit/type/set
         working-directory: native_tests
+
+      - name: zset
+        if: always()
+        run: ./testnative unit/type/zset
+        working-directory: native_tests

@@ -7,10 +7,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRangeByLex {
@@ -26,57 +28,58 @@ public class TestZRangeByLex {
         members.put("ccc", 0d);
         members.put("aaa", 0d);
         long result = jedis.zadd(key, members);
-        assertEquals(4L, result);
+        assertThat(result).isEqualTo(4L);
     }
 
     @TestTemplate
     public void zrangebylexKeysCorrectOrderUnbounded(Jedis jedis) {
         List<String> results = jedis.zrangeByLex(key, "-", "+");
-        assertEquals(Arrays.asList("aaa", "bbb", "ccc", "ddd"), results);
+        assertThat(results).containsExactly("aaa", "bbb", "ccc", "ddd");
     }
 
     @TestTemplate
     void zrangebylexKeysCorrectOrderBounded(Jedis jedis) {
         List<String> results = jedis.zrangeByLex(key, "[bbb", "(ddd");
-        assertEquals(Arrays.asList("bbb", "ccc"), results);
+        assertThat(results).containsExactly("bbb", "ccc");
     }
 
     @TestTemplate
     public void zrevrangebylexKeysCorrectOrderUnbounded(Jedis jedis) {
         List<String> results = jedis.zrevrangeByLex(key, "+", "-");
-        assertEquals(Arrays.asList("ddd", "ccc", "bbb", "aaa"), results);
+        assertThat(results).containsExactly("ddd", "ccc", "bbb", "aaa");
     }
 
     @TestTemplate
     void zrevrangebylexKeysCorrectOrderBounded(Jedis jedis) {
         List<String> results = jedis.zrevrangeByLex(key, "[ddd", "(bbb");
-        assertEquals(Arrays.asList("ddd", "ccc"), results);
+        assertThat(results).containsExactly("ddd", "ccc");
     }
 
 
     @TestTemplate
     public void zrangebylexKeysThrowsOnIncorrectParameters(Jedis jedis) {
-        assertThrows(JedisDataException.class, () -> jedis.zrangeByLex(key, "b", "[d"));
-        assertThrows(JedisDataException.class, () -> jedis.zrevrangeByLex(key, "b", "[d"));
-        assertThrows(JedisDataException.class, () -> jedis.zrangeByLex(key, "[b", "d"));
-        assertThrows(JedisDataException.class, () -> jedis.zrevrangeByLex(key, "[b", "d"));
+        assertThatThrownBy(() -> jedis.zrangeByLex(key, "b", "[d"))
+                .isInstanceOf(JedisDataException.class);
+        assertThatThrownBy(() -> jedis.zrevrangeByLex(key, "b", "[d"))
+                .isInstanceOf(JedisDataException.class);
+        assertThatThrownBy(() -> jedis.zrangeByLex(key, "[b", "d"))
+                .isInstanceOf(JedisDataException.class);
+        assertThatThrownBy(() -> jedis.zrevrangeByLex(key, "[b", "d"))
+                .isInstanceOf(JedisDataException.class);
     }
 
     @TestTemplate
     public void zrangebylexLimit(Jedis jedis) {
-        assertEquals(Collections.singletonList("aaa"),
-                jedis.zrangeByLex(key, "[a", "(c", 0, 1));
+        assertThat(jedis.zrangeByLex(key, "[a", "(c", 0, 1)).containsExactly("aaa");
     }
 
     @TestTemplate
     public void zrevrangebylexLimit(Jedis jedis) {
-        assertEquals(Collections.singletonList("bbb"),
-                jedis.zrevrangeByLex(key, "(c", "[a", 0, 1));
+        assertThat(jedis.zrevrangeByLex(key, "(c", "[a", 0, 1)).containsExactly("bbb");
     }
 
     @TestTemplate
     public void zrangebylexNegativeLimit(Jedis jedis) {
-        assertEquals(Arrays.asList("aaa", "bbb"),
-                jedis.zrangeByLex(key, "[a", "(c", 0, -1));
+        assertThat(jedis.zrangeByLex(key, "[a", "(c", 0, -1)).containsExactly("aaa", "bbb");
     }
 }

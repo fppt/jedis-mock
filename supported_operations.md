@@ -195,41 +195,41 @@
 
 ## Sorted Sets
 
-:x: bzmpop<br>
-:x: bzpopmax<br>
-:x: bzpopmin<br>
+:heavy_check_mark: bzmpop<br>
+:heavy_check_mark: bzpopmax<br>
+:heavy_check_mark: bzpopmin<br>
 :heavy_check_mark: zadd<br>
 :heavy_check_mark: zcard<br>
 :heavy_check_mark: zcount<br>
-:x: zdiff<br>
-:x: zdiffstore<br>
-:x: zincrby<br>
-:x: zinter<br>
-:x: zintercard<br>
-:x: zinterstore<br>
-:x: zlexcount<br>
-:x: zmpop<br>
-:x: zmscore<br>
-:x: zpopmax<br>
-:x: zpopmin<br>
+:heavy_check_mark: zdiff<br>
+:heavy_check_mark: zdiffstore<br>
+:heavy_check_mark: zincrby<br>
+:heavy_check_mark: zinter<br>
+:heavy_check_mark: zintercard<br>
+:heavy_check_mark: zinterstore<br>
+:heavy_check_mark: zlexcount<br>
+:heavy_check_mark: zmpop<br>
+:heavy_check_mark: zmscore<br>
+:heavy_check_mark: zpopmax<br>
+:heavy_check_mark: zpopmin<br>
 :x: zrandmember<br>
 :heavy_check_mark: zrange<br>
 :heavy_check_mark: zrangebylex<br>
 :heavy_check_mark: zrangebyscore<br>
-:x: zrangestore<br>
-:x: zrank<br>
+:heavy_check_mark: zrangestore<br>
+:heavy_check_mark: zrank<br>
 :heavy_check_mark: zrem<br>
-:x: zremrangebylex<br>
-:x: zremrangebyrank<br>
+:heavy_check_mark: zremrangebylex<br>
+:heavy_check_mark: zremrangebyrank<br>
 :heavy_check_mark: zremrangebyscore<br>
 :heavy_check_mark: zrevrange<br>
 :heavy_check_mark: zrevrangebylex<br>
 :heavy_check_mark: zrevrangebyscore<br>
-:x: zrevrank<br>
-:x: zscan<br>
+:heavy_check_mark: zrevrank<br>
+:heavy_check_mark: zscan<br>
 :heavy_check_mark: zscore<br>
-:x: zunion<br>
-:x: zunionstore<br>
+:heavy_check_mark: zunion<br>
+:heavy_check_mark: zunionstore<br>
 
 ## Streams
 

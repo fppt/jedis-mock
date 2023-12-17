@@ -1,13 +1,14 @@
 package com.github.fppt.jedismock.comparisontests.lists;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class WatchTest {
@@ -34,6 +35,6 @@ public class WatchTest {
         secondClient.rpop(key);
         t.exec();
 
-        Assertions.assertEquals(initialValue, jedis.get(setKey));
+        assertThat(jedis.get(setKey)).isEqualTo(initialValue);
     }
 }

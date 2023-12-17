@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @RedisCommand(value = "exec", transactional = false)
 public class Exec implements RedisOperation {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Exec.class);
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     public Exec(OperationExecutorState state) {
         this.state = state;

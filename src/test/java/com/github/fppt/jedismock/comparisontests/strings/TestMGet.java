@@ -6,9 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestMGet {
@@ -21,7 +19,7 @@ public class TestMGet {
     public void mget(Jedis jedis) {
         jedis.set("key1", "Hello");
         jedis.set("key2", "World");
-        assertEquals(Arrays.asList("Hello", "World", null), jedis.mget("key1", "key2", "key3"));
+        assertThat(jedis.mget("key1", "key2", "key3")).containsExactly("Hello", "World", null);
     }
 
 
@@ -29,6 +27,6 @@ public class TestMGet {
     public void mgetWithNonText(Jedis jedis) {
         jedis.set("key1", "Hello");
         jedis.hset("key2", "field", "World");
-        assertEquals(Arrays.asList("Hello", null), jedis.mget("key1", "key2"));
+        assertThat(jedis.mget("key1", "key2")).containsExactly("Hello", null);
     }
 }

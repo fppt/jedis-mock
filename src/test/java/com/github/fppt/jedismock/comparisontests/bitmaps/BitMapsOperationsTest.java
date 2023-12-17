@@ -10,9 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class BitMapsOperationsTest {
@@ -30,7 +28,7 @@ public class BitMapsOperationsTest {
     @TestTemplate
     void testSetBitByBitValue(Jedis jedis) {
         for (int i = 0; i <= Collections.max(bits); i++) {
-            assertEquals(bits.contains(i), jedis.getbit("bm", i));
+            assertThat(jedis.getbit("bm", i)).isEqualTo(bits.contains(i));
         }
     }
 
@@ -38,7 +36,7 @@ public class BitMapsOperationsTest {
     void testGetStringRepresentation(Jedis jedis) {
         jedis.set("bm2".getBytes(), jedis.get("bm".getBytes()));
         for (int i = 0; i <= Collections.max(bits); i++) {
-            assertEquals(bits.contains(i), jedis.getbit("bm2", i));
+            assertThat(jedis.getbit("bm2", i)).isEqualTo(bits.contains(i));
         }
     }
 
@@ -47,16 +45,16 @@ public class BitMapsOperationsTest {
         byte[] buf = jedis.get("bm".getBytes());
         jedis.set("bm2".getBytes(), buf);
         byte[] buf2 = jedis.get("bm2".getBytes());
-        assertArrayEquals(buf, buf2);
+        assertThat(buf2).containsExactlyInAnyOrder(buf);
     }
 
 
     @TestTemplate
     void testValueAftersetbit(Jedis jedis) {
         jedis.setbit("foo", 0L, true);
-        assertTrue(jedis.getbit("foo", 0L));
+        assertThat(jedis.getbit("foo", 0L)).isTrue();
         jedis.setbit("foo", 1L, true);
-        assertTrue(jedis.getbit("foo", 0L));
+        assertThat(jedis.getbit("foo", 0L)).isTrue();
     }
 
     @TestTemplate
@@ -64,7 +62,7 @@ public class BitMapsOperationsTest {
         jedis.set("something", "foo");
         jedis.setbit("something", 41, true);
         jedis.set("something2".getBytes(), jedis.get("something".getBytes()));
-        assertTrue(jedis.getbit("something2", 1));
-        assertTrue(jedis.getbit("something2", 41));
+        assertThat(jedis.getbit("something2", 1)).isTrue();
+        assertThat(jedis.getbit("something2", 41)).isTrue();
     }
 }

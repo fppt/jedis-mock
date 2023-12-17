@@ -9,9 +9,8 @@ import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.List;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class ListOperationsTest {
@@ -25,39 +24,39 @@ public class ListOperationsTest {
     public void whenUsingRpop_EnsureTheLastElementPushedIsReturned(Jedis jedis) {
         String key = "Another key";
         jedis.rpush(key, "1", "2", "3");
-        assertEquals(jedis.rpop(key), "3");
+        assertThat(jedis.rpop(key)).isEqualTo("3");
     }
 
     @TestTemplate
     public void whenUsingLpop_EnsureTheFirstElementPushedIsReturned(Jedis jedis) {
         String key = "Another key";
         jedis.rpush(key, "1", "2", "3");
-        assertEquals("1", jedis.lpop(key));
+        assertThat(jedis.lpop(key)).isEqualTo("1");
     }
 
     @TestTemplate
     public void whenUsingLpopCount_EnsureAllElementsPushedIsReturned(Jedis jedis) {
         String key = "Another key";
         jedis.rpush(key, "1", "2", "3", "4");
-        assertEquals(asList("1", "2", "3"), jedis.lpop(key, 3));
-        assertEquals(singletonList("4"), jedis.lpop(key, 5));
-        assertNull(jedis.lpop(key, 5));
+        assertThat(jedis.lpop(key, 3)).containsExactly("1", "2", "3");
+        assertThat(jedis.lpop(key, 5)).containsExactly("4");
+        assertThat(jedis.lpop(key, 5)).isNull();
     }
 
     @TestTemplate
     public void whenUsingRpop_EnsureTheFirstElementPushedIsReturned(Jedis jedis) {
         String key = "Another key";
         jedis.rpush(key, "1", "2", "3");
-        assertEquals("3", jedis.rpop(key));
+        assertThat(jedis.rpop(key)).isEqualTo("3");
     }
 
     @TestTemplate
     public void whenUsingRpopCount_EnsureAllElementsPushedIsReturned(Jedis jedis) {
         String key = "Another key";
         jedis.rpush(key, "1", "2", "3", "4");
-        assertEquals(asList("4", "3", "2"), jedis.rpop(key, 3));
-        assertEquals(singletonList("1"), jedis.rpop(key, 5));
-        assertNull(jedis.rpop(key, 5));
+        assertThat(jedis.rpop(key, 3)).containsExactly("4", "3", "2");
+        assertThat(jedis.rpop(key, 5)).containsExactly("1");
+        assertThat(jedis.rpop(key, 5)).isNull();
     }
 
     @TestTemplate
@@ -66,7 +65,7 @@ public class ListOperationsTest {
         String list2key = "list 2";
 
         String nullResult = jedis.rpoplpush(list1key, list2key);
-        assertNull(nullResult);
+        assertThat(nullResult).isNull();
 
         jedis.rpush(list1key, "1", "2", "3");
         jedis.rpush(list2key, "a", "b", "c");
@@ -75,29 +74,21 @@ public class ListOperationsTest {
         List<String> results1 = jedis.lrange(list1key, 0, -1);
         List<String> results2 = jedis.lrange(list2key, 0, -1);
 
-        assertTrue(results1.contains("1"));
-        assertTrue(results1.contains("2"));
-        assertTrue(results1.contains("3"));
+        assertThat(results1).contains("1", "2", "3");
 
-        assertTrue(results2.contains("a"));
-        assertTrue(results2.contains("b"));
-        assertTrue(results2.contains("c"));
+        assertThat(results2).contains("a", "b", "c");
 
         //Check that the one list has been pushed into the other
         String result = jedis.rpoplpush(list1key, list2key);
-        assertEquals("3", result);
+        assertThat(result).isEqualTo("3");
 
         results1 = jedis.lrange(list1key, 0, -1);
         results2 = jedis.lrange(list2key, 0, -1);
 
-        assertTrue(results1.contains("1"));
-        assertTrue(results1.contains("2"));
-        assertFalse(results1.contains("3"));
+        assertThat(results1).contains("1", "2");
+        assertThat(results1.contains("3")).isFalse();
 
-        assertTrue(results2.contains("3"));
-        assertTrue(results2.contains("a"));
-        assertTrue(results2.contains("b"));
-        assertTrue(results2.contains("c"));
+        assertThat(results2).contains("3", "a", "b", "c");
     }
 
     @TestTemplate
@@ -113,24 +104,21 @@ public class ListOperationsTest {
 
         //Everything in order
         List<String> list = jedis.lrange(key, 0, -1);
-        assertEquals(hello, list.get(0));
-        assertEquals(hello, list.get(1));
-        assertEquals(foo, list.get(2));
-        assertEquals(hello, list.get(3));
+        assertThat(list).contains(hello, hello, foo, hello);
 
         long numRemoved = jedis.lrem(key, -2, hello);
-        assertEquals(2L, numRemoved);
+        assertThat(numRemoved).isEqualTo(2L);
 
         //Check order again
         list = jedis.lrange(key, 0, -1);
-        assertEquals(hello, list.get(0));
-        assertEquals(foo, list.get(1));
+        assertThat(list).contains(hello, foo);
     }
 
     @TestTemplate
     public void testGetOperation(Jedis jedis) {
         String key = "Another key";
         jedis.rpush(key, "1", "2", "3");
-        assertThrows(JedisDataException.class, () -> jedis.get("Another key"));
+        assertThatThrownBy(() -> jedis.get("Another key"))
+                .isInstanceOf(JedisDataException.class);
     }
 }

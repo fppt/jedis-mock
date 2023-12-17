@@ -7,9 +7,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Integer.MIN_VALUE;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestZRevRange {
@@ -24,31 +25,36 @@ public class TestZRevRange {
         jedis.zadd(ZSET_KEY, 1, "cccc");
         jedis.zadd(ZSET_KEY, 3, "bcbb");
         jedis.zadd(ZSET_KEY, 3, "babb");
-        assertEquals(5L, jedis.zcount(ZSET_KEY, Integer.MIN_VALUE, Integer.MAX_VALUE));
+        assertThat(jedis.zcount(ZSET_KEY, MIN_VALUE, MAX_VALUE)).isEqualTo(5L);
     }
 
     @TestTemplate
     public void whenUsingZrevrange_EnsureItReturnsEverythingInRightOrderWithPlusMinusMaxInteger(Jedis jedis) {
-        assertEquals(Arrays.asList("bcbb", "bbbb", "babb", "aaaa", "cccc"), new ArrayList<>(jedis.zrevrange(ZSET_KEY, Integer.MIN_VALUE, Integer.MAX_VALUE)));
+        assertThat(new ArrayList<>(jedis.zrevrange(ZSET_KEY, MIN_VALUE, MAX_VALUE))).containsExactly("bcbb", "bbbb", "babb", "aaaa", "cccc");
     }
 
     @TestTemplate
     public void whenUsingZrevrange_EnsureItReturnsListInRightOrderWithPositiveRange(Jedis jedis) {
-        assertEquals(Arrays.asList("bbbb", "babb", "aaaa"), new ArrayList<>(jedis.zrevrange(ZSET_KEY, 1, 3)));
+        assertThat(new ArrayList<>(jedis.zrevrange(ZSET_KEY, 1, 3))).containsExactly("bbbb", "babb", "aaaa");
     }
 
     @TestTemplate
     public void whenUsingZrevrange_EnsureItReturnsListInRightOrderWithNegativeRange(Jedis jedis) {
-        assertEquals(Arrays.asList("babb", "aaaa", "cccc"), new ArrayList<>(jedis.zrevrange(ZSET_KEY, -3, -1)));
+        assertThat(new ArrayList<>(jedis.zrevrange(ZSET_KEY, -3, -1))).containsExactly("babb", "aaaa", "cccc");
     }
 
     @TestTemplate
     public void whenUsingZrevrange_EnsureItReturnsListInRightOrderWithNegativeStartAndPositiveEndRange(Jedis jedis) {
-        assertEquals(Arrays.asList("bcbb", "bbbb", "babb"), new ArrayList<>(jedis.zrevrange(ZSET_KEY, -5, 2)));
+        assertThat(new ArrayList<>(jedis.zrevrange(ZSET_KEY, -5, 2))).containsExactly("bcbb", "bbbb", "babb");
     }
 
     @TestTemplate
     public void whenUsingZrevrange_EnsureItReturnsListInRightOrderWithPositiveStartAndNegativeEndRange(Jedis jedis) {
-        assertEquals(Arrays.asList("bbbb", "babb", "aaaa", "cccc"), new ArrayList<>(jedis.zrevrange(ZSET_KEY, 1, -1)));
+        assertThat(new ArrayList<>(jedis.zrevrange(ZSET_KEY, 1, -1))).containsExactly("bbbb", "babb", "aaaa", "cccc");
+    }
+
+    @TestTemplate
+    public void whenUsingZrevrange_EnsureItReturnsEmptyListWhenGiveWrongStartOrStop(Jedis jedis) {
+        assertThat(jedis.zrevrange(ZSET_KEY, -50, -100)).isEmpty();
     }
 }

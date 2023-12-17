@@ -8,8 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class LSetTest {
@@ -24,28 +24,33 @@ public class LSetTest {
     @DisplayName("Change element")
     public void whenUsingLSet_EnsureElementIsSet(Jedis jedis) {
         jedis.lset(key, 1, "5");
-        assertEquals(jedis.lindex(key, 1), "5");
+        assertThat(jedis.lindex(key, 1)).isEqualTo("5");
     }
 
     @TestTemplate
     @DisplayName("Change element by negative index")
     public void whenUsingLSet_EnsureNegativeIndexWorks(Jedis jedis) {
         jedis.lset(key, -2, "5");
-        assertEquals(jedis.lindex(key, 1), "5");
+        assertThat(jedis.lindex(key, 1)).isEqualTo("5");
     }
 
     @TestTemplate
     @DisplayName("Check index out of bound returns error")
     public void whenUsingLSet_EnsureErrorOnIndexOutOfBounds(Jedis jedis) {
-        assertThrows(JedisDataException.class, () -> jedis.lset(key, 10, "5"), "ERR index out of range");
-        assertThrows(JedisDataException.class, () -> jedis.lset(key, -10, "5"), "ERR index out of range");
+        assertThatThrownBy(() -> jedis.lset(key, 10, "5"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR index out of range");
+        assertThatThrownBy(() -> jedis.lset(key, -10, "5"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR index out of range");
     }
 
     @TestTemplate
     @DisplayName("Check error on non existing key")
     public void whenUsingLSet_EnsureErrorOnNonExistingKey(Jedis jedis) {
         jedis.del(key);
-        JedisDataException exception = assertThrows(JedisDataException.class, () -> jedis.lset(key, 0, "1"));
-        assertEquals(exception.getMessage(), "ERR no such key");
+        assertThatThrownBy(() -> jedis.lset(key, 0, "1"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR no such key");
     }
 }

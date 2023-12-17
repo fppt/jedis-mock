@@ -1,13 +1,12 @@
 package com.github.fppt.jedismock.comparisontests.lists;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import java.util.Collections;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class LRangeTest {
@@ -21,6 +20,6 @@ public class LRangeTest {
         String key = "lrange_key";
         jedis.lpush(key, "1", "2", "3");
 
-        Assertions.assertEquals(Collections.emptyList(), jedis.lrange(key, 0, -5));
+        assertThat(jedis.lrange(key, 0, -5)).isEmpty();
     }
 }

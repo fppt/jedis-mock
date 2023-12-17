@@ -16,7 +16,7 @@ public class OperationExecutorState {
     private final Map<Integer, RedisBase> redisBases;
     private final AtomicBoolean isTransactionModeOn = new AtomicBoolean(false);
     private final List<RedisOperation> tx = new ArrayList<>();
-    public final Set<Slice> watchedKeys = new HashSet<>();
+    private final Set<Slice> watchedKeys = new HashSet<>();
     private boolean watchedKeysAffected = false;
     private int selectedRedisBase = 0;
     private String clientName;

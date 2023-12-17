@@ -6,7 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)
 public class TestSetRange {
@@ -19,31 +19,31 @@ public class TestSetRange {
     public void setRange(Jedis jedis) {
         jedis.set("key1", "Hello World");
         final long l = jedis.setrange("key1", 6, "Redis");
-        assertEquals(11, l);
-        assertEquals("Hello Redis", jedis.get("key1"));
+        assertThat(l).isEqualTo(11);
+        assertThat(jedis.get("key1")).isEqualTo("Hello Redis");
     }
 
     @TestTemplate
     public void setRangeAppend(Jedis jedis) {
         jedis.set("key1", "Hello World");
         final long l = jedis.setrange("key1", 6, "Redis Redis");
-        assertEquals(17, l);
-        assertEquals("Hello Redis Redis", jedis.get("key1"));
+        assertThat(l).isEqualTo(17);
+        assertThat(jedis.get("key1")).isEqualTo("Hello Redis Redis");
     }
 
     @TestTemplate
     public void setRangeInTheMiddle(Jedis jedis) {
         jedis.set("key1", "Hello World");
         final long l = jedis.setrange("key1", 2, "FOO");
-        assertEquals(11, l);
-        assertEquals("HeFOO World", jedis.get("key1"));
+        assertThat(l).isEqualTo(11);
+        assertThat(jedis.get("key1")).isEqualTo("HeFOO World");
     }
 
 
     @TestTemplate
     public void setRangeZeroPadding(Jedis jedis) {
         final long l = jedis.setrange("key2", 6, "Redis");
-        assertEquals(11, l);
-        assertEquals(new String(new byte[6]) + "Redis", jedis.get("key2"));
+        assertThat(l).isEqualTo(11);
+        assertThat(jedis.get("key2")).isEqualTo(new String(new byte[6]) + "Redis");
     }
 }

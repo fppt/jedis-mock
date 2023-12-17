@@ -8,7 +8,9 @@ import redis.clients.jedis.Jedis;
 
 import java.util.HashMap;
 import java.util.Map;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestHDel {
@@ -23,11 +25,11 @@ public class TestHDel {
         String hash = "my-hash-2";
         String value = "my-value-2";
 
-        assertEquals(0, jedis.hdel(hash, field));
+        assertThat(jedis.hdel(hash, field)).isEqualTo(0);
         jedis.hset(hash, field, value);
-        assertEquals(value, jedis.hget(hash, field));
-        assertEquals(1, jedis.hdel(hash, field));
-        assertNull(jedis.hget(hash, field));
+        assertThat(jedis.hget(hash, field)).isEqualTo(value);
+        assertThat(jedis.hdel(hash, field)).isEqualTo(1);
+        assertThat(jedis.hget(hash, field)).isNull();
     }
 
     @TestTemplate
@@ -37,8 +39,8 @@ public class TestHDel {
         hash.put("key2", "2");
         jedis.hset("foo", hash);
         final Long res = jedis.hdel("foo", "key1", "key2");
-        assertEquals(2, res);
-        assertTrue(jedis.hgetAll("foo").isEmpty());
+        assertThat(res).isEqualTo(2);
+        assertThat(jedis.hgetAll("foo")).isEmpty();
     }
 
     @TestTemplate
@@ -47,8 +49,8 @@ public class TestHDel {
         hash.put("key1", "1");
         hash.put("key2", "2");
         jedis.hset("foo", hash);
-        assertThrows(RuntimeException.class,
-                () -> jedis.hdel("foo"));
-        assertEquals(2, jedis.hlen("foo"));
+        assertThatThrownBy(() -> jedis.hdel("foo"))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(jedis.hlen("foo")).isEqualTo(2);
     }
 }

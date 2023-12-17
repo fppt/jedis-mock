@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 @RedisCommand(value = "multi", transactional = false)
 public class Multi implements RedisOperation {
-    private OperationExecutorState state;
+    private final OperationExecutorState state;
 
     Multi(OperationExecutorState state){
         this.state = state;
