@@ -71,7 +71,7 @@ public class TestRedisServer {
             assertThat(jedis[i].ping()).isEqualTo("PONG");
             if (i % 2 == 1) {
                 //Part of the clients quit
-                jedis[i].quit();
+                jedis[i].disconnect();
             }
         }
         server.stop();

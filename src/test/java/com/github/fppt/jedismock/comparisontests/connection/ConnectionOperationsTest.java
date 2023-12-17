@@ -5,6 +5,8 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.commands.ProtocolCommand;
+import redis.clients.jedis.util.SafeEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,7 +19,7 @@ public class ConnectionOperationsTest {
         //Create a new connection
         try (Jedis newJedis = new Jedis(hostAndPort.getHost(), hostAndPort.getPort())) {
             newJedis.set("A happy lucky key", "A sad value");
-            assertThat(newJedis.quit()).isEqualTo("OK");
+            assertThat(newJedis.sendCommand(() -> SafeEncoder.encode("QUIT"))).isEqualTo("OK".getBytes());
             assertThat(jedis.get("A happy lucky key")).isEqualTo("A sad value");
         }
     }

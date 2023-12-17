@@ -7,8 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.resps.Tuple;
 
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
@@ -37,11 +35,8 @@ public class TestZDiff {
     public void testZDiffWithEmptySet(Jedis jedis) {
         jedis.zadd(ZSET_KEY_1, 1, "a");
         jedis.zadd(ZSET_KEY_1, 2, "b");
-        Set<Tuple> results = jedis.zdiffWithScores(ZSET_KEY_1, ZSET_KEY_2);
-        Set<Tuple> expected = new TreeSet<>();
-        expected.add(new Tuple("a", 1.0));
-        expected.add(new Tuple("b", 2.0));
-        assertThat(results).isEqualTo(expected);
+        List<Tuple> results = jedis.zdiffWithScores(ZSET_KEY_1, ZSET_KEY_2);
+        assertThat(results).containsExactly(new Tuple("a", 1.0), new Tuple("b", 2.0));
     }
 
     @TestTemplate
@@ -52,10 +47,8 @@ public class TestZDiff {
         jedis.zadd(ZSET_KEY_2, 1, "1");
         jedis.zadd(ZSET_KEY_2, 3, "3");
         jedis.zadd(ZSET_KEY_2, 4, "4");
-        Set<Tuple> results = jedis.zdiffWithScores(ZSET_KEY_1, ZSET_KEY_2);
-        Set<Tuple> expected = new TreeSet<>();
-        expected.add(new Tuple("2", 2.0));
-        assertThat(results).isEqualTo(expected);
+        List<Tuple> results = jedis.zdiffWithScores(ZSET_KEY_1, ZSET_KEY_2);
+        assertThat(results).containsExactly(new Tuple("2", 2.0));
     }
 
     public static String randomValue(int n) {
@@ -149,12 +142,8 @@ public class TestZDiff {
                     numElements--;
                 }
             }
-            Set<String> result = jedis.zdiff(argsList.toArray(new String[0]));
-            List<String> resultSorted = new ArrayList<>(result);
-            resultSorted.sort(null);
-            List<String> sSorted = new ArrayList<>(s.keySet());
-            sSorted.sort(null);
-            assertThat(resultSorted).isEqualTo(sSorted);
+            List<String> result = jedis.zdiff(argsList.toArray(new String[0]));
+            assertThat(result).containsExactlyInAnyOrderElementsOf(s.keySet());
         }
     }
 }

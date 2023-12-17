@@ -98,12 +98,12 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
             {
                 if (context.getExecutionException().isPresent() &&
                         context.getExecutionException().get().getMessage().startsWith(TestErrorMessages.DEADLOCK_ERROR_MESSAGE)) {
-                    jedis.quit();
+                    jedis.disconnect();
                     jedis.close();
                     return;
                 }
                 jedis.resetState();
-                jedis.quit();
+                jedis.disconnect();
                 jedis.close();
             });
         }

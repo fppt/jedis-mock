@@ -5,7 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.resps.KeyedZSetElement;
+import redis.clients.jedis.resps.Tuple;
+import redis.clients.jedis.util.KeyValue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,8 +28,8 @@ public class TestBZPopMin {
         jedis.zadd(ZSET_KEY_1, 1, "b");
         jedis.zadd(ZSET_KEY_1, 0, "a");
         jedis.zadd(ZSET_KEY_1, 2, "c");
-        KeyedZSetElement result = jedis.bzpopmin(0, ZSET_KEY_2, ZSET_KEY_1, "aaa");
-        KeyedZSetElement expected = new KeyedZSetElement(ZSET_KEY_1, "a", 0.0);
+        KeyValue<String, Tuple> result = jedis.bzpopmin(0, ZSET_KEY_2, ZSET_KEY_1, "aaa");
+        KeyValue<String, Tuple> expected = KeyValue.of(ZSET_KEY_1, new Tuple("a", 0.0));
 
         assertThat(result).isEqualTo(expected);
     }
@@ -42,8 +43,8 @@ public class TestBZPopMin {
         jedis.zadd(ZSET_KEY_2, 3, "d");
         jedis.zadd(ZSET_KEY_2, 4, "e");
         jedis.zadd(ZSET_KEY_2, 5, "f");
-        KeyedZSetElement result = jedis.bzpopmin(0, ZSET_KEY_2, ZSET_KEY_1, "aaa");
-        KeyedZSetElement expected = new KeyedZSetElement(ZSET_KEY_2, "d", 3.0);
+        KeyValue<String, Tuple>  result = jedis.bzpopmin(0, ZSET_KEY_2, ZSET_KEY_1, "aaa");
+        KeyValue<String, Tuple>  expected = KeyValue.of(ZSET_KEY_2, new Tuple("d", 3.0));
 
         assertThat(result).isEqualTo(expected);
     }

@@ -42,7 +42,7 @@ public class PubSubTest {
         public void close() throws Exception {
             subscriber.unsubscribe();
             future.get();
-            client.quit();
+            client.disconnect();
         }
     }
 

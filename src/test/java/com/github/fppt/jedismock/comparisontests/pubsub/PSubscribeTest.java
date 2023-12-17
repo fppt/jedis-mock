@@ -37,7 +37,7 @@ public class PSubscribeTest {
         public void close() throws Exception {
             subscriber.punsubscribe();
             future.get();
-            client.quit();
+            client.disconnect();
         }
     }
 

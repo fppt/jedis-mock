@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Protocol;
 import redis.clients.jedis.params.ZAddParams;
 import redis.clients.jedis.resps.Tuple;
 
@@ -138,13 +139,15 @@ public class TestZadd {
 
     @TestTemplate
     public void testZAddXXandNX(Jedis jedis) {
-        assertThatThrownBy(() -> jedis.zadd(ZSET_KEY, 10, "x", new ZAddParams().xx().nx()))
+        assertThatThrownBy(() ->
+                jedis.sendCommand(Protocol.Command.ZADD, ZSET_KEY, "NX", "XX", "10", "x"))
                 .isInstanceOf(RuntimeException.class);
     }
 
     @TestTemplate
     public void testZAddLTandGT(Jedis jedis) {
-        assertThatThrownBy(() -> jedis.zadd(ZSET_KEY, 10, "x", new ZAddParams().lt().gt()))
+        assertThatThrownBy(() ->
+                jedis.sendCommand(Protocol.Command.ZADD, ZSET_KEY, "LT", "GT", "10", "x"))
                 .isInstanceOf(RuntimeException.class);
     }
 

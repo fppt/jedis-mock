@@ -8,6 +8,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ZParams;
 import redis.clients.jedis.resps.Tuple;
 
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -44,11 +45,8 @@ public class TestZInter {
         jedis.zadd(ZSET_KEY_2, 1, "1");
         jedis.zadd(ZSET_KEY_2, 3, "3");
         jedis.zadd(ZSET_KEY_2, 4, "4");
-        Set<Tuple> results = jedis.zinterWithScores(new ZParams(), ZSET_KEY_1, ZSET_KEY_2);
-        Set<Tuple> expected = new TreeSet<>();
-        expected.add(new Tuple("1", 2.0));
-        expected.add(new Tuple("3", 6.0));
-        assertThat(results).isEqualTo(expected);
+        List<Tuple> results = jedis.zinterWithScores(new ZParams(), ZSET_KEY_1, ZSET_KEY_2);
+        assertThat(results).containsExactly(new Tuple("1", 2.0), new Tuple("3", 6.0));
     }
 
     @TestTemplate
@@ -59,11 +57,8 @@ public class TestZInter {
         jedis.zadd(ZSET_KEY_2, 1, "b");
         jedis.zadd(ZSET_KEY_2, 2, "c");
         jedis.zadd(ZSET_KEY_2, 3, "d");
-        Set<Tuple> results = jedis.zinterWithScores(new ZParams().weights(2, 3), ZSET_KEY_1, ZSET_KEY_2);
-        Set<Tuple> expected = new TreeSet<>();
-        expected.add(new Tuple("b", 7.0));
-        expected.add(new Tuple("c", 12.0));
-        assertThat(results).isEqualTo(expected);
+        List<Tuple> results = jedis.zinterWithScores(new ZParams().weights(2, 3), ZSET_KEY_1, ZSET_KEY_2);
+        assertThat(results).containsExactly(new Tuple("b", 7.0), new Tuple("c", 12.0));
     }
 
     @TestTemplate
@@ -74,12 +69,9 @@ public class TestZInter {
         jedis.zadd(ZSET_KEY_2, 1, "b");
         jedis.zadd(ZSET_KEY_2, 2, "c");
         jedis.zadd(ZSET_KEY_2, 3, "d");
-        Set<Tuple> results = jedis.zinterWithScores(
+        List<Tuple> results = jedis.zinterWithScores(
                 new ZParams().aggregate(ZParams.Aggregate.valueOf("MIN")), ZSET_KEY_1, ZSET_KEY_2);
-        Set<Tuple> expected = new TreeSet<>();
-        expected.add(new Tuple("b", 1.0));
-        expected.add(new Tuple("c", 2.0));
-        assertThat(results).isEqualTo(expected);
+        assertThat(results).containsExactly(new Tuple("b", 1.0), new Tuple("c", 2.0));
     }
 
     @TestTemplate
@@ -90,11 +82,8 @@ public class TestZInter {
         jedis.zadd(ZSET_KEY_2, 1, "b");
         jedis.zadd(ZSET_KEY_2, 2, "c");
         jedis.zadd(ZSET_KEY_2, 3, "d");
-        Set<Tuple> results = jedis.zinterWithScores(
+        List<Tuple> results = jedis.zinterWithScores(
                 new ZParams().aggregate(ZParams.Aggregate.valueOf("MAX")), ZSET_KEY_1, ZSET_KEY_2);
-        Set<Tuple> expected = new TreeSet<>();
-        expected.add(new Tuple("b", 2.0));
-        expected.add(new Tuple("c", 3.0));
-        assertThat(results).isEqualTo(expected);
+        assertThat(results).containsExactly(new Tuple("b", 2.0), new Tuple("c", 3.0));
     }
 }
