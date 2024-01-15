@@ -46,7 +46,7 @@
         <assertj.version>3.24.2</assertj.version>
         <jedis.version>5.1.0</jedis.version>
         <testcontainers.version>1.19.3</testcontainers.version>
-        <spotbugs.version>4.8.2.0</spotbugs.version>
+        <spotbugs.version>4.8.3.0</spotbugs.version>
         <slf4j.version>2.0.9</slf4j.version>
     </properties>
 
