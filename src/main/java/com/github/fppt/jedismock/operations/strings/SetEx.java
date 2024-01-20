@@ -1,6 +1,6 @@
 package com.github.fppt.jedismock.operations.strings;
 
-import com  .github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
@@ -15,12 +15,16 @@ class SetEx extends Set {
         super(base, params);
     }
 
-    long timeoutToSet(List<Slice> params){
+    long timeoutToSet(List<Slice> params) {
         return convertToLong(new String(params.get(1).data())) * 1000;
     }
 
     protected Slice response() {
-        base().putValue(params().get(0), params().get(2).extract(), timeoutToSet(params()));
+        final long timeout = timeoutToSet(params());
+        if (timeout < 0) {
+            return Response.error("ERR invalid expire time in 'setex' command");
+        }
+        base().putValue(params().get(0), params().get(2).extract(), timeout);
         return Response.OK;
     }
 }

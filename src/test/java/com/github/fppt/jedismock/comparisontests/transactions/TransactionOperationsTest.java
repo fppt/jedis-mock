@@ -5,7 +5,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Protocol;
 import redis.clients.jedis.Transaction;
+import redis.clients.jedis.commands.ProtocolCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,6 +32,14 @@ public class TransactionOperationsTest {
         transaction.exec();
 
         assertThat(jedis.llen(key)).isEqualTo(3);
+    }
+
+    @TestTemplate
+    public void queuedOperationShouldReplyQueued(Jedis jedis) {
+        assertThat((byte[]) jedis.sendCommand(Protocol.Command.MULTI)).asString().isEqualTo("OK");
+        assertThat((byte[]) jedis.sendCommand(Protocol.Command.SET, "a".getBytes(), "b".getBytes()))
+                .asString().isEqualTo("QUEUED");
+        assertThat((byte[]) jedis.sendCommand(Protocol.Command.DISCARD)).asString().isEqualTo("OK");
     }
 
     @TestTemplate
