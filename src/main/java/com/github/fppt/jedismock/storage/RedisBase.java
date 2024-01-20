@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.datastructures.RMHash;
 import com.github.fppt.jedismock.datastructures.RMHyperLogLog;
 import com.github.fppt.jedismock.datastructures.RMList;
 import com.github.fppt.jedismock.datastructures.RMSet;
+import com.github.fppt.jedismock.datastructures.streams.RMStream;
 import com.github.fppt.jedismock.datastructures.RMString;
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
@@ -62,6 +63,10 @@ public class RedisBase {
         }
         value.raiseTypeCastException();
         return null;
+    }
+
+    public RMStream getStream(Slice key) {
+        return getStructure(key, RMStream.class);
     }
 
     public RMSet getSet(Slice key) {

@@ -2,7 +2,6 @@ package com.github.fppt.jedismock.operations.sortedsets;
 
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
@@ -16,11 +15,17 @@ public class ZIncrBy extends AbstractByScoreOperation {
     }
 
     @Override
-    protected Slice response() {
-        if (params().size() != 3) {
-            throw new ArgumentException("ERR wrong number of arguments for 'zincrby' command");
-        }
+    protected int minArgs() {
+        return 3;
+    }
 
+    @Override
+    protected int maxArgs() {
+        return 3;
+    }
+
+    @Override
+    protected Slice response() {
         return Response.bulkString(Slice.create(String.valueOf(getNewScore())));
     }
 

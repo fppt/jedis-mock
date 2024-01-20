@@ -122,7 +122,7 @@ public class TestZDiff {
     }
 
     @TestTemplate
-    public void testZDiffFuzzing(Jedis jedis) {
+    public void testZDiffStress(Jedis jedis) {
         for (int j = 0; j < 100; j++) {
             Map<String, String> s = new HashMap<>();
             List<String> argsList = new ArrayList<>();

@@ -19,11 +19,12 @@ public class SMIsMember extends AbstractRedisOperation {
     }
 
     @Override
-    protected Slice response() {
-        if (params().size() < 2) {
-            return Response.error("ERR wrong number of arguments for 'smismember' command");
-        }
+    protected int minArgs() {
+        return 2;
+    }
 
+    @Override
+    protected Slice response() {
         Slice key = params().get(0);
         Stream<Slice> paramStream = params().subList(1, params().size()).stream();
         RMSet setDBObj = getSetFromBaseOrCreateEmpty(key);

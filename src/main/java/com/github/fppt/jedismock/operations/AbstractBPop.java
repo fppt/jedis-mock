@@ -26,10 +26,12 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
     }
 
     @Override
+    protected int minArgs(){
+        return 2;
+    }
+
+    @Override
     protected void doOptionalWork() {
-        if (params().size() < 2) {
-            throw new IndexOutOfBoundsException("require at least 2 params");
-        }
         timeoutNanos = toNanoTimeout(params().get(params().size() - 1).toString());
         keys = params().subList(0, params().size() - 1);
     }

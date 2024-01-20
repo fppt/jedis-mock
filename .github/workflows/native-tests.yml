@@ -78,3 +78,8 @@ jobs:
         if: always()
         run: ./testnative unit/type/zset
         working-directory: native_tests
+
+      - name: stream
+        if: always()
+        run: ./testnative unit/type/stream
+        working-directory: native_tests

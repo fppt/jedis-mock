@@ -234,20 +234,20 @@
 ## Streams
 
 :x: xack<br>
-:x: xadd<br>
+:heavy_check_mark: xadd<br>
 :x: xautoclaim<br>
 :x: xclaim<br>
-:x: xdel<br>
+:heavy_check_mark: xdel<br>
 :x: xgroup<br>
 :x: xinfo<br>
-:x: xlen<br>
+:heavy_check_mark: xlen<br>
 :x: xpending<br>
-:x: xrange<br>
-:x: xread<br>
+:heavy_check_mark: xrange<br>
+:heavy_check_mark: xread<br>
 :x: xreadgroup<br>
-:x: xrevrange<br>
+:heavy_check_mark: xrevrange<br>
 :x: xsetid<br>
-:x: xtrim<br>
+:heavy_check_mark: xtrim<br>
 
 ## Strings
 

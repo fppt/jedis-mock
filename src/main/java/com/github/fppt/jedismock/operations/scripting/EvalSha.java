@@ -11,8 +11,6 @@ import java.util.List;
 
 @RedisCommand("evalsha")
 public class EvalSha extends AbstractRedisOperation {
-    private static final String SCRIPT_PARAM_ERROR = "Wrong number of arguments for EVALSHA";
-
     private final OperationExecutorState state;
 
     public EvalSha(final RedisBase base, final List<Slice> params, OperationExecutorState state) {
@@ -21,10 +19,12 @@ public class EvalSha extends AbstractRedisOperation {
     }
 
     @Override
+    protected int minArgs() {
+        return 2;
+    }
+
+    @Override
     protected Slice response() {
-        if (params().size() < 2) {
-            return Response.error(SCRIPT_PARAM_ERROR);
-        }
         final String sha = params().get(0).toString();
         final String script = base().getCachedLuaScript(sha);
         if (script == null) {
