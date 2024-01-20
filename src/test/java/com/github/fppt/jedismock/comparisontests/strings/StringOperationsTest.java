@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.params.SetParams;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -167,6 +168,24 @@ public class StringOperationsTest {
     public void testSetEXNonUTF8binary(Jedis jedis) {
         jedis.setex("foo".getBytes(), 100, msg);
         assertThat(jedis.get("foo".getBytes())).containsExactlyInAnyOrder(msg);
+    }
+
+    @TestTemplate
+    public void testSetExInvalidNegativeTime(Jedis jedis) {
+        assertThatThrownBy(() ->
+                jedis.setex("foo", -1, "bar")).isInstanceOf(JedisDataException.class)
+                .hasMessageContaining("ERR invalid expire time");
+        assertThatThrownBy(() ->
+                jedis.psetex("foo", -1, "bar")).isInstanceOf(JedisDataException.class)
+                .hasMessageContaining("ERR invalid expire time");
+    }
+
+    @TestTemplate
+    public void testSetInvalidNegativeTime(Jedis jedis) {
+        assertThatThrownBy(() ->
+                jedis.set("a", "b", SetParams.setParams().ex(-1)))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageContaining("ERR invalid expire time");
     }
 
     @TestTemplate

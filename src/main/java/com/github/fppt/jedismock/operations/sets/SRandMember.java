@@ -23,8 +23,11 @@ public class SRandMember extends AbstractRedisOperation {
 
     @Override
     protected Slice response() {
-        Slice key = params().get(0);
-        RMSet set = base().getSet(key);
+        if (params().isEmpty()) {
+            return Response.error("ERR wrong number of arguments for 'srandmember' command");
+        }
+
+        RMSet set = base().getSet(params().get(0));
         int number;
         if (params().size() > 1) {
             if (set == null) {
@@ -38,8 +41,8 @@ public class SRandMember extends AbstractRedisOperation {
             number = 1;
         }
 
-        //TODO: more effective algorithms should be used here,
-        //avoiding conversion of set to list, shuffling all the elements etc.
+        // TODO: more effective algorithms should be used here,
+        // avoiding conversion of set to list, shuffling all the elements etc.
         List<Slice> list = new ArrayList<>(set.getStoredData());
         if (number == 1) {
             int index = ThreadLocalRandom.current().nextInt(list.size());

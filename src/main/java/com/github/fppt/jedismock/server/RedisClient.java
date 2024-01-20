@@ -81,7 +81,7 @@ public final class RedisClient implements Runnable {
     /**
      * Send a response due to a specific command.
      *
-     * @param response     The respond to send.
+     * @param response     The response to send.
      * @param respondingTo The reason for sending this response
      */
     public void sendResponse(Slice response, String respondingTo) {

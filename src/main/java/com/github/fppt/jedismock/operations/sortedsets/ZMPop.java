@@ -27,10 +27,12 @@ public class ZMPop extends ZPop {
     }
 
     @Override
+    protected int minArgs() {
+        return 3;
+    }
+
+    @Override
     protected Slice response() {
-        if (params().size() < 3) {
-            throw new ArgumentException("ERR wrong number of arguments for 'zmpop' command");
-        }
         parseArgs();
         return getResult();
     }

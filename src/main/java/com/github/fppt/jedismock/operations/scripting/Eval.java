@@ -27,7 +27,6 @@ import static com.github.fppt.jedismock.operations.scripting.Script.getScriptSHA
 @RedisCommand("eval")
 public class Eval extends AbstractRedisOperation {
 
-    private static final String SCRIPT_PARAM_ERROR = "Wrong number of arguments for EVAL";
     private static final String SCRIPT_RUNTIME_ERROR = "Error running script (call to function returned nil)";
     private static final String REDIS_LUA = loadResource();
     private final Globals globals = JsePlatform.standardGlobals();
@@ -39,11 +38,12 @@ public class Eval extends AbstractRedisOperation {
     }
 
     @Override
-    public Slice response() {
-        if (params().size() < 2) {
-            return Response.error(SCRIPT_PARAM_ERROR);
-        }
+    protected int minArgs() {
+        return 2;
+    }
 
+    @Override
+    public Slice response() {
         final String script = params().get(0).toString();
 
         this.base().addCachedLuaScript(getScriptSHA(script), script);

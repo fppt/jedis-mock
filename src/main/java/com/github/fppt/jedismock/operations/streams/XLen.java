@@ -1,4 +1,4 @@
-package com.github.fppt.jedismock.operations.connection;
+package com.github.fppt.jedismock.operations.streams;
 
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
@@ -8,9 +8,12 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("echo")
-class Echo extends AbstractRedisOperation {
-    Echo(RedisBase base, List<Slice> params) {
+/**
+ * XLEN key
+ */
+@RedisCommand("xlen")
+public class XLen extends AbstractRedisOperation {
+    XLen(RedisBase base, List<Slice> params) {
         super(base, params);
     }
 
@@ -24,7 +27,8 @@ class Echo extends AbstractRedisOperation {
         return 1;
     }
 
+    @Override
     protected Slice response() {
-        return Response.bulkString(params().get(0));
+        return Response.integer(getStreamFromBaseOrCreateEmpty(params().get(0)).getStoredData().size());
     }
 }
