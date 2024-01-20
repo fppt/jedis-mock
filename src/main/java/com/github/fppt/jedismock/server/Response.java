@@ -17,6 +17,7 @@ public class Response {
     private static final String LINE_SEPARATOR = "\r\n";
 
     public static final Slice OK = Slice.create("+OK" + LINE_SEPARATOR);
+    public static final Slice QUEUED = Slice.create("+QUEUED" + LINE_SEPARATOR);
     public static final Slice NULL = Slice.create("$-1" + LINE_SEPARATOR);
     public static final Slice SKIP = Slice.create("Skip this submission");
     public static final Slice EMPTY_ARRAY = Response.array(Collections.emptyList());

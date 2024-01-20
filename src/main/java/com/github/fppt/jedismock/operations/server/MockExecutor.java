@@ -36,10 +36,10 @@ public class MockExecutor {
                 if (operation != null) {
                     if (state.isTransactionModeOn()) {
                         state.tx().add(operation);
+                        return Response.clientResponse(name, Response.QUEUED);
                     } else {
                         return Response.clientResponse(name, operation.execute());
                     }
-                    return Response.clientResponse(name, Response.OK);
                 } else {
                     return Response.error(String.format("Unsupported operation: %s", name));
                 }

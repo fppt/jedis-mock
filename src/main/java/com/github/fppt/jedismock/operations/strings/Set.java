@@ -23,11 +23,14 @@ class Set extends AbstractRedisOperation {
     protected Slice response() {
         Slice key = params().get(0);
         Slice value = params().get(1);
-
+        Long ttl = ttl();
+        if (ttl != null && ttl < 0){
+            return Response.error("ERR invalid expire time in 'set' command");
+        }
         if (nx()) {
             Slice old = base().getSlice(key);
             if (old == null) {
-                base().putValue(key, value.extract(), ttl());
+                base().putValue(key, value.extract(), ttl);
                 return Response.OK;
             } else {
                 return Response.NULL;
@@ -37,11 +40,11 @@ class Set extends AbstractRedisOperation {
             if (old == null) {
                 return Response.NULL;
             } else {
-                base().putValue(key, value.extract(), ttl());
+                base().putValue(key, value.extract(), ttl);
                 return Response.OK;
             }
         } else {
-            base().putValue(key, value.extract(), ttl());
+            base().putValue(key, value.extract(), ttl);
             return Response.OK;
         }
     }
