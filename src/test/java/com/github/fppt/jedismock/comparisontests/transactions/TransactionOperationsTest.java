@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.comparisontests.transactions;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,6 +9,10 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.commands.ProtocolCommand;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.util.SafeEncoder;
+
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,6 +45,53 @@ public class TransactionOperationsTest {
         assertThat((byte[]) jedis.sendCommand(Protocol.Command.SET, "a".getBytes(), "b".getBytes()))
                 .asString().isEqualTo("QUEUED");
         assertThat((byte[]) jedis.sendCommand(Protocol.Command.DISCARD)).asString().isEqualTo("OK");
+    }
+
+    @TestTemplate
+    public void multiIsNotAllowedInMulti(Jedis jedis) {
+        jedis.sendCommand(Protocol.Command.MULTI);
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.MULTI)).isInstanceOf(
+                JedisDataException.class
+        ).hasMessage("ERR MULTI calls can not be nested");
+        jedis.sendCommand(Protocol.Command.EXEC);
+    }
+
+    @TestTemplate
+    public void watchIsNotAllowedInMulti(Jedis jedis) {
+        jedis.sendCommand(Protocol.Command.MULTI);
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.WATCH, "foo")).isInstanceOf(
+                JedisDataException.class
+        ).hasMessage("ERR WATCH inside MULTI is not allowed");
+        jedis.sendCommand(Protocol.Command.EXEC);
+    }
+
+    @TestTemplate
+    public void flushAllIsTransactional(Jedis jedis) {
+        jedis.sendCommand(Protocol.Command.MULTI);
+        assertThat((byte[]) jedis.sendCommand(Protocol.Command.FLUSHALL))
+                .asString().isEqualTo("QUEUED");
+        assertThat((ArrayList<?>) jedis.sendCommand(Protocol.Command.EXEC)).hasSize(1);
+    }
+
+    @TestTemplate
+    public void execWithoutMulti(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.EXEC)).isInstanceOf(
+                JedisDataException.class
+        ).hasMessage("ERR EXEC without MULTI");
+    }
+
+    @TestTemplate
+    public void discardTransactionOnError(Jedis jedis) {
+        jedis.sendCommand(Protocol.Command.MULTI);
+        jedis.sendCommand(Protocol.Command.SET, "foo", "bar");
+        assertThatThrownBy(() -> jedis.sendCommand(() -> SafeEncoder.encode("no-such-command")))
+                .isInstanceOf(JedisDataException.class);
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.EXEC)).isInstanceOf(
+                JedisDataException.class
+        ).hasMessage("EXECABORT Transaction discarded because of previous errors.");
+        //Here we verify that error state was reset as well as transaction buffer
+        jedis.sendCommand(Protocol.Command.MULTI);
+        assertThat((ArrayList<?>) jedis.sendCommand(Protocol.Command.EXEC)).hasSize(0);
     }
 
     @TestTemplate

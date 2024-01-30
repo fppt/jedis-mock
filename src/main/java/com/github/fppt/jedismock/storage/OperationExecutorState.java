@@ -9,12 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OperationExecutorState {
+    public enum TransactionState {NORMAL, MULTI, ERRORED}
+
     private final RedisClient owner;
     private final Map<Integer, RedisBase> redisBases;
-    private final AtomicBoolean isTransactionModeOn = new AtomicBoolean(false);
+    private TransactionState transactionState = TransactionState.NORMAL;
     private final List<RedisOperation> tx = new ArrayList<>();
     private final Set<Slice> watchedKeys = new HashSet<>();
     private boolean watchedKeysAffected = false;
@@ -43,18 +44,21 @@ public class OperationExecutorState {
     }
 
     public void transactionMode(boolean isTransactionModeOn) {
-        this.isTransactionModeOn.set(isTransactionModeOn);
+        this.transactionState = isTransactionModeOn ? TransactionState.MULTI : TransactionState.NORMAL;
     }
 
     public boolean isTransactionModeOn() {
-        return isTransactionModeOn.get();
+        return transactionState != TransactionState.NORMAL;
     }
 
-    public void newTransaction() {
-        if (isTransactionModeOn.get()) {
-            throw new IllegalStateException("Redis mock does not support more than one transaction");
+    public void errorTransaction() {
+        if (isTransactionModeOn()) {
+            transactionState = TransactionState.ERRORED;
         }
-        transactionMode(true);
+    }
+
+    public TransactionState getTransactionState(){
+        return transactionState;
     }
 
     public void clearAll() {

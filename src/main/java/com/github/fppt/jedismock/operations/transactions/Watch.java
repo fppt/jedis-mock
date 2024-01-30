@@ -21,7 +21,11 @@ public class Watch implements RedisOperation {
 
     @Override
     public Slice execute() {
-        state.watch(keys);
-        return Response.OK;
+        if (state.isTransactionModeOn()) {
+            return Response.error("ERR WATCH inside MULTI is not allowed");
+        } else {
+            state.watch(keys);
+            return Response.OK;
+        }
     }
 }

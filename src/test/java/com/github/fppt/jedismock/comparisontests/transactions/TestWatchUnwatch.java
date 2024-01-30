@@ -2,10 +2,12 @@ package com.github.fppt.jedismock.comparisontests.transactions;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Protocol;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.params.SetParams;
 
@@ -156,4 +158,27 @@ public class TestWatchUnwatch {
         assertThat(result).containsExactly("OK");
     }
 
+
+    @TestTemplate
+    public void afterFailedExecKeyIsNoLongerWatched(Jedis jedis){
+        jedis.set("x", "a");
+        jedis.watch("x");
+        jedis.set("x", "b");
+        Transaction transaction = jedis.multi();
+        transaction.set("foo", "bar");
+        assertThat(transaction.exec()).isNull();
+        transaction = jedis.multi();
+        transaction.set("foo", "bar");
+        assertThat(transaction.exec()).hasSize(1);
+    }
+
+    @TestTemplate
+    void flushTouchesWatchedKeys(Jedis jedis){
+        jedis.set("x", "a");
+        jedis.watch("x");
+        jedis.flushAll();
+        Transaction transaction = jedis.multi();
+        transaction.set("foo", "bar");
+        assertThat(transaction.exec()).isNull();
+    }
 }

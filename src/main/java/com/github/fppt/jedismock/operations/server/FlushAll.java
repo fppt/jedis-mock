@@ -6,7 +6,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
-@RedisCommand(value = "flushall", transactional = false)
+@RedisCommand(value = "flushall")
 class FlushAll implements RedisOperation {
     private final OperationExecutorState state;
 

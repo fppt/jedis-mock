@@ -22,7 +22,7 @@ public class ExpiringKeyValueStorage {
         return values;
     }
 
-    public Map<Slice, Long> ttls()  {
+    public Map<Slice, Long> ttls() {
         return ttls;
     }
 
@@ -48,7 +48,7 @@ public class ExpiringKeyValueStorage {
 
         storedData.remove(key2);
 
-        if(storedData.isEmpty()) {
+        if (storedData.isEmpty()) {
             values.remove(key1);
         }
 
@@ -58,12 +58,17 @@ public class ExpiringKeyValueStorage {
     }
 
     public void clear() {
+        for (Slice key : values().keySet()) {
+            if (!isKeyOutdated(key)) {
+                keyChangeNotifier.accept(key);
+            }
+        }
         values().clear();
         ttls().clear();
     }
 
     public RMDataStructure getValue(Slice key) {
-        if(!verifyKey(key)) {
+        if (!verifyKey(key)) {
             return null;
         }
         return values().get(key);
@@ -71,7 +76,7 @@ public class ExpiringKeyValueStorage {
 
     private boolean verifyKey(Slice key) {
         Objects.requireNonNull(key);
-        if(!values().containsKey(key)) {
+        if (!values().containsKey(key)) {
             return false;
         }
 
@@ -132,7 +137,7 @@ public class ExpiringKeyValueStorage {
         Objects.requireNonNull(value);
         RMHash mapByKey;
 
-        if(!values.containsKey(key1)) {
+        if (!values.containsKey(key1)) {
             mapByKey = new RMHash();
             values.put(key1, mapByKey);
         } else {
@@ -144,7 +149,7 @@ public class ExpiringKeyValueStorage {
 
     private RMHash getRMSortedSet(Slice key) {
         RMDataStructure valueByKey = values.get(key);
-        if(!isSortedSetValue(valueByKey)) {
+        if (!isSortedSetValue(valueByKey)) {
             valueByKey.raiseTypeCastException();
         }
 
