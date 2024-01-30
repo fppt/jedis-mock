@@ -10,13 +10,17 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 public class Multi implements RedisOperation {
     private final OperationExecutorState state;
 
-    Multi(OperationExecutorState state){
+    Multi(OperationExecutorState state) {
         this.state = state;
     }
 
     @Override
     public Slice execute() {
-        state.newTransaction();
-        return Response.OK;
+        if (state.isTransactionModeOn()) {
+            return Response.error("ERR MULTI calls can not be nested");
+        } else {
+            state.transactionMode(true);
+            return Response.OK;
+        }
     }
 }
