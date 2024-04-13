@@ -35,13 +35,14 @@ However, the primary objective of a test mock is not to be a bug-to-bug compatib
 
 ## Quickstart 
 
-Add it as a dependency in Maven as:
+Add it as a test dependency in Maven as:
 
 ```xml
 <dependency>
   <groupId>com.github.fppt</groupId>
   <artifactId>jedis-mock</artifactId>
   <version>1.1.0</version>
+  <scope>test</scope>
 </dependency>
 ```
 
@@ -65,7 +66,7 @@ RedisClient redisClient = RedisClient
 Config config = new Config();
 config.useSingleServer().setAddress(
         String.format("redis://%s:%d",
-        redisServer.getHost(), redisServer.getBindPort()));
+        server.getHost(), redisServer.getBindPort()));
 RedissonClient client = Redisson.create(config);
 ```
 
