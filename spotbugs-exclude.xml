@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter xmlns="https://github.com/spotbugs/filter/3.0.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
 
     <Match>
         <Or>
             <Bug pattern="EI_EXPOSE_REP2"/>
             <Bug pattern="EI_EXPOSE_REP"/>
-            <Bug pattern="DM_DEFAULT_ENCODING" />
-            <Bug pattern="DM_CONVERT_CASE" />
+            <Bug pattern="DM_DEFAULT_ENCODING"/>
+            <Bug pattern="DM_CONVERT_CASE"/>
+            <Bug pattern="SING_SINGLETON_GETTER_NOT_SYNCHRONIZED"/>
         </Or>
     </Match>
 
@@ -18,5 +19,18 @@
             <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
             <Bug pattern="THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION"/>
         </Or>
+    </Match>
+    <Match>
+        <!--False positive as of Spotbugs 4.8.4.0-->
+        <Class name="com.github.fppt.jedismock.datastructures.RMHyperLogLog"/>
+        <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_READ_OBJECT"/>
+    </Match>
+    <Match>
+        <Class name="com.github.fppt.jedismock.operations.sortedsets.ZAdd"/>
+        <Bug pattern="FE_FLOATING_POINT_EQUALITY"/>
+    </Match>
+    <Match>
+        <Class name="com.github.fppt.jedismock.datastructures.Slice"/>
+        <Bug pattern="SING_SINGLETON_IMPLEMENTS_SERIALIZABLE"/>
     </Match>
 </FindBugsFilter>
