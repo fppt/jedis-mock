@@ -5,7 +5,6 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RedisCommand("blpop")
@@ -18,6 +17,6 @@ class BLPop extends BPop {
     @Override
     public Slice popper(List<Slice> params) {
         Slice result = new LPop(base(), params).execute();
-        return Response.array(Arrays.asList(Response.bulkString(params.get(0)), result));
+        return Response.array(Response.bulkString(params.get(0)), result);
     }
 }

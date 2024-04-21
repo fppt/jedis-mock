@@ -1,12 +1,11 @@
 package com.github.fppt.jedismock.operations.server;
 
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RedisCommand("time")
@@ -22,8 +21,9 @@ public class Time extends AbstractRedisOperation {
         long time = System.currentTimeMillis();
         long seconds = time / 1000L;
         long microseconds = (time % 1000L) * 1000L;
-        return Response.array(Arrays.asList(
+        return Response.array(
                 Response.bulkString(Slice.create(Long.toString(seconds))),
-                Response.bulkString(Slice.create(Long.toString(microseconds)))));
+                Response.bulkString(Slice.create(Long.toString(microseconds)))
+        );
     }
 }

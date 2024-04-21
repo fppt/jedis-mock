@@ -8,7 +8,6 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -51,10 +50,13 @@ public class ZMPop extends ZPop {
                 for (int index = 0; index < result.size(); index += 2) {
                     Slice value = result.get(index);
                     Slice score = result.get(index + 1);
-                    popedList.add(Response.array(Arrays.asList(value, score)));
+                    popedList.add(Response.array(value, score));
                 }
-                Slice pop = Response.array(popedList);
-                return Response.array(Arrays.asList(Response.bulkString(key), pop));
+
+                return Response.array(
+                        Response.bulkString(key),
+                        Response.array(popedList)
+                );
             }
         }
         return Response.NULL_ARRAY;

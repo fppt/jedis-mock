@@ -1,14 +1,14 @@
 package com.github.fppt.jedismock.operations.hashes;
 
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RedisCommand("hkeys")
 public class HKeys extends AbstractRedisOperation {
@@ -22,16 +22,10 @@ public class HKeys extends AbstractRedisOperation {
 
         Map<Slice, Slice> fieldAndValueMap = base().getFieldsAndValues(hash);
 
-        int arraySize = fieldAndValueMap.size();
-        Slice [] fkeys = new Slice[arraySize];
-
-        int currentIndex = 0;
-        for (Map.Entry<Slice, Slice> entry: fieldAndValueMap.entrySet()){
-            fkeys[currentIndex] = Response.bulkString(entry.getKey());
-            currentIndex++;
-        }
-
-        List<Slice> values = Arrays.asList(fkeys);
-        return Response.array(values);
+        return Response.array(
+                fieldAndValueMap.keySet().stream()
+                        .map(Response::bulkString)
+                        .collect(Collectors.toList())
+        );
     }
 }

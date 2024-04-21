@@ -1,10 +1,10 @@
 package com.github.fppt.jedismock.operations.keys;
 
 import com.github.fppt.jedismock.Utils;
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ class Keys extends AbstractRedisOperation {
 
         base().keys().forEach(keyData -> {
             String key = new String(keyData.data());
-            if(key.matches(regex)){
+            if (key.matches(regex)) {
                 matchingKeys.add(Response.bulkString(keyData));
             }
         });

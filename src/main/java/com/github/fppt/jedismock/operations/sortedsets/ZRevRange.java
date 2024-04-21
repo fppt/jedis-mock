@@ -7,7 +7,6 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
 
@@ -32,7 +31,7 @@ class ZRevRange extends AbstractZRangeByIndex {
         mapDBObj = getZSetFromBaseOrCreateEmpty(key);
         options.add(REV);
         if (checkWrongIndex()) {
-            return Response.array(new ArrayList<>());
+            return Response.EMPTY_ARRAY;
         }
 
         NavigableSet<ZSetEntry> entries = getRange(
