@@ -17,18 +17,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.reflections.util.ReflectionUtilsPredicates.withAnnotation;
 
 @Testcontainers
 public class SupportedOperationsGeneratorTest {
-    private static final String SEPARATOR = " ";
-    private static final String LINE_SEPARATOR = "<br>";
     private static final String HEADING_LEVEL1 = "# ";
     private static final String HEADING_LEVEL2 = "## ";
     private static final String SYMBOL_SUPPORTED = ":heavy_check_mark:";
@@ -74,7 +69,7 @@ public class SupportedOperationsGeneratorTest {
                 lines.add("");
                 lines.add(HEADING_LEVEL2 + category);
                 lines.add("");
-                lines.addAll(categoryOperations.stream()
+                List<String> operations = categoryOperations.stream()
                         .map(s ->
                                 {
                                     int indexOfPipe = s.indexOf('|');
@@ -84,11 +79,49 @@ public class SupportedOperationsGeneratorTest {
                         .filter(s -> !mentioned.contains(s))
                         .peek(mentioned::add)
                         .sorted()
-                        .map(op -> implementedOperations.contains(op) ?
-                                SYMBOL_SUPPORTED + SEPARATOR + op + LINE_SEPARATOR :
-                                SYMBOL_UNSUPPORTED + SEPARATOR + op + LINE_SEPARATOR
+                        .map(op ->
+                                String.format("%s [%s](https://valkey.io/commands/%s/)",
+                                        implementedOperations.contains(op) ?
+                                                SYMBOL_SUPPORTED :
+                                                SYMBOL_UNSUPPORTED, op, op)
                         )
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toList());
+
+                final int colnum;
+                if (operations.size() < 5 || operations.size() == 7) {
+                    colnum = operations.size();
+                } else if (operations.size() % 5 == 0) {
+                    colnum = 5;
+                } else {
+                    colnum = 6;
+                }
+
+                final int remainder = operations.size() % colnum;
+                final int rownum = operations.size() / colnum + ((remainder == 0) ? 0 : 1);
+                if (remainder != 0) {
+                    for (int i = rownum * (remainder + 1) - 1; i < rownum * colnum; i += rownum) {
+                        operations.add(i, "");
+                    }
+                }
+                StringBuilder header = new StringBuilder();
+                for (int i = 0; i < colnum; i++) {
+                    header.append("|     ");
+                }
+                lines.add(header + "|");
+                header = new StringBuilder();
+                for (int i = 0; i < colnum; i++) {
+                    header.append("| --- ");
+                }
+                lines.add(header + "|");
+                for (int i = 0; i < rownum; i++) {
+                    header = new StringBuilder();
+                    for (int j = 0; j < colnum; j++) {
+                        header.append("| ");
+                        header.append(operations.get(j * rownum + i));
+                        header.append(" ");
+                    }
+                    lines.add(header + "|");
+                }
             }
         }
         writeToFile(lines);
