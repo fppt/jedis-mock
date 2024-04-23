@@ -1,12 +1,12 @@
 package com.github.fppt.jedismock.operations.hashes;
 
+import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
-import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,22 +23,17 @@ public class HGetAll extends AbstractRedisOperation {
 
         Map<Slice, Slice> fieldAndValueMap = base().getFieldsAndValues(hash);
 
-        if(fieldAndValueMap == null) {
+        if (fieldAndValueMap == null) {
             fieldAndValueMap = new HashMap<>();
         }
-        int arraySize = fieldAndValueMap.size() * 2;
-        Slice [] fieldAndValueList = new Slice[arraySize];
 
-        int currentIndex = arraySize - 1;
-        for (Map.Entry<Slice, Slice> entry: fieldAndValueMap.entrySet()){
-            fieldAndValueList[currentIndex] = Response.bulkString(entry.getValue());
-            currentIndex--;
+        List<Slice> output = new ArrayList<>();
 
-            fieldAndValueList[currentIndex] = Response.bulkString(entry.getKey());
-            currentIndex--;
-        }
+        fieldAndValueMap.forEach((key, value) -> {
+            output.add(Response.bulkString(key));
+            output.add(Response.bulkString(value));
+        });
 
-        List<Slice> values = Arrays.asList(fieldAndValueList);
-        return Response.array(values);
+        return Response.array(output);
     }
 }

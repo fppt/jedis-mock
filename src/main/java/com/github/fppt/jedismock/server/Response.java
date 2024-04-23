@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,7 +19,7 @@ public class Response {
     public static final Slice QUEUED = Slice.create("+QUEUED" + LINE_SEPARATOR);
     public static final Slice NULL = Slice.create("$-1" + LINE_SEPARATOR);
     public static final Slice SKIP = Slice.create("Skip this submission");
-    public static final Slice EMPTY_ARRAY = Response.array(Collections.emptyList());
+    public static final Slice EMPTY_ARRAY = Response.array();
     public static final Slice NULL_ARRAY = Slice.create("*-1" + LINE_SEPARATOR);
 
     private Response() {}
@@ -52,6 +51,19 @@ public class Response {
 
     public static Slice doubleValue(double v) {
         return Slice.create(String.format(":%.0f%s", v, LINE_SEPARATOR));
+    }
+
+    public static Slice array(Slice... values) {
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+        try {
+            bo.write(String.format("*%d%s", values.length, LINE_SEPARATOR).getBytes());
+            for (Slice value : values) {
+                bo.write(value.data());
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        return Slice.create(bo.toByteArray());
     }
 
     public static Slice array(List<Slice> values) {

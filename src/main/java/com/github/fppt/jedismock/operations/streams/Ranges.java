@@ -11,8 +11,6 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -99,17 +97,17 @@ public class Ranges extends AbstractRedisOperation {
         /* End parsing arguments */
 
         if (map.size() == 0) { // empty map case
-            return Response.array(Collections.emptyList());
+            return Response.EMPTY_ARRAY;
         }
 
         /* Compare with the last item in map */
         if (multiplier == 1) {
             if (start.compareTo(map.getTail()) > 0) {
-                return Response.array(Collections.emptyList());
+                return Response.EMPTY_ARRAY;
             }
         } else {
             if (start.compareTo(map.getHead()) < 0) {
-                return Response.array(Collections.emptyList());
+                return Response.EMPTY_ARRAY;
             }
         }
 
@@ -134,10 +132,10 @@ public class Ranges extends AbstractRedisOperation {
                 entrySlice.add(Response.bulkString(value));
             });
 
-            output.add(Response.array(Arrays.asList(
+            output.add(Response.array(
                     Response.bulkString(entry.getKey().toSlice()),
                     Response.array(entrySlice)
-            )));
+            ));
         }
 
         return Response.array(output);

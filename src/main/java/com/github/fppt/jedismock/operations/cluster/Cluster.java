@@ -6,8 +6,6 @@ import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @RedisCommand(value = "cluster", transactional = false)
@@ -33,17 +31,18 @@ public class Cluster implements RedisOperation {
         }
         final String subcommand = params.get(0).toString();
         if ("slots".equalsIgnoreCase(subcommand)) {
-            return Response.array(Collections.singletonList(
-                    Response.array(Arrays.asList(
+            return Response.array(
+                    Response.array(
                             Response.integer(0),
                             Response.integer(16383),
-                            Response.array(Arrays.asList(
+                            Response.array(
                                     Response.bulkString(Slice.create(state.getHost())),
                                     Response.integer(state.getPort()),
                                     Response.bulkString(Slice.create(NODE_ID)),
                                     Response.EMPTY_ARRAY
-                            ))
-                    ))));
+                            )
+                    )
+            );
         } else if ("nodes".equalsIgnoreCase(subcommand)) {
             return Response.bulkString(
                     Slice.create(String.format("%s %s:%d@%d myself,master - 0 1691313236000 1 connected 0-16383",

@@ -20,11 +20,11 @@ public class HMGet extends AbstractRedisOperation {
         ArrayList<Slice> result = new ArrayList<>();
         Slice hash = params().get(0);
 
-        for(int i = 1; i < params().size(); i ++){
+        for (int i = 1; i < params().size(); i++) {
             Slice field = params().get(i);
             Slice value = base().getSlice(hash, field);
 
-            if(value == null){
+            if (value == null) {
                 result.add(Response.NULL);
             } else {
                 result.add(Response.bulkString(value));

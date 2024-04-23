@@ -47,7 +47,7 @@ public class SRandMember extends AbstractRedisOperation {
         if (number == 1) {
             int index = ThreadLocalRandom.current().nextInt(list.size());
             return params().size() > 1 ?
-                    Response.array(Collections.singletonList(Response.bulkString(list.get(index)))) :
+                    Response.array(Response.bulkString(list.get(index))) :
                     Response.bulkString(list.get(index));
         } else if (number > 1) {
             Collections.shuffle(list);
