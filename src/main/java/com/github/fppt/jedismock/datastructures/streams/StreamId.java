@@ -91,6 +91,10 @@ public final class StreamId implements Comparable<StreamId> {
 
     @Override
     public int compareTo(StreamId other) {
+        if (other == null) {
+            return 1; // occurs in blocking (when nothing was added)
+        }
+
         int firstPartComparison = compareUnsigned(firstPart, other.firstPart);
         return firstPartComparison != 0
                 ? firstPartComparison

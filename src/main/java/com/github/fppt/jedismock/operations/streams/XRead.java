@@ -111,18 +111,32 @@ public class XRead extends AbstractRedisOperation {
         long waitTimeNanos;
 
         if (isBlocking) {
+            boolean updated = false; // should be unblocked after XADD was invoked
             if (blockTimeNanosec > 0) {
                 try {
-                    while (!isInTransaction && (waitTimeNanos = waitEnd - System.nanoTime()) >= 0) {
-                        lock.wait(waitTimeNanos / 1_000_000, (int) (waitTimeNanos % 1_000_000));
+                    while (!isInTransaction && !updated && ((waitTimeNanos = waitEnd - System.nanoTime()) >= 0)) {
+                        for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
+                            if (base().exists(entry.getKey())
+                                    && entry.getValue()
+                                    .compareTo(getStreamFromBaseOrCreateEmpty(entry.getKey())
+                                    .getStoredData()
+                                    .getTail()) < 0) {
+                                updated = true;
+                                break;
+                            }
+                        }
+
+                        if (waitTimeNanos / 1_000_000 < 500) {
+                            lock.wait(waitTimeNanos / 1_000_000, (int) waitTimeNanos % 1_000_000);
+                        } else {
+                            lock.wait(500, 0);
+                        }
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return Response.NULL;
                 }
-            } else { // should be blocked until XADD was invoked
-                boolean updated = false;
-
+            } else {
                 try {
                     while (!isInTransaction && !updated) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
