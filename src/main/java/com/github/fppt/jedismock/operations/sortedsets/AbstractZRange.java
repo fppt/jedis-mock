@@ -28,11 +28,10 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
         WITHSCORES, REV, BYSCORE, BYLEX, LIMIT
     }
 
-    protected final EnumSet<Options> options = EnumSet.noneOf(Options.class);
-    
     protected static final String EXCLUSIVE_PREFIX = "(";
     protected static final String LOWEST_POSSIBLE_SCORE = "-inf";
     protected static final String HIGHEST_POSSIBLE_SCORE = "+inf";
+    protected final EnumSet<Options> options = EnumSet.noneOf(Options.class);
     protected int startIndex;
     protected int endIndex;
     protected long offset = 0;
@@ -45,8 +44,8 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
         parseArgs();
     }
 
-    abstract protected ZSetEntryBound getStartBound(Slice start);
-    abstract protected ZSetEntryBound getEndBound(Slice end);
+    protected abstract ZSetEntryBound getStartBound(Slice start);
+    protected abstract ZSetEntryBound getEndBound(Slice end);
 
     protected NavigableSet<ZSetEntry> getRange(ZSetEntryBound start, ZSetEntryBound end) {
         if (mapDBObj.isEmpty()) {

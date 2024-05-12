@@ -69,5 +69,4 @@ class Set extends AbstractRedisOperation {
         }
         return null;
     }
-
 }

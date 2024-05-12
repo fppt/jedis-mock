@@ -12,8 +12,7 @@ import java.util.List;
  * Created by Xiaolu on 2015/4/20.
  */
 public class Response {
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Response.class);
-    private static final String LINE_SEPARATOR = "\r\n";
+    public static final String LINE_SEPARATOR = "\r\n";
 
     public static final Slice OK = Slice.create("+OK" + LINE_SEPARATOR);
     public static final Slice QUEUED = Slice.create("+QUEUED" + LINE_SEPARATOR);
@@ -22,7 +21,10 @@ public class Response {
     public static final Slice EMPTY_ARRAY = Response.array();
     public static final Slice NULL_ARRAY = Slice.create("*-1" + LINE_SEPARATOR);
 
-    private Response() {}
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Response.class);
+
+    private Response() {
+    }
 
     public static Slice bulkString(Slice slice) {
         if (slice == null) {
@@ -79,7 +81,7 @@ public class Response {
         return Slice.create(bo.toByteArray());
     }
 
-    public static Slice publishedMessage(Slice channel, Slice message){
+    public static Slice publishedMessage(Slice channel, Slice message) {
         Slice operation = SliceParser.consumeParameter("$7\r\nmessage\r\n".getBytes());
 
         List<Slice> slices = new ArrayList<>();
@@ -90,7 +92,7 @@ public class Response {
         return array(slices);
     }
 
-    public static Slice publishedPMessage(Slice pattern, Slice channel, Slice message){
+    public static Slice publishedPMessage(Slice pattern, Slice channel, Slice message) {
         Slice operation = SliceParser.consumeParameter("$8\r\npmessage\r\n".getBytes());
 
         List<Slice> slices = new ArrayList<>();
@@ -102,7 +104,7 @@ public class Response {
         return array(slices);
     }
 
-    public static Slice subscribedToChannel(List<Slice> channels){
+    public static Slice subscribedToChannel(List<Slice> channels) {
         Slice operation = SliceParser.consumeParameter("$9\r\nsubscribe\r\n".getBytes());
         List<Slice> slices = new ArrayList<>();
         int i = 0;
@@ -114,7 +116,7 @@ public class Response {
         return array(slices);
     }
 
-    public static Slice psubscribedToChannel(List<Slice> patterns){
+    public static Slice psubscribedToChannel(List<Slice> patterns) {
         Slice operation = SliceParser.consumeParameter("$10\r\npsubscribe\r\n".getBytes());
         List<Slice> slices = new ArrayList<>();
         int i = 0;
@@ -126,7 +128,7 @@ public class Response {
         return array(slices);
     }
 
-    public static Slice unsubscribe(Slice channel, int remainingSubscriptions){
+    public static Slice unsubscribe(Slice channel, int remainingSubscriptions) {
         Slice operation = SliceParser.consumeParameter("$11\r\nunsubscribe\r\n".getBytes());
 
         List<Slice> slices = new ArrayList<>();
@@ -137,7 +139,7 @@ public class Response {
         return array(slices);
     }
 
-    public static Slice punsubscribe(Slice channel, int remainingSubscriptions){
+    public static Slice punsubscribe(Slice channel, int remainingSubscriptions) {
         Slice operation = SliceParser.consumeParameter("$12\r\npunsubscribe\r\n".getBytes());
 
         List<Slice> slices = new ArrayList<>();
@@ -148,9 +150,9 @@ public class Response {
         return array(slices);
     }
 
-    public static Slice clientResponse(String command, Slice response){
+    public static Slice clientResponse(String command, Slice response) {
         String stringResponse = response.toString().replace("\n", "").replace("\r", "");
-        if(!response.equals(SKIP)) {
+        if (!response.equals(SKIP)) {
             LOG.debug("Received command [" + command + "] sending reply [" + stringResponse + "]");
         }
         return response;

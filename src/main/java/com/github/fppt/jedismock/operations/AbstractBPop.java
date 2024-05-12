@@ -13,11 +13,10 @@ import java.util.List;
 import static com.github.fppt.jedismock.Utils.toNanoTimeout;
 
 public abstract class AbstractBPop extends AbstractRedisOperation {
-
-    private final Object lock;
-    private final boolean isInTransaction;
     protected long timeoutNanos;
     protected List<Slice> keys;
+    private final Object lock;
+    private final boolean isInTransaction;
 
     protected AbstractBPop(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
