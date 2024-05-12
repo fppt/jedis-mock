@@ -9,7 +9,6 @@
             <Bug pattern="EI_EXPOSE_REP"/>
             <Bug pattern="DM_DEFAULT_ENCODING"/>
             <Bug pattern="DM_CONVERT_CASE"/>
-            <Bug pattern="SING_SINGLETON_GETTER_NOT_SYNCHRONIZED"/>
         </Or>
     </Match>
 

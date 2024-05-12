@@ -45,15 +45,15 @@ public class RedisServer {
         CommandFactory.initialize();
     }
 
-    static public RedisServer newRedisServer() {
+    public static RedisServer newRedisServer() {
         return new RedisServer();
     }
 
-    static public RedisServer newRedisServer(int port) {
+    public static RedisServer newRedisServer(int port) {
         return new RedisServer(port);
     }
 
-    static public RedisServer newRedisServer(int port, InetAddress address) {
+    public static RedisServer newRedisServer(int port, InetAddress address) {
         return new RedisServer(port, address);
     }
 

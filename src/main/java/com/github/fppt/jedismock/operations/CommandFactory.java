@@ -16,7 +16,7 @@ import static java.util.stream.Collectors.toMap;
 import static org.reflections.ReflectionUtils.withAnnotation;
 
 public class CommandFactory {
-    private final static Map<Boolean, Map<String, Class<? extends RedisOperation>>> commands;
+    private static final Map<Boolean, Map<String, Class<? extends RedisOperation>>> commands;
 
     static {
         Reflections scanner = new Reflections(CommandFactory.class.getPackage().getName());

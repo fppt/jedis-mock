@@ -9,10 +9,6 @@ import java.util.Set;
 public class RMSet implements RMDataStructure {
     private final Set<Slice> storedData;
 
-    public Set<Slice> getStoredData() {
-        return storedData;
-    }
-
     public RMSet() {
         storedData = new HashSet<>();
     }
@@ -20,6 +16,10 @@ public class RMSet implements RMDataStructure {
     public RMSet(Set<Slice> data) {
         Objects.requireNonNull(data);
         storedData = data;
+    }
+
+    public Set<Slice> getStoredData() {
+        return storedData;
     }
 
     @Override

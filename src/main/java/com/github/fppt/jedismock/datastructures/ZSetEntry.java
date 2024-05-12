@@ -3,11 +3,11 @@ package com.github.fppt.jedismock.datastructures;
 import java.util.Objects;
 
 public final class ZSetEntry implements Comparable<ZSetEntry> {
-    public final static Double MIN_SCORE = Double.NEGATIVE_INFINITY;
-    public final static Double MAX_SCORE = Double.POSITIVE_INFINITY;
-    public final static Slice MIN_VALUE = Slice.empty();
+    public static final Double MIN_SCORE = Double.NEGATIVE_INFINITY;
+    public static final Double MAX_SCORE = Double.POSITIVE_INFINITY;
+    public static final Slice MIN_VALUE = Slice.empty();
     //magic string that is considered to be lexicographically greater than any other string
-    public final static Slice MAX_VALUE = Slice.create("2815bbb7-cacd-4ce1-ba76-11fee7937b0e");
+    public static final Slice MAX_VALUE = Slice.create("2815bbb7-cacd-4ce1-ba76-11fee7937b0e");
 
     private final double score;
 

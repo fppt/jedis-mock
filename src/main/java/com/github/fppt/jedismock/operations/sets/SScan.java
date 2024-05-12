@@ -14,11 +14,11 @@ import java.util.stream.Collectors;
 @RedisCommand("sscan")
 class SScan extends Scan {
 
+    private Slice keySlice;
+
     SScan(RedisBase base, List<Slice> params) {
         super(base, params);
     }
-
-    private Slice keySlice;
 
     @Override
     protected void doOptionalWork() {

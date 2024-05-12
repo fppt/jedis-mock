@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE module PUBLIC
-          "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
-          "https://checkstyle.org/dtds/configuration_1_3.dtd">
+        "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <module name="Checker">
 
@@ -9,7 +9,7 @@
     <module name="FileTabCharacter">
         <property name="eachLine" value="true"/>
     </module>
-
+    <module name="SuppressWarningsFilter"/>
     <module name="TreeWalker">
 
         <!-- Java filename must match name of outer class -->
@@ -18,7 +18,8 @@
         <!-- Use \n, \b etc. instead of octal or unicode escape (e.g. \012) -->
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL"/>
-            <property name="format" value="\\u00(08|09|0(a|A)|0(c|C)|0(d|D)|22|27|5(C|c))|\\(0(10|11|12|14|15|42|47)|134)"/>
+            <property name="format"
+                      value="\\u00(08|09|0(a|A)|0(c|C)|0(d|D)|22|27|5(C|c))|\\(0(10|11|12|14|15|42|47)|134)"/>
             <property name="message" value="Avoid using corresponding octal or Unicode escape."/>
         </module>
 
@@ -44,7 +45,6 @@
         <module name="NoLineWrap"/>
 
         <!-- No empty blocks allowed -->
-        <module name="EmptyBlock"/>
 
         <!-- In some cases, empty blocks are allowed with a comment inside, e.g.
         This is bad:
@@ -85,7 +85,22 @@
             <property name="scope" value="public"/>
             <property name="authorFormat" value=".*"/>
         </module>-->
+        <module name="UnusedImports"/>
+        <module name="UnnecessaryParentheses"/>
+        <module name="UnusedLocalVariable"/>
+
+        <module name="MutableException"/>
+        <module name="DeclarationOrder"/>
+        <module name="ModifierOrder"/>
+        <module name="DefaultComesLast"/>
+        <module name="EqualsAvoidNull"/>
+        <module name="IllegalInstantiation"/>
+        <module name="NoFinalizer"/>
+        <module name="StringLiteralEquality"/>
+        <module name="UpperEll"/>
+        <module name="SuppressWarningsHolder"/>
 
     </module>
+    <module name="NewlineAtEndOfFile"/>
 
 </module>

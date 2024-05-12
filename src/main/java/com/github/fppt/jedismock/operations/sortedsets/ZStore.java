@@ -14,8 +14,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 abstract class ZStore extends AbstractByScoreOperation {
-    private final Object lock;
-
     protected static final String IS_WEIGHTS = "WEIGHTS";
     protected static final String IS_AGGREGATE = "AGGREGATE";
     protected static final String IS_WITHSCORES = "WITHSCORES";
@@ -30,12 +28,14 @@ abstract class ZStore extends AbstractByScoreOperation {
 
     protected boolean withScores = false;
 
+    private final Object lock;
+
     ZStore(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
         this.lock = state.lock();
     }
 
-    abstract protected RMZSet getResult(RMZSet zset1, RMZSet zset2, double weight);
+    protected abstract RMZSet getResult(RMZSet zset1, RMZSet zset2, double weight);
 
     protected RMZSet getFinishedZSet() {
         int numKeys = Integer.parseInt(params().get(startKeysIndex).toString());

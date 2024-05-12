@@ -122,9 +122,12 @@ class ZAdd extends AbstractByScoreOperation {
         }
     }
 
+    @SuppressWarnings("UnnecessaryParentheses")
     private void updateValue(RMZSet mapDBObj, Slice value, double newScore) {
         Double oldScore = mapDBObj.getScore(value);
-        if ((options.contains(LT) && oldScore > newScore) || (options.contains(GT) && oldScore < newScore) || (!options.contains(LT) && !options.contains(GT) && oldScore != newScore)) {
+        if ((options.contains(LT) && oldScore > newScore)
+                || (options.contains(GT) && oldScore < newScore)
+                || (!options.contains(LT) && !options.contains(GT) && oldScore != newScore)) {
             mapDBObj.put(value, newScore);
             countChange++;
         }

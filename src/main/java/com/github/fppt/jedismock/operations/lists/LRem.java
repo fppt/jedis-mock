@@ -17,16 +17,15 @@ class LRem extends AbstractRedisOperation {
     private final int directedNumRemove;
     private final Slice target;
 
-    private boolean isDeletingElement(Slice element, int numRemoved) {
-        return element.equals(target) && (directedNumRemove == 0 || numRemoved < Math.abs(directedNumRemove));
-    }
-
     LRem(RedisBase base, List<Slice> params) {
         super(base, params);
         directedNumRemove = convertToInteger(new String(params().get(1).data()));
         target = params().get(2);
     }
 
+    private boolean isDeletingElement(Slice element, int numRemoved) {
+        return element.equals(target) && (directedNumRemove == 0 || numRemoved < Math.abs(directedNumRemove));
+    }
     protected Slice response(){
         Slice key = params().get(0);
         RMList listObj = base().getList(key);

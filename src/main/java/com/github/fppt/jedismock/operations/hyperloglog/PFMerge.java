@@ -18,7 +18,7 @@ class PFMerge extends AbstractRedisOperation {
     protected Slice response() {
         Slice key = params().get(0);
         RMHyperLogLog rmData = base().getHLL(key);
-        RMHyperLogLog set = (rmData == null ? new RMHyperLogLog() : rmData);
+        RMHyperLogLog set = rmData == null ? new RMHyperLogLog() : rmData;
 
         for (Slice v : params().subList(1, params().size())) {
             RMHyperLogLog valueToMerge = base().getHLL(v);

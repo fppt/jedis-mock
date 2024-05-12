@@ -13,11 +13,10 @@ import java.util.List;
 
 @RedisCommand("zscan")
 class ZScan extends Scan {
+    private Slice keySlice;
     ZScan(RedisBase base, List<Slice> params) {
         super(base, params);
     }
-
-    private Slice keySlice;
 
     @Override
     protected void doOptionalWork() {

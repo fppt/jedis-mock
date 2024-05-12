@@ -40,9 +40,9 @@ public class Ranges extends AbstractRedisOperation {
     protected StreamId preprocessKey(Slice key, RMStream stream, boolean isStart) throws WrongStreamKeyException {
         String rawKey = key.toString();
 
-        if (rawKey.equals("-")) {
+        if ("-".equals(rawKey)) {
             return stream.getStoredData().getHead();
-        } else if (rawKey.equals("+")) {
+        } else if ("+".equals(rawKey)) {
             return stream.getStoredData().getTail();
         }
 

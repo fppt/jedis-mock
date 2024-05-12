@@ -18,14 +18,6 @@ public final class StreamId implements Comparable<StreamId> {
     private final long firstPart;
     private final long secondPart;
 
-    public long getFirstPart() {
-        return firstPart;
-    }
-
-    public long getSecondPart() {
-        return secondPart;
-    }
-
     /* 0-0 ID for PRIVATE API usage */
     StreamId() {
         this(0, 0);
@@ -53,6 +45,14 @@ public final class StreamId implements Comparable<StreamId> {
 
     public StreamId(Slice slice) throws WrongStreamKeyException {
         this(slice.toString());
+    }
+
+    public long getFirstPart() {
+        return firstPart;
+    }
+
+    public long getSecondPart() {
+        return secondPart;
     }
 
     public boolean isZero() {
