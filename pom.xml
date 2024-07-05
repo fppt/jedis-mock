@@ -147,13 +147,6 @@
             <version>3.30.0</version>
             <scope>test</scope>
         </dependency>
-
-        <!--    spotbugs annotations    -->
-        <dependency>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-annotations</artifactId>
-            <version>4.8.6</version>
-        </dependency>
     </dependencies>
 
     <build>
