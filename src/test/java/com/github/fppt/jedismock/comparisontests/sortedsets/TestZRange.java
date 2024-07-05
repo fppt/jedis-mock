@@ -6,6 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ZRangeParams;
+import redis.clients.jedis.resps.Tuple;
 
 import java.util.List;
 
@@ -83,6 +84,21 @@ public class TestZRange {
         jedis.zadd("foo", 3, "three");
         final List<String> list = jedis.zrange("foo", ZRangeParams.zrangeByScoreParams(3, 1).rev());
         assertThat(list).containsExactly("three", "two", "one");
+    }
+
+    @TestTemplate
+    public void zRangeWorksWithDoubleInZAdd(Jedis jedis) {
+        jedis.flushDB();
+        jedis.zadd(ZSET_KEY, 3.14, "pi");
+        jedis.zadd(ZSET_KEY, 2, "two");
+        jedis.zadd(ZSET_KEY, 1.23456789, "many");
+        final List<Tuple> result = jedis.zrangeWithScores(ZSET_KEY, 0, -1);
+        assertThat(result.get(0).getElement()).isEqualTo("many");
+        assertThat(result.get(0).getScore()).isEqualTo(1.23456789);
+        assertThat(result.get(1).getElement()).isEqualTo("two");
+        assertThat(result.get(1).getScore()).isEqualTo(2.0);
+        assertThat(result.get(2).getElement()).isEqualTo("pi");
+        assertThat(result.get(2).getScore()).isEqualTo(3.14);
     }
 
     @TestTemplate
