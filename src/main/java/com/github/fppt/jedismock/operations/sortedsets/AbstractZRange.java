@@ -68,8 +68,7 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
                 if (options.contains(WITHSCORES)) {
                     list = entries.stream()
                             .skip(offset)
-                            .flatMap(e -> Stream.of(e.getValue(),
-                                    Slice.create(String.format("%.0f", e.getScore()))))
+                            .flatMap(AbstractZRange::getSliceStream)
                             .map(Response::bulkString)
                             .collect(Collectors.toList());
                 } else {
@@ -84,8 +83,7 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
                     list = entries.stream()
                             .skip(offset)
                             .limit(count)
-                            .flatMap(e -> Stream.of(e.getValue(),
-                                    Slice.create(String.format("%.0f", e.getScore()))))
+                            .flatMap(AbstractZRange::getSliceStream)
                             .map(Response::bulkString)
                             .collect(Collectors.toList());
                 } else {
@@ -101,8 +99,7 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
         } else {
             if (options.contains(WITHSCORES)) {
                 list = entries.stream()
-                        .flatMap(e -> Stream.of(e.getValue(),
-                                Slice.create(String.format("%.0f", e.getScore()))))
+                        .flatMap(AbstractZRange::getSliceStream)
                         .map(Response::bulkString)
                         .collect(Collectors.toList());
             } else {
@@ -114,6 +111,17 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
         }
 
         return Response.array(list);
+    }
+
+    protected static Stream<Slice> getSliceStream(ZSetEntry e) {
+        if (e.getScore() % 1 == 0) {
+            return Stream.of(
+                    e.getValue(),
+                    Slice.create(String.format("%.0f", e.getScore())));
+        }
+        return Stream.of(
+                e.getValue(),
+                Slice.create(String.valueOf(e.getScore())));
     }
 
     protected final void parseArgs() {
