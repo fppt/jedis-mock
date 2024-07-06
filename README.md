@@ -4,7 +4,7 @@
 
 # Jedis-Mock
 
-Jedis-Mock is a simple in-memory mock of Redis for Java testing, which can also work as test proxy. 
+Jedis-Mock is a simple in-memory mock of Redis/Valkey for Java testing, which can also work as test proxy. 
 Despite its name, it works on network protocol level and can be used with any Redis client 
 (be it [Jedis](https://github.com/redis/jedis), [Lettuce](https://github.com/lettuce-io/lettuce-core), [Redisson](https://github.com/redisson/redisson) or others).
 
@@ -41,7 +41,7 @@ Add it as a test dependency in Maven as:
 <dependency>
   <groupId>com.github.fppt</groupId>
   <artifactId>jedis-mock</artifactId>
-  <version>1.1.1</version>
+  <version>1.1.2</version>
   <scope>test</scope>
 </dependency>
 ```
