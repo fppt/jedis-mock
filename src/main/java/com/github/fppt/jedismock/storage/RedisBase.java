@@ -151,6 +151,10 @@ public class RedisBase {
         return keyValueStorage.setDeadline(key, deadline);
     }
 
+    public Long getDeadline(Slice key) {
+        return keyValueStorage.ttls().get(key);
+    }
+
     public void clear() {
         keyValueStorage.clear();
         subscribers.clear();
