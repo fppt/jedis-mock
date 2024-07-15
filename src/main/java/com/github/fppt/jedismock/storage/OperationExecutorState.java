@@ -28,7 +28,11 @@ public class OperationExecutorState {
     }
 
     public RedisBase base() {
-        return redisBases.computeIfAbsent(selectedRedisBase, key -> new RedisBase());
+        return base(selectedRedisBase);
+    }
+
+    public RedisBase base(int baseIndex) {
+        return redisBases.computeIfAbsent(baseIndex, key -> new RedisBase());
     }
 
     public RedisClient owner() {
@@ -57,7 +61,7 @@ public class OperationExecutorState {
         }
     }
 
-    public TransactionState getTransactionState(){
+    public TransactionState getTransactionState() {
         return transactionState;
     }
 

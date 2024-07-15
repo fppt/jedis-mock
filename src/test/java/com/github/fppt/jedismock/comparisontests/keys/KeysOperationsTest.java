@@ -6,6 +6,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -152,11 +153,34 @@ public class KeysOperationsTest {
     }
 
     @TestTemplate
-    public void multipleExpire (Jedis jedis){
+    public void multipleExpire(Jedis jedis) {
         jedis.set("foo1", "bar");
         jedis.set("foo2", "bar");
         jedis.expire("foo1", 0);
         jedis.expire("foo2", 0);
         assertThat(jedis.dbSize()).isEqualTo(0);
+    }
+
+    @TestTemplate
+    public void expireTime(Jedis jedis) {
+        assertThat(jedis.expireTime("mykey")).isEqualTo(-2);
+        jedis.set("mykey", "myvalue");
+        assertThat(jedis.expireTime("mykey")).isEqualTo(-1);
+        long expireAt = Long.parseLong(jedis.time().get(0)) + 1234;
+        jedis.expireAt("mykey", expireAt);
+        assertThat(jedis.expireTime("mykey")).isEqualTo(expireAt);
+    }
+
+    @TestTemplate
+    public void pExpireTime(Jedis jedis) {
+        assertThat(jedis.pexpireTime("mykey")).isEqualTo(-2);
+        jedis.set("mykey", "myvalue");
+        assertThat(jedis.pexpireTime("mykey")).isEqualTo(-1);
+        List<String> time = jedis.time();
+        long expireAt = Long.parseLong(time.get(0)) * 1000
+                + Long.parseLong(time.get(1))
+                + 1234567;
+        jedis.pexpireAt("mykey", expireAt);
+        assertThat(jedis.pexpireTime("mykey")).isEqualTo(expireAt);
     }
 }
