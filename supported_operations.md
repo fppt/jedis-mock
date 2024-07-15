@@ -48,12 +48,12 @@
 
 |     |     |     |     |     |
 | --- | --- | --- | --- | --- |
-| :x: [copy](https://valkey.io/commands/copy/) | :heavy_check_mark: [expireat](https://valkey.io/commands/expireat/) | :x: [move](https://valkey.io/commands/move/) | :heavy_check_mark: [pttl](https://valkey.io/commands/pttl/) | :heavy_check_mark: [scan](https://valkey.io/commands/scan/) |
-| :heavy_check_mark: [dbsize](https://valkey.io/commands/dbsize/) | :x: [expiretime](https://valkey.io/commands/expiretime/) | :x: [object](https://valkey.io/commands/object/) | :x: [randomkey](https://valkey.io/commands/randomkey/) | :x: [swapdb](https://valkey.io/commands/swapdb/) |
+| :heavy_check_mark: [copy](https://valkey.io/commands/copy/) | :heavy_check_mark: [expireat](https://valkey.io/commands/expireat/) | :heavy_check_mark: [move](https://valkey.io/commands/move/) | :heavy_check_mark: [pttl](https://valkey.io/commands/pttl/) | :heavy_check_mark: [scan](https://valkey.io/commands/scan/) |
+| :heavy_check_mark: [dbsize](https://valkey.io/commands/dbsize/) | :heavy_check_mark: [expiretime](https://valkey.io/commands/expiretime/) | :x: [object](https://valkey.io/commands/object/) | :x: [randomkey](https://valkey.io/commands/randomkey/) | :x: [swapdb](https://valkey.io/commands/swapdb/) |
 | :heavy_check_mark: [del](https://valkey.io/commands/del/) | :heavy_check_mark: [flushall](https://valkey.io/commands/flushall/) | :heavy_check_mark: [persist](https://valkey.io/commands/persist/) | :heavy_check_mark: [rename](https://valkey.io/commands/rename/) | :x: [touch](https://valkey.io/commands/touch/) |
 | :x: [dump](https://valkey.io/commands/dump/) | :heavy_check_mark: [flushdb](https://valkey.io/commands/flushdb/) | :heavy_check_mark: [pexpire](https://valkey.io/commands/pexpire/) | :x: [renamenx](https://valkey.io/commands/renamenx/) | :heavy_check_mark: [ttl](https://valkey.io/commands/ttl/) |
 | :heavy_check_mark: [exists](https://valkey.io/commands/exists/) | :heavy_check_mark: [keys](https://valkey.io/commands/keys/) | :heavy_check_mark: [pexpireat](https://valkey.io/commands/pexpireat/) | :x: [restore](https://valkey.io/commands/restore/) | :heavy_check_mark: [type](https://valkey.io/commands/type/) |
-| :heavy_check_mark: [expire](https://valkey.io/commands/expire/) | :x: [migrate](https://valkey.io/commands/migrate/) | :x: [pexpiretime](https://valkey.io/commands/pexpiretime/) | :x: [restore-asking](https://valkey.io/commands/restore-asking/) | :heavy_check_mark: [unlink](https://valkey.io/commands/unlink/) |
+| :heavy_check_mark: [expire](https://valkey.io/commands/expire/) | :x: [migrate](https://valkey.io/commands/migrate/) | :heavy_check_mark: [pexpiretime](https://valkey.io/commands/pexpiretime/) | :x: [restore-asking](https://valkey.io/commands/restore-asking/) | :heavy_check_mark: [unlink](https://valkey.io/commands/unlink/) |
 
 ## Lists
 
