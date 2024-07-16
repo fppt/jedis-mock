@@ -27,6 +27,11 @@ class PExpire extends AbstractRedisOperation {
         return convertToLong(new String(params.get(1).data()));
     }
 
+    @Override
+    protected int minArgs() {
+        return 2;
+    }
+
     protected Slice response() {
         param:
         for (int i = 2; i < params().size(); i++) {
