@@ -79,9 +79,13 @@ public abstract class AbstractRedisOperation implements RedisOperation {
         return Integer.MAX_VALUE;
     }
 
+    protected RedisCommand self() {
+        return Objects.requireNonNull(getClass().getAnnotation(RedisCommand.class));
+    }
+
     @Override
     public Slice execute() {
-        RedisCommand self = Objects.requireNonNull(getClass().getAnnotation(RedisCommand.class));
+        RedisCommand self = self();
         try {
             //Validate the number of arguments
             if (params().size() < minArgs() || params().size() > maxArgs()) {

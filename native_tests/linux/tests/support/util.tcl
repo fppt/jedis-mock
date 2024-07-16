@@ -1115,3 +1115,9 @@ proc format_command {args} {
     set _ $cmd
 }
 
+proc generate_largevalue_test_array {} {
+    array set largevalue {}
+    set largevalue(listpack) "hello"
+    set largevalue(quicklist) [string repeat "x" 8192]
+    return [array get largevalue]
+}

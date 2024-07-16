@@ -16,13 +16,19 @@ class SetEx extends Set {
     }
 
     long timeoutToSet(List<Slice> params) {
-        return convertToLong(new String(params.get(1).data())) * 1000;
+        return Math.multiplyExact(convertToLong(new String(params.get(1).data())), 1000L);
     }
 
     protected Slice response() {
-        final long timeout = timeoutToSet(params());
-        if (timeout < 0) {
-            return Response.error("ERR invalid expire time in 'setex' command");
+        final long timeout;
+        try {
+            timeout = timeoutToSet(params());
+            Math.addExact(System.currentTimeMillis(), timeout);
+        } catch (ArithmeticException e) {
+            return Response.error(String.format("ERR invalid expire time in '%s' command", self().value()));
+        }
+        if (timeout <= 0){
+            return Response.error(String.format("ERR invalid expire time in '%s' command", self().value()));
         }
         base().putValue(params().get(0), params().get(2).extract(), timeout);
         return Response.OK;

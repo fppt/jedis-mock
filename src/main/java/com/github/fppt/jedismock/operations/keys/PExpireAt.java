@@ -16,6 +16,11 @@ class PExpireAt extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 2;
+    }
+
     protected Slice response() {
         long deadline = convertToLong(new String(params().get(1).data()));
         return Response.integer(base().setDeadline(params().get(0), deadline));

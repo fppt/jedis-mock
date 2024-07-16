@@ -1,13 +1,17 @@
 package com.github.fppt.jedismock.comparisontests.strings;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.SetParams;
 
+import java.util.stream.LongStream;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestSet {
@@ -98,6 +102,35 @@ public class TestSet {
     }
 
     @TestTemplate
+    public void testSetBadExpiration(Jedis jedis) {
+        SoftAssertions softly = new SoftAssertions();
+        LongStream.of(
+                9223370399119966L,
+                9223372036854776L,
+                10000000000000000L,
+                18446744073709561L,
+                -9223372036854776L,
+                -9999999999999999L,
+                -100L,
+                0L
+        ).forEach(
+                v -> softly.assertThatThrownBy(() ->
+                                jedis.set("foo", "bar", SetParams.setParams().ex(v)))
+                        .hasMessage("ERR invalid expire time in 'set' command")
+        );
+        softly.assertAll();
+    }
+
+    @TestTemplate
+    public void keepTTL(Jedis jedis) {
+        long exat = System.currentTimeMillis() / 1000 + 1050;
+        jedis.set(SET_KEY, SET_VALUE);
+        jedis.expireAt(SET_KEY, exat);
+        jedis.set(SET_KEY, SET_ANOTHER_VALUE, SetParams.setParams().keepTtl());
+        assertThat(jedis.expireTime(SET_KEY)).isEqualTo(exat);
+    }
+
+    @TestTemplate
     public void testSetNonUTF8binary(Jedis jedis) {
         byte[] msg = new byte[]{(byte) 0xbe};
         jedis.set("foo".getBytes(), msg);
@@ -133,4 +166,19 @@ public class TestSet {
         assertThat(jedis.get(SET_KEY)).isEqualTo(SET_VALUE);
         assertThat(jedis.del(SET_KEY)).isEqualTo(1);
     }
+
+    @TestTemplate
+    void testSetExat(Jedis jedis) {
+        long exat = System.currentTimeMillis() / 1000 + 1050;
+        jedis.set(SET_KEY, SET_VALUE, SetParams.setParams().exAt(exat));
+        assertThat(jedis.expireTime(SET_KEY)).isEqualTo(exat);
+    }
+
+    @TestTemplate
+    void testSetPExat(Jedis jedis) {
+        long pxat = System.currentTimeMillis() + 100500;
+        jedis.set(SET_KEY, SET_VALUE, SetParams.setParams().pxAt(pxat));
+        assertThat(jedis.pexpireTime(SET_KEY)).isEqualTo(pxat);
+    }
+
 }

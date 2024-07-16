@@ -83,3 +83,13 @@ jobs:
         if: always()
         run: ./testnative unit/type/stream
         working-directory: native_tests
+
+      - name: keyspace
+        if: always()
+        run: ./testnative unit/keyspace
+        working-directory: native_tests
+
+      - name: expire
+        if: always()
+        run: ./testnative unit/expire
+        working-directory: native_tests

@@ -2,6 +2,7 @@ package com.github.fppt.jedismock.operations.sets;
 
 import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
@@ -13,8 +14,6 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import static com.github.fppt.jedismock.Utils.convertToInteger;
-
 @RedisCommand("srandmember")
 public class SRandMember extends AbstractRedisOperation {
     public SRandMember(RedisBase base, List<Slice> params) {
@@ -22,18 +21,26 @@ public class SRandMember extends AbstractRedisOperation {
     }
 
     @Override
-    protected Slice response() {
-        if (params().isEmpty()) {
-            return Response.error("ERR wrong number of arguments for 'srandmember' command");
-        }
+    protected int minArgs() {
+        return 1;
+    }
 
+    @Override
+    protected Slice response() {
         RMSet set = base().getSet(params().get(0));
         int number;
         if (params().size() > 1) {
             if (set == null) {
                 return Response.EMPTY_ARRAY;
             }
-            number = convertToInteger(params().get(1).toString());
+            int result;
+            String value = params().get(1).toString();
+            try {
+                result = Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                throw new WrongValueTypeException("ERR value is out of range");
+            }
+            number = result;
         } else {
             if (set == null) {
                 return Response.NULL;
