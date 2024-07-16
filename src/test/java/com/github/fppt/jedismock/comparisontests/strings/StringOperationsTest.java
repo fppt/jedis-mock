@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.comparisontests.strings;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.LongStream;
 
 import static java.lang.Integer.parseInt;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -171,13 +173,23 @@ public class StringOperationsTest {
     }
 
     @TestTemplate
-    public void testSetExInvalidNegativeTime(Jedis jedis) {
-        assertThatThrownBy(() ->
-                jedis.setex("foo", -1, "bar")).isInstanceOf(JedisDataException.class)
-                .hasMessageContaining("ERR invalid expire time");
-        assertThatThrownBy(() ->
-                jedis.psetex("foo", -1, "bar")).isInstanceOf(JedisDataException.class)
-                .hasMessageContaining("ERR invalid expire time");
+    public void testSetExInvalidTime(Jedis jedis) {
+        SoftAssertions softly = new SoftAssertions();
+        LongStream.of(
+                9223370399119966L,
+                9223372036854776L,
+                10000000000000000L,
+                18446744073709561L,
+                -9223372036854776L,
+                -9999999999999999L,
+                -100L,
+                0L
+        ).forEach(
+                v -> softly.assertThatThrownBy(() ->
+                                jedis.setex("foo", v, "bar"))
+                        .hasMessage("ERR invalid expire time in 'setex' command")
+        );
+        softly.assertAll();
     }
 
     @TestTemplate

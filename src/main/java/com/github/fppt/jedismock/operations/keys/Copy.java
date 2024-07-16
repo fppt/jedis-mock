@@ -12,9 +12,6 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * COPY source destination [DB destination-db] [REPLACE]
- */
 @RedisCommand(value = "copy")
 public class Copy implements RedisOperation {
     private final OperationExecutorState state;

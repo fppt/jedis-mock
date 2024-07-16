@@ -62,4 +62,13 @@ public class CopyTests {
         assertThat(jedis.copy(srcKey, dstKey, true)).isTrue();
         assertThat(jedis.get(dstKey)).isEqualTo(val);
     }
+
+    @TestTemplate
+    public void copyDoesNotCreateAnExpireIfItDoesNotExist(Jedis jedis) {
+        jedis.set("mykey", "foobar");
+        assertThat(jedis.ttl("mykey")).isEqualTo(-1);
+        jedis.copy("mykey", "mynewkey", true);
+        assertThat(jedis.ttl("mynewkey")).isEqualTo(-1);
+        assertThat(jedis.get("mynewkey")).isEqualTo("foobar");
+    }
 }

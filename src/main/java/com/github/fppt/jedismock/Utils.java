@@ -51,7 +51,7 @@ public class Utils {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            throw new WrongValueTypeException("ERR value is not an integer or value is out of range");
+            throw new WrongValueTypeException("ERR value is not an integer or out of range");
         }
     }
 
