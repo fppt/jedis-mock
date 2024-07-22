@@ -79,7 +79,7 @@ class Set extends AbstractRedisOperation {
         }
         try {
             value = Math.multiplyExact(multiplier, value);
-            Math.addExact(System.currentTimeMillis(), value);
+            Math.addExact(base().getClock().millis(), value);
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException(String.format(
                     "ERR invalid expire time in '%s' command", self().value()));

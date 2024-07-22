@@ -1,7 +1,9 @@
-package com.github.fppt.jedismock.server;
+package com.github.fppt.jedismock;
 
 import com.github.fppt.jedismock.commands.RedisCommandParser;
 import com.github.fppt.jedismock.exception.ParseErrorException;
+import com.github.fppt.jedismock.server.RedisOperationExecutor;
+import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,8 +12,10 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.fppt.jedismock.commands.RedisCommandParser.parse;
 import static com.github.fppt.jedismock.server.Response.NULL;
@@ -79,15 +83,20 @@ public class TestRedisOperationExecutor {
         assertThat(executor.execCommand(parse(command)).data()[0]).isEqualTo((byte) '-');
     }
 
-    private String del(String key){ return executor.execCommand(RedisCommandParser.parse(array("DEL", key))).toString(); }
-    private String set(String key, String value){ return executor.execCommand(RedisCommandParser.parse(array("SET", key, value))).toString(); }
+    private String del(String key) {
+        return executor.execCommand(RedisCommandParser.parse(array("DEL", key))).toString();
+    }
+
+    private String set(String key, String value) {
+        return executor.execCommand(RedisCommandParser.parse(array("SET", key, value))).toString();
+    }
 
     @BeforeEach
     public void initCommandExecutor() throws IOException {
         Map<Integer, RedisBase> redisBases = new HashMap<>();
-        redisBases.put(0, new RedisBase());
-        RedisClient redisClient = new RedisClient(redisBases,
-                mockSocket, ServiceOptions.defaultOptions(), c -> {
+        redisBases.put(0, new RedisBase(new AtomicReference<>(Clock.systemDefaultZone())::get));
+        RedisClient redisClient = new RedisClient(
+                new RedisServer(), mockSocket, c -> {
         });
         OperationExecutorState state = new OperationExecutorState(redisClient, redisBases);
         executor = new RedisOperationExecutor(state);
@@ -104,7 +113,8 @@ public class TestRedisOperationExecutor {
     }
 
     // SET key value NX
-    @Test public void testSetNX() throws ParseErrorException {
+    @Test
+    public void testSetNX() throws ParseErrorException {
         assertCommandOK(array("SET", "key", "value", "NX"));
         assertCommandEquals("value", array("GET", "key"));
         assertCommandNull(array("SET", "key", "value", "NX"));
@@ -112,7 +122,8 @@ public class TestRedisOperationExecutor {
     }
 
     // SET key value XX
-    @Test public void testSetXX() throws ParseErrorException {
+    @Test
+    public void testSetXX() throws ParseErrorException {
         del("key");
         assertCommandNull(array("SET", "key", "value", "XX"));
         assertCommandOK(array("SET", "key", "value"));
@@ -121,7 +132,8 @@ public class TestRedisOperationExecutor {
     }
 
     // SET key value EX s
-    @Test public void testSetEX() throws ParseErrorException, InterruptedException {
+    @Test
+    public void testSetEX() throws ParseErrorException, InterruptedException {
         assertCommandOK(array("SET", "key", "value", "EX", "1"));
         assertCommandEquals("value", array("GET", "key"));
         Thread.sleep(1000);
@@ -129,7 +141,8 @@ public class TestRedisOperationExecutor {
     }
 
     // SET key value PX ms
-    @Test public void testSetPX() throws ParseErrorException, InterruptedException {
+    @Test
+    public void testSetPX() throws ParseErrorException, InterruptedException {
         assertCommandOK(array("SET", "key", "value", "PX", "1000"));
         assertCommandEquals("value", array("GET", "key"));
         Thread.sleep(1000);
@@ -137,13 +150,16 @@ public class TestRedisOperationExecutor {
     }
 
     // SET key value EX s NX
-    @Test public void testSetEXNXexpires() throws ParseErrorException, InterruptedException {
+    @Test
+    public void testSetEXNXexpires() throws ParseErrorException, InterruptedException {
         assertCommandOK(array("SET", "key", "value", "EX", "1", "NX"));
         assertCommandEquals("value", array("GET", "key"));
         Thread.sleep(1000);
         assertCommandNull(array("GET", "key"));
     }
-    @Test public void testSetEXNXnotexists() throws ParseErrorException {
+
+    @Test
+    public void testSetEXNXnotexists() throws ParseErrorException {
         assertCommandOK(array("SET", "key", "value", "EX", "1", "NX"));
         assertCommandEquals("value", array("GET", "key"));
         assertCommandNull(array("SET", "key", "value", "EX", "1", "NX"));
@@ -151,13 +167,16 @@ public class TestRedisOperationExecutor {
     }
 
     // SET key value PX ms NX
-    @Test public void testSetPXNXexpires() throws ParseErrorException, InterruptedException {
+    @Test
+    public void testSetPXNXexpires() throws ParseErrorException, InterruptedException {
         assertCommandOK(array("SET", "key", "value", "PX", "1000", "NX"));
         assertCommandEquals("value", array("GET", "key"));
         Thread.sleep(1000);
         assertCommandNull(array("GET", "key"));
     }
-    @Test public void testSetPXNXnotexists() throws ParseErrorException {
+
+    @Test
+    public void testSetPXNXnotexists() throws ParseErrorException {
         assertCommandOK(array("SET", "key", "value", "PX", "1000", "NX"));
         assertCommandEquals("value", array("GET", "key"));
         assertCommandNull(array("SET", "key", "value", "PX", "1000", "NX"));
@@ -165,14 +184,17 @@ public class TestRedisOperationExecutor {
     }
 
     // SET key value EX s XX
-    @Test public void testSetEXXXexpires() throws ParseErrorException, InterruptedException {
+    @Test
+    public void testSetEXXXexpires() throws ParseErrorException, InterruptedException {
         set("key", "value");
         assertCommandOK(array("SET", "key", "value", "EX", "1", "XX"));
         assertCommandEquals("value", array("GET", "key"));
         Thread.sleep(1000);
         assertCommandNull(array("GET", "key"));
     }
-    @Test public void testSetEXXXnotexists() throws ParseErrorException {
+
+    @Test
+    public void testSetEXXXnotexists() throws ParseErrorException {
         del("key");
         assertCommandNull(array("SET", "key", "value", "EX", "1", "XX"));
         assertCommandOK(array("SET", "key", "value"));
@@ -181,14 +203,17 @@ public class TestRedisOperationExecutor {
     }
 
     // SET key value PX ms XX
-    @Test public void testSetPXXXexpires() throws ParseErrorException, InterruptedException {
+    @Test
+    public void testSetPXXXexpires() throws ParseErrorException, InterruptedException {
         set("key", "value");
         assertCommandOK(array("SET", "key", "value", "PX", "1000", "XX"));
         assertCommandEquals("value", array("GET", "key"));
         Thread.sleep(1000);
         assertCommandNull(array("GET", "key"));
     }
-    @Test public void testSetPXXXnotexists() throws ParseErrorException {
+
+    @Test
+    public void testSetPXXXnotexists() throws ParseErrorException {
         del("key");
         assertCommandNull(array("SET", "key", "value", "PX", "1000", "XX"));
         assertCommandOK(array("SET", "key", "value"));
@@ -379,7 +404,7 @@ public class TestRedisOperationExecutor {
 
     @Test
     public void testDelHash() {
-        assertCommandOK(array("hmset","h", "a", "v1", "b", "v2"));
+        assertCommandOK(array("hmset", "h", "a", "v1", "b", "v2"));
         assertCommandEquals(1, array("del", "h"));
         assertCommandArrayEquals(nullArray(), array("hmget", "h", "a"));
     }

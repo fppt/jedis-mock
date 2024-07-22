@@ -2,8 +2,9 @@ package com.github.fppt.jedismock.storage;
 
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisOperation;
-import com.github.fppt.jedismock.server.RedisClient;
+import com.github.fppt.jedismock.RedisClient;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class OperationExecutorState {
     }
 
     public RedisBase base(int baseIndex) {
-        return redisBases.computeIfAbsent(baseIndex, key -> new RedisBase());
+        return redisBases.computeIfAbsent(baseIndex, key -> new RedisBase(this::getClock));
     }
 
     public RedisClient owner() {
@@ -111,6 +112,10 @@ public class OperationExecutorState {
 
     public int getPort() {
         return owner.getPort();
+    }
+
+    public Clock getClock() {
+        return owner.getClock();
     }
 
     public String getHost() {

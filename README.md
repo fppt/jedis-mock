@@ -18,9 +18,9 @@ When used as a mock, it allows you to test behaviour dependent on Redis without 
 * TestContainers require Docker. Jedis-Mock is just a Maven dependency which, when used as 'pure' mock, can be run on any machine, right now.
 * TestContainers tests can be slow and resource-consuming. Jedis-Mock tests are lightning fast, which
 encourages developers to write more tests and run them more often.
-* Redis running in TestContainers is a "black box". We cannot verify what was actually called. 
-  We cannot interfere with the reply. All this we can do with testing mock/proxy.
-* We can use cluster connection APIs (e. g. `JedisCluster`) without spinning up 3 instances of Redis.
+* While Redis running in TestContainers is a "black box", Jedis-Mock facilitates "white box" testing: we can verify what was actually called and interfere with the reply via a [command interceptor](#interceptor).
+* With Jedis-Mock in [cluster emulation mode](#cluster), one can use cluster connection APIs (e. g. `JedisCluster`) without spinning up 3 instances of Redis.
+* Using [clock injection](#clockinjection), we can "fast forward" and avoid waiting before keys expiration, or, on the contrary, "freeze time" and be guaranteed that keys are not expired before the end of the test scenario.   
 * If you wish, you can use Jedis-Mock *together* with TestContainers, delegating command execution 
   to a real Redis instance, intercepting some of the calls when needed.
 
@@ -72,7 +72,7 @@ RedissonClient client = Redisson.create(config);
 
 From here test as needed.
 
-## Cluster mode support
+## <a name="cluster">Cluster mode support</a>
 
 Sometimes you need to use cluster connection APIs in your tests. Jedis-Mock can emulate "cluster mode" by mocking a single node holding all the hash slots (0-16383) so that common connectivity libraries can successfully connect and work. Just use `withClusterModeEnabled()` for `ServiceOptions`:
 
@@ -95,7 +95,7 @@ RedisClusterClient redisClient = RedisClusterClient
 
 Note that support of `CLUSTER` subcommands is limited to the  minimum that is necessary for successful usage of `JedisCluster`/`RedisClusterClient`.
 
-## Using `RedisCommandInterceptor`
+## <a name="interceptor">Using `RedisCommandInterceptor`</a>
 
 `RedisCommandInterceptor` is a functional interface which can be used to intercept calls to Jedis-Mock. 
 You can use it as following:
@@ -170,6 +170,47 @@ jedis.lrange("mylist", 0, -1));
 :warning: Lua language capabilities are restricted to what is provided by current LuaJ version. Methods provided by `redis` global object are currently restricted to what was available in Redis version 2.6.0 (see [redis.lua](src/main/resources/redis.lua)). 
 
 Feel free to report an issue if you have any problems with Lua scripting in Jedis-Mock.
+
+## <a name="clockinjection">Clock injection</a>
+
+[`java.time.Clock`](https://docs.oracle.com/javase/8/docs/api/java/time/Clock.html) injection is supported via `setClock` method on `RedisServer`. The injected clock is used for calculation and verification of the keys expiration time. Thus, it's possible to "freeze" or "skip" time for better testing of keys expiration. `setClock` is a thread-safe method which can be called as needed from any place of the code.
+
+### "Freezing" time
+
+```java
+jedis.setex("key1", 1, "v1");
+server.setClock(Clock.fixed(Instant.now(), ZoneId.systemDefault()));
+Thread.sleep(1500);
+//The key must have expired, but the time is stopped
+assertThat(jedis.exists("key1")).isTrue();
+```
+### Skipping time
+```java
+jedis.setex("key1", 20, "v1");
+jedis.setex("key2", 40, "v2");
+
+//Skipping 30 seconds: key1 expires, key2 not yet
+server.setClock(Clock.offset(server.getClock(), Duration.ofSeconds(30)));
+assertThat(jedis.exists("key1")).isFalse();
+assertThat(jedis.exists("key2")).isTrue();
+
+//Skipping another 30 seconds: both keys expire
+server.setClock(Clock.offset(server.getClock(), Duration.ofSeconds(30)));
+assertThat(jedis.exists("key1")).isFalse();
+assertThat(jedis.exists("key2")).isFalse();
+```
+
+### Setting time in the past
+```java
+jedis.setex("key1", 1, "v1");
+//Give extra two seconds for the key to expire
+server.setClock(Clock.offset(server.getClock(), Duration.ofSeconds(-2)));
+Thread.sleep(1500);
+assertThat(jedis.exists("key1")).isTrue();
+Thread.sleep(1600);
+assertThat(jedis.exists("key1")).isFalse();
+```
+:warning: Setting time in the past does not "magically revive" the keys that have already been expired, although it provides extra time before the expiration of the keys still present in the database. Also, clock injection does not change the semantics of waiting operations: e.g. `BLPOP mylist 10` will be waiting for the period of 10 seconds regardless of the changes in the injected clock.
 
 ## Supported and Missing Operations
 

@@ -23,7 +23,7 @@ class SetEx extends Set {
         final long timeout;
         try {
             timeout = timeoutToSet(params());
-            Math.addExact(System.currentTimeMillis(), timeout);
+            Math.addExact(base().getClock().millis(), timeout);
         } catch (ArithmeticException e) {
             return Response.error(String.format("ERR invalid expire time in '%s' command", self().value()));
         }
