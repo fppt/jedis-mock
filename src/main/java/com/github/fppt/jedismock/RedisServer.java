@@ -65,14 +65,12 @@ public class RedisServer {
     }
 
     public RedisServer setOptions(ServiceOptions options) {
-        Objects.requireNonNull(options);
-        this.options = options;
+        this.options = Objects.requireNonNull(options);
         return this;
     }
 
     public RedisServer setClock(Clock clock) {
-        Objects.requireNonNull(clock);
-        this.clock = clock;
+        this.clock = Objects.requireNonNull(clock);
         return this;
     }
 

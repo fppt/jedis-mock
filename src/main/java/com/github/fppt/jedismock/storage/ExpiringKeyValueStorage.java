@@ -113,13 +113,13 @@ public class ExpiringKeyValueStorage {
         return null;
     }
 
-    private long getMillis() {
-        return clockSupplier.get().millis();
-    }
-
     public long setTTL(Slice key, long ttl) {
         keyChangeNotifier.accept(key);
-        return setDeadline(key, ttl + clockSupplier.get().millis());
+        return setDeadline(key, ttl + getMillis());
+    }
+
+    private long getMillis() {
+        return clockSupplier.get().millis();
     }
 
     public void put(Slice key, RMDataStructure value, Long ttl) {
