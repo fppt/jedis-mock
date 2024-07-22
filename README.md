@@ -210,7 +210,7 @@ assertThat(jedis.exists("key1")).isTrue();
 Thread.sleep(1600);
 assertThat(jedis.exists("key1")).isFalse();
 ```
-:warning: Setting time in the past does not "magically revive" the keys that have already been expired, although it provides extra time before the expiration of the keys still present in the database. Also, clock injection does not change the semantics of waiting operations: e.g. `BLPOP mylist 10` will be waiting for the period 10 seconds regardless of the changes in the injected clock.
+:warning: Setting time in the past does not "magically revive" the keys that have already been expired, although it provides extra time before the expiration of the keys still present in the database. Also, clock injection does not change the semantics of waiting operations: e.g. `BLPOP mylist 10` will be waiting for the period of 10 seconds regardless of the changes in the injected clock.
 
 ## Supported and Missing Operations
 
