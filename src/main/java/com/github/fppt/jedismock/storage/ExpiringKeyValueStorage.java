@@ -4,18 +4,22 @@ import com.github.fppt.jedismock.datastructures.RMDataStructure;
 import com.github.fppt.jedismock.datastructures.RMHash;
 import com.github.fppt.jedismock.datastructures.Slice;
 
+import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ExpiringKeyValueStorage {
+    private final Supplier<Clock> clockSupplier;
     private final Map<Slice, RMDataStructure> values = new HashMap<>();
     private final Map<Slice, Long> ttls = new HashMap<>();
     private final Consumer<Slice> keyChangeNotifier;
 
-    public ExpiringKeyValueStorage(Consumer<Slice> keyChangeNotifier) {
-        this.keyChangeNotifier = keyChangeNotifier;
+    public ExpiringKeyValueStorage(Supplier<Clock> clockSupplier, Consumer<Slice> keyChangeNotifier) {
+        this.clockSupplier = Objects.requireNonNull(clockSupplier);
+        this.keyChangeNotifier = Objects.requireNonNull(keyChangeNotifier);
     }
 
     public Map<Slice, RMDataStructure> values() {
@@ -89,7 +93,7 @@ public class ExpiringKeyValueStorage {
 
     boolean isKeyOutdated(Slice key) {
         Long deadline = ttls().get(key);
-        return deadline != null && deadline != -1 && deadline <= System.currentTimeMillis();
+        return deadline != null && deadline != -1 && deadline <= getMillis();
     }
 
     public Long getTTL(Slice key) {
@@ -101,7 +105,7 @@ public class ExpiringKeyValueStorage {
         if (deadline == -1) {
             return deadline;
         }
-        long now = System.currentTimeMillis();
+        long now = getMillis();
         if (now < deadline) {
             return deadline - now;
         }
@@ -109,9 +113,13 @@ public class ExpiringKeyValueStorage {
         return null;
     }
 
+    private long getMillis() {
+        return clockSupplier.get().millis();
+    }
+
     public long setTTL(Slice key, long ttl) {
         keyChangeNotifier.accept(key);
-        return setDeadline(key, ttl + System.currentTimeMillis());
+        return setDeadline(key, ttl + clockSupplier.get().millis());
     }
 
     public void put(Slice key, RMDataStructure value, Long ttl) {

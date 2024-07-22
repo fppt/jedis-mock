@@ -2,7 +2,7 @@ package com.github.fppt.jedismock.operations.pubsub;
 
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
-import com.github.fppt.jedismock.server.RedisClient;
+import com.github.fppt.jedismock.RedisClient;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;

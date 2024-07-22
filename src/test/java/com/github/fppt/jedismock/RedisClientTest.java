@@ -1,4 +1,4 @@
-package com.github.fppt.jedismock.server;
+package com.github.fppt.jedismock;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Collections;
 
 class RedisClientTest {
     Socket s;
@@ -19,7 +18,7 @@ class RedisClientTest {
         s = Mockito.mock(Socket.class);
         Mockito.when(s.getInputStream()).thenReturn(Mockito.mock(InputStream.class));
         Mockito.when(s.getOutputStream()).thenReturn(Mockito.mock(OutputStream.class));
-        redisClient = new RedisClient(Collections.emptyMap(), s, ServiceOptions.defaultOptions(), c -> {
+        redisClient = new RedisClient(Mockito.mock(RedisServer.class), s, c -> {
         });
     }
 

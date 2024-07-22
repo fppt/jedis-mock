@@ -1,12 +1,13 @@
-package com.github.fppt.jedismock.server;
+package com.github.fppt.jedismock;
 
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.EOFException;
+import com.github.fppt.jedismock.server.RedisOperationExecutor;
+import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
-import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.commands.RedisCommand;
 import com.github.fppt.jedismock.commands.RedisCommandParser;
-import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.exception.ParseErrorException;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Map;
+import java.time.Clock;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,26 +26,25 @@ import java.util.function.Consumer;
  */
 public final class RedisClient implements Runnable {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisClient.class);
+    private final RedisServer server;
+    private final Socket socket;
     private final AtomicBoolean running;
     private final RedisOperationExecutor executor;
-    private final Socket socket;
-    private final ServiceOptions options;
     private final InputStream in;
     private final OutputStream out;
     private final Consumer<RedisClient> onClose;
 
-    RedisClient(Map<Integer, RedisBase> redisBases,
+    RedisClient(RedisServer server,
                 Socket socket,
-                ServiceOptions options,
                 Consumer<RedisClient> onClose) throws IOException {
-        Objects.requireNonNull(redisBases);
+        Objects.requireNonNull(server);
         Objects.requireNonNull(socket);
-        Objects.requireNonNull(options);
         Objects.requireNonNull(onClose);
-        OperationExecutorState state = new OperationExecutorState(this, redisBases);
+        this.server = server;
+        OperationExecutorState state = new OperationExecutorState(this,
+                server.getRedisBases());
         this.executor = new RedisOperationExecutor(state);
         this.socket = socket;
-        this.options = options;
         this.in = socket.getInputStream();
         this.out = socket.getOutputStream();
         this.running = new AtomicBoolean(true);
@@ -107,11 +107,15 @@ public final class RedisClient implements Runnable {
     }
 
     public ServiceOptions options() {
-        return options;
+        return server.options();
     }
 
     public int getPort() {
         return socket.getLocalPort();
+    }
+
+    public Clock getClock() {
+        return server.getClock();
     }
 
     public String getAddress() {

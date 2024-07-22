@@ -11,8 +11,9 @@ import com.github.fppt.jedismock.datastructures.streams.RMStream;
 import com.github.fppt.jedismock.datastructures.RMString;
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.server.RedisClient;
+import com.github.fppt.jedismock.RedisClient;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,20 +21,31 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Created by Xiaolu on 2015/4/20.
  */
 public class RedisBase {
+    private final Supplier<Clock> clockSupplier;
     private final Map<Slice, Set<RedisClient>> subscribers = new HashMap<>();
     private final Map<Slice, Set<RedisClient>> psubscribers = new HashMap<>();
     private final Map<Slice, Set<OperationExecutorState>> watchedKeys = new HashMap<>();
-    private final ExpiringKeyValueStorage keyValueStorage =
-            new ExpiringKeyValueStorage(key -> watchedKeys
-                    .getOrDefault(key, Collections.emptySet())
-                    .forEach(OperationExecutorState::watchedKeyIsAffected));
     private final Map<String, String> cachedLuaScripts = new HashMap<>();
+    private final ExpiringKeyValueStorage keyValueStorage;
+
+    public RedisBase(Supplier<Clock> clockSupplier) {
+        this.clockSupplier = Objects.requireNonNull(clockSupplier);
+        this.keyValueStorage = new ExpiringKeyValueStorage(clockSupplier, key -> watchedKeys
+                .getOrDefault(key, Collections.emptySet())
+                .forEach(OperationExecutorState::watchedKeyIsAffected));
+    }
+
+    public Clock getClock() {
+        return clockSupplier.get();
+    }
 
     public Set<Slice> keys() {
         Iterator<Slice> slices = keyValueStorage.values().keySet().iterator();

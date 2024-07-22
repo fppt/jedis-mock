@@ -100,6 +100,12 @@
         <module name="UpperEll"/>
         <module name="SuppressWarningsHolder"/>
 
+        <!-- Prohibit usage of System.currentTimeMillis()-->
+        <module name="Regexp">
+            <property name="format" value="currentTimeMillis *\( *\)"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="message" value="currentTimeMillis() invocation detected. Use injected clock instead."/>
+        </module>
     </module>
     <module name="NewlineAtEndOfFile"/>
 

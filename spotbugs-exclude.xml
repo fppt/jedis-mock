@@ -11,13 +11,9 @@
             <Bug pattern="DM_CONVERT_CASE"/>
         </Or>
     </Match>
-
     <Match>
-        <Class name="com.github.fppt.jedismock.server.RedisService"/>
-        <Or>
-            <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
-            <Bug pattern="THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION"/>
-        </Or>
+        <Class name="com.github.fppt.jedismock.RedisServer$RedisServiceJob"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
     </Match>
     <Match>
         <!--False positive as of Spotbugs 4.8.4.0-->

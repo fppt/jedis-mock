@@ -55,7 +55,7 @@ class PExpire extends AbstractRedisOperation {
         try {
             newTTL = getValue(params());
             //Check for potential overflow
-            Math.addExact(newTTL, System.currentTimeMillis());
+            Math.addExact(newTTL, base().getClock().millis());
         } catch (ArithmeticException e) {
             return Response.error(
                     String.format("ERR invalid expire time in '%s' command",
