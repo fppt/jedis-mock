@@ -18,7 +18,7 @@ When used as a mock, it allows you to test behaviour dependent on Redis without 
 * TestContainers require Docker. Jedis-Mock is just a Maven dependency which, when used as 'pure' mock, can be run on any machine, right now.
 * TestContainers tests can be slow and resource-consuming. Jedis-Mock tests are lightning fast, which
 encourages developers to write more tests and run them more often.
-* Redis running in TestContainers is a "black box", while Jedis-Mock facilitates "white box" testing: we verify what was actually called and interfere with the reply via a [command interceptor](#interceptor).
+* While Redis running in TestContainers is a "black box", Jedis-Mock facilitates "white box" testing: we can verify what was actually called and interfere with the reply via a [command interceptor](#interceptor).
 * With Jedis-Mock in [cluster emulation mode](#cluster), one can use cluster connection APIs (e. g. `JedisCluster`) without spinning up 3 instances of Redis.
 * Using [clock injection](#clockinjection), we can "fast forward" and avoid waiting before keys expiration, or, on the contrary, "freeze time" and be guaranteed that keys are not expired before the end of the test scenario.   
 * If you wish, you can use Jedis-Mock *together* with TestContainers, delegating command execution 
