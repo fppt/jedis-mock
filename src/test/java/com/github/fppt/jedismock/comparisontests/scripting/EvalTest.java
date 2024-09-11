@@ -2,6 +2,7 @@ package com.github.fppt.jedismock.comparisontests.scripting;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -284,5 +285,12 @@ public class EvalTest {
                 Collections.emptyList()
         );
         assertThat(result).isEqualTo(1L);
+    }
+
+    @TestTemplate
+    public void evalUnpackTest(Jedis jedis) {
+        jedis.eval("redis.call(\"SADD\", \"myset\", unpack({ \"the\", \"quick\", \"brown\", \"fox\" }))");
+        assertThat(jedis.smembers("myset"))
+                .containsExactly("the", "quick", "brown", "fox");
     }
 }

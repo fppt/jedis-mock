@@ -51,7 +51,12 @@ public class Eval extends AbstractRedisOperation {
         int keysNum = Integer.parseInt(params().get(1).toString());
         final List<LuaValue> args = getLuaValues(params().subList(2, params().size()));
 
-        globals.set("redis", globals.load(REDIS_LUA).call());
+        /*
+        An alias for 'unpack' function: unpack() was moved to table.unpack() in Lua 5.2,
+        but Redis uses Lua 5.1.
+         */
+        globals.set("unpack", globals.load("return table.unpack(...)").checkfunction());
+        globals.set("redis", globals.load(REDIS_LUA).call().checktable());
         globals.set("KEYS", embedLuaListToValue(args.subList(0, keysNum)));
         globals.set("ARGV", embedLuaListToValue(args.subList(keysNum, args.size())));
         globals.set("_mock", CoerceJavaToLua.coerce(new LuaRedisCallback(state)));
