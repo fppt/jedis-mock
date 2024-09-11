@@ -53,9 +53,7 @@ public class TestBZPopMin {
     public void testBZPopMinFromEmptySortedSetAndTimeOut(Jedis jedis) {
         long timeout = 1;
         long startTime = System.currentTimeMillis();
-        assertThatThrownBy(() ->
-                jedis.bzpopmin(timeout, ZSET_KEY_2, ZSET_KEY_1, "aaa"))
-                .isInstanceOf(NullPointerException.class);
+        assertThat(jedis.bzpopmin(timeout, ZSET_KEY_2, ZSET_KEY_1, "aaa")).isNull();
         long finishTime = System.currentTimeMillis();
         assertThat(finishTime - startTime).isGreaterThanOrEqualTo(timeout * 1000);
     }
