@@ -42,7 +42,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <junit.version>5.11.1</junit.version>
+        <junit.version>5.11.2</junit.version>
         <assertj.version>3.26.3</assertj.version>
         <jedis.version>5.2.0</jedis.version>
         <testcontainers.version>1.20.2</testcontainers.version>
