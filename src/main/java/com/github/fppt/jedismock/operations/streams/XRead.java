@@ -87,7 +87,7 @@ public class XRead extends AbstractRedisOperation {
                     mapKeyToBeginEntryId.append(
                             key,
                             "$".equalsIgnoreCase(id.toString())
-                                    ? new StreamId(0, 1) // lowest possible id
+                                    ? new StreamId(0, 0) // lowest possible id
                                     : new StreamId(id)
                     );
                 } else {
