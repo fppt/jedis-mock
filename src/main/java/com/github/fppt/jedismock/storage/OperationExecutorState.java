@@ -118,8 +118,8 @@ public class OperationExecutorState {
         return owner.getClock();
     }
 
-    public String getHost() {
-        return owner.getAddress();
+    public String getServerHost() {
+        return owner.getServerHost();
     }
 
     public void setClientName(String clientName) {

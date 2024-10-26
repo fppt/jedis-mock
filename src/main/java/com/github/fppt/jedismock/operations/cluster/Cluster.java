@@ -36,7 +36,7 @@ public class Cluster implements RedisOperation {
                             Response.integer(0),
                             Response.integer(16383),
                             Response.array(
-                                    Response.bulkString(Slice.create(state.getHost())),
+                                    Response.bulkString(Slice.create(state.getServerHost())),
                                     Response.integer(state.getPort()),
                                     Response.bulkString(Slice.create(NODE_ID)),
                                     Response.EMPTY_ARRAY
@@ -47,7 +47,7 @@ public class Cluster implements RedisOperation {
             return Response.bulkString(
                     Slice.create(String.format("%s %s:%d@%d myself,master - 0 1691313236000 1 connected 0-16383",
                             NODE_ID,
-                            state.getHost(), state.getPort(),
+                            state.getServerHost(), state.getPort(),
                             state.getPort() + 10000))
             );
         } else if ("myid".equalsIgnoreCase(subcommand)) {
