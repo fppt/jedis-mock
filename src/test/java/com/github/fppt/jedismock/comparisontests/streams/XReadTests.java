@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 
 @ExtendWith(ComparisonBase.class)
 public class XReadTests {
@@ -68,7 +69,7 @@ public class XReadTests {
                     .hasSize(1)
                     .first()
                     .extracting(Map.Entry::getValue)
-                    .asList()
+                    .asInstanceOf(LIST)
                     .hasSize(1)
                     .first()
                     .usingRecursiveComparison()
@@ -98,7 +99,7 @@ public class XReadTests {
                     .hasSize(1)
                     .first()
                     .extracting(Map.Entry::getValue)
-                    .asList()
+                    .asInstanceOf(LIST)
                     .hasSize(1)
                     .first()
                     .usingRecursiveComparison()
@@ -146,7 +147,7 @@ public class XReadTests {
                     .hasSize(1)
                     .first()
                     .extracting(Map.Entry::getValue)
-                    .asList()
+                    .asInstanceOf(LIST)
                     .hasSize(1)
                     .first()
                     .usingRecursiveComparison()
@@ -200,7 +201,7 @@ public class XReadTests {
                     .hasSize(1)
                     .first()
                     .extracting(Map.Entry::getValue)
-                    .asList()
+                    .asInstanceOf(LIST)
                     .hasSize(1)
                     .first()
                     .usingRecursiveComparison()
