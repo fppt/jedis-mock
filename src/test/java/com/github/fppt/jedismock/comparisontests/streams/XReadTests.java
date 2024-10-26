@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 
 @ExtendWith(ComparisonBase.class)
 public class XReadTests {
@@ -68,7 +69,7 @@ public class XReadTests {
                     .hasSize(1)
                     .first()
                     .extracting(Map.Entry::getValue)
-                    .asList()
+                    .asInstanceOf(LIST)
                     .hasSize(1)
                     .first()
                     .usingRecursiveComparison()
@@ -98,7 +99,7 @@ public class XReadTests {
                     .hasSize(1)
                     .first()
                     .extracting(Map.Entry::getValue)
-                    .asList()
+                    .asInstanceOf(LIST)
                     .hasSize(1)
                     .first()
                     .usingRecursiveComparison()
@@ -146,7 +147,7 @@ public class XReadTests {
                     .hasSize(1)
                     .first()
                     .extracting(Map.Entry::getValue)
-                    .asList()
+                    .asInstanceOf(LIST)
                     .hasSize(1)
                     .first()
                     .usingRecursiveComparison()
@@ -181,6 +182,52 @@ public class XReadTests {
 
         fstAddJob.get();
         sndAddJob.get();
+        cancellationJob.get();
+        blockingReadJob.get();
+
+        assertThat(blockingReadJob.isCancelled()).isFalse();
+    }
+
+    @TestTemplate
+    void whenLastEntryIsCalledOnEmptyStream_EnsureXaddAwakes(Jedis jedis)
+            throws ExecutionException, InterruptedException {
+        Future<?> blockingReadJob = scheduledThreadPool.submit(() -> {
+            List<Map.Entry<String, List<StreamEntry>>> answer = blockedClient.xread(
+                    XReadParams.xReadParams().block(0).count(1),
+                    Collections.singletonMap("test:jedis", StreamEntryID.LAST_ENTRY)
+            );
+
+            assertThat(answer)
+                    .hasSize(1)
+                    .first()
+                    .extracting(Map.Entry::getValue)
+                    .asInstanceOf(LIST)
+                    .hasSize(1)
+                    .first()
+                    .usingRecursiveComparison()
+                    .comparingOnlyFields("fields")
+                    .isEqualTo(
+                            new StreamEntry(
+                                    new StreamEntryID(0, 1),
+                                    Collections.singletonMap("a", "b")
+                            )
+                    );
+        });
+
+        ScheduledFuture<?> addJob = scheduledThreadPool.schedule(() -> {
+            jedis.xadd(
+                    "test:jedis",
+                    XAddParams.xAddParams(),
+                    Collections.singletonMap("a", "b")
+            );
+        }, 2, TimeUnit.SECONDS);
+
+
+        ScheduledFuture<?> cancellationJob = scheduledThreadPool.schedule(() -> {
+            blockingReadJob.cancel(true);
+        }, 15, TimeUnit.SECONDS);
+
+        addJob.get();
         cancellationJob.get();
         blockingReadJob.get();
 

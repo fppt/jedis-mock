@@ -17,6 +17,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 
 @ExtendWith(ComparisonBase.class)
 public class EvalTest {
@@ -59,7 +60,7 @@ public class EvalTest {
     void evalTableOfLongTest(Jedis jedis) {
         Object eval_return = jedis.eval("return { 1, 2, 3 }", 0);
         assertThat(eval_return).isInstanceOf(ArrayList.class)
-                .asList().containsExactly(1L, 2L, 3L);
+                .asInstanceOf(LIST).containsExactly(1L, 2L, 3L);
         assertThat(((List<?>) eval_return).get(0)).isInstanceOf(Long.class);
     }
 
@@ -67,7 +68,7 @@ public class EvalTest {
     void evalDeepListTest(Jedis jedis) {
         Object eval_return = jedis.eval("return { 'test', 2, {'test', 2} }", 0);
         assertThat(eval_return).isInstanceOf(ArrayList.class)
-                .asList().containsExactly("test", 2L, Arrays.asList("test", 2L));
+                .asInstanceOf(LIST).containsExactly("test", 2L, asList("test", 2L));
         assertThat(((List<?>) eval_return).get(0)).isInstanceOf(String.class);
         assertThat(((List<?>) eval_return).get(1)).isInstanceOf(Long.class);
         assertThat(((List<?>) eval_return).get(2)).isInstanceOf(ArrayList.class);
@@ -77,7 +78,7 @@ public class EvalTest {
     void evalDictTest(Jedis jedis) {
         Object eval_return = jedis.eval("return { a = 1, 2 }", 0);
         assertThat(eval_return).isInstanceOf(ArrayList.class)
-                .asList().containsExactly(2L);
+                .asInstanceOf(LIST).containsExactly(2L);
         assertThat(((List<?>) eval_return).get(0)).isInstanceOf(Long.class);
     }
 
