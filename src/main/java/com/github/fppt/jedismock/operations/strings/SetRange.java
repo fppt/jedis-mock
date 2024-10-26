@@ -37,7 +37,9 @@ public class SetRange extends AbstractRedisOperation {
         if (offset + value.length() < oldValue.length()) {
             newValue += oldValue.substring(offset + value.length());
         }
-        base().putValue(key, Slice.create(newValue).extract(), null);
+        if (!oldValue.equals(newValue)) {
+            base().putValue(key, Slice.create(newValue).extract(), null);
+        }
         return Response.integer(newValue.length());
     }
 }

@@ -2,11 +2,15 @@ package com.github.fppt.jedismock.datastructures;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class RMHyperLogLog extends StringCompatible {
+public class RMHyperLogLog extends StringCompatible implements Serializable {
     private static final long serialVersionUID = 1L;
     private transient HashSet<Slice> storedData;
 
@@ -58,6 +62,18 @@ public class RMHyperLogLog extends StringCompatible {
                 buf[j] = s.readByte();
             }
             storedData.add(Slice.create(buf));
+        }
+    }
+
+    @Override
+    public final Slice getAsSlice() {
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream outputStream = new ObjectOutputStream(byteOutputStream);
+            outputStream.writeObject(this);
+            return Slice.create(byteOutputStream.toByteArray());
+        } catch (IOException exp) {
+            throw new IllegalStateException(exp);
         }
     }
 }
