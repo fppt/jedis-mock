@@ -118,7 +118,7 @@ public final class RedisClient implements Runnable {
         return server.getClock();
     }
 
-    public String getAddress() {
-        return socket.getInetAddress().getHostAddress();
+    public String getServerHost() {
+        return server.getHost();
     }
 }
