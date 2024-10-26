@@ -46,4 +46,23 @@ public class TestSetRange {
         assertThat(l).isEqualTo(11);
         assertThat(jedis.get("key2")).isEqualTo(new String(new byte[6]) + "Redis");
     }
+
+    @TestTemplate
+    public void setRangeAgainstNonExistent(Jedis jedis) {
+        assertThat(jedis.setrange("mykey", 0, "foo"))
+                .isEqualTo(3);
+        assertThat(jedis.get("mykey")).isEqualTo("foo");
+    }
+
+    @TestTemplate
+    public void setRangeAgainstNonExistentNoOp(Jedis jedis) {
+        assertThat(jedis.setrange("mykey", 0, "")).isEqualTo(0);
+        assertThat(jedis.exists("mykey")).isFalse();
+    }
+
+    @TestTemplate
+    public void setRangeAgainstNonExistentPadding(Jedis jedis) {
+        assertThat(jedis.setrange("mykey", 1, "foo")).isEqualTo(4);
+        assertThat(jedis.get("mykey")).isEqualTo("\000foo");
+    }
 }
