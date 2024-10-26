@@ -11,7 +11,7 @@
 
     <groupId>com.github.fppt</groupId>
     <artifactId>jedis-mock</artifactId>
-    <version>1.1.5-SNAPSHOT</version>
+    <version>1.1.5</version>
     <packaging>jar</packaging>
     <name>jedis-mock</name>
     <description>In memory Redis mock for testing</description>
