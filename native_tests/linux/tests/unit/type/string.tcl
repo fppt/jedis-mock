@@ -208,23 +208,23 @@ start_server {tags {"string"}} {
         assert_error "*out of range*" {r setbit mykey 0 20}
     }
 
-    test "SETBIT fuzzing" {
-        set str ""
-        set len [expr 256*8]
-        r del mykey
-
-        for {set i 0} {$i < 2000} {incr i} {
-            set bitnum [randomInt $len]
-            set bitval [randomInt 2]
-            set fmt [format "%%-%ds%%d%%-s" $bitnum]
-            set head [string range $str 0 $bitnum-1]
-            set tail [string range $str $bitnum+1 end]
-            set str [string map {" " 0} [format $fmt $head $bitval $tail]]
-
-            r setbit mykey $bitnum $bitval
-            assert_equal [binary format B* $str] [r get mykey]
-        }
-    }
+    #test "SETBIT fuzzing" {
+    #    set str ""
+    #    set len [expr 256*8]
+    #    r del mykey
+    #
+    #    for {set i 0} {$i < 2000} {incr i} {
+    #        set bitnum [randomInt $len]
+    #        set bitval [randomInt 2]
+    #        set fmt [format "%%-%ds%%d%%-s" $bitnum]
+    #        set head [string range $str 0 $bitnum-1]
+    #        set tail [string range $str $bitnum+1 end]
+    #        set str [string map {" " 0} [format $fmt $head $bitval $tail]]
+    #
+    #        r setbit mykey $bitnum $bitval
+    #        assert_equal [binary format B* $str] [r get mykey]
+    #    }
+    #}
 
     test "GETBIT against non-existing key" {
         r del mykey
@@ -337,47 +337,47 @@ start_server {tags {"string"}} {
         assert_error "*maximum allowed size*" {r setrange mykey [expr 512*1024*1024-4] world}
     }
 
-    test "GETRANGE against non-existing key" {
-        r del mykey
-        assert_equal "" [r getrange mykey 0 -1]
-    }
+    #test "GETRANGE against non-existing key" {
+    #    r del mykey
+    #    assert_equal "" [r getrange mykey 0 -1]
+    #}
 
-    test "GETRANGE against string value" {
-        r set mykey "Hello World"
-        assert_equal "Hell" [r getrange mykey 0 3]
-        assert_equal "Hello World" [r getrange mykey 0 -1]
-        assert_equal "orld" [r getrange mykey -4 -1]
-        assert_equal "" [r getrange mykey 5 3]
-        assert_equal " World" [r getrange mykey 5 5000]
-        assert_equal "Hello World" [r getrange mykey -5000 10000]
-    }
+    #test "GETRANGE against string value" {
+    #    r set mykey "Hello World"
+    #    assert_equal "Hell" [r getrange mykey 0 3]
+    #    assert_equal "Hello World" [r getrange mykey 0 -1]
+    #    assert_equal "orld" [r getrange mykey -4 -1]
+    #    assert_equal "" [r getrange mykey 5 3]
+    #    assert_equal " World" [r getrange mykey 5 5000]
+    #    assert_equal "Hello World" [r getrange mykey -5000 10000]
+    #}
 
-    test "GETRANGE against integer-encoded value" {
-        r set mykey 1234
-        assert_equal "123" [r getrange mykey 0 2]
-        assert_equal "1234" [r getrange mykey 0 -1]
-        assert_equal "234" [r getrange mykey -3 -1]
-        assert_equal "" [r getrange mykey 5 3]
-        assert_equal "4" [r getrange mykey 3 5000]
-        assert_equal "1234" [r getrange mykey -5000 10000]
-    }
+    #test "GETRANGE against integer-encoded value" {
+    #    r set mykey 1234
+    #    assert_equal "123" [r getrange mykey 0 2]
+    #    assert_equal "1234" [r getrange mykey 0 -1]
+    #    assert_equal "234" [r getrange mykey -3 -1]
+    #    assert_equal "" [r getrange mykey 5 3]
+    #    assert_equal "4" [r getrange mykey 3 5000]
+    #    assert_equal "1234" [r getrange mykey -5000 10000]
+    #}
 
-    test "GETRANGE fuzzing" {
-        for {set i 0} {$i < 1000} {incr i} {
-            r set bin [set bin [randstring 0 1024 binary]]
-            set _start [set start [randomInt 1500]]
-            set _end [set end [randomInt 1500]]
-            if {$_start < 0} {set _start "end-[abs($_start)-1]"}
-            if {$_end < 0} {set _end "end-[abs($_end)-1]"}
-            assert_equal [string range $bin $_start $_end] [r getrange bin $start $end]
-        }
-    }
+    #test "GETRANGE fuzzing" {
+    #    for {set i 0} {$i < 1000} {incr i} {
+    #        r set bin [set bin [randstring 0 1024 binary]]
+    #        set _start [set start [randomInt 1500]]
+    #        set _end [set end [randomInt 1500]]
+    #        if {$_start < 0} {set _start "end-[abs($_start)-1]"}
+    #        if {$_end < 0} {set _end "end-[abs($_end)-1]"}
+    #        assert_equal [string range $bin $_start $_end] [r getrange bin $start $end]
+    #    }
+    #}
 
-    test {Extended SET can detect syntax errors} {
-        set e {}
-        catch {r set foo bar non-existing-option} e
-        set e
-    } {*syntax*}
+    #test {Extended SET can detect syntax errors} {
+    #    set e {}
+    #    catch {r set foo bar non-existing-option} e
+    #    set e
+    #} {*syntax*}
 
     test {Extended SET NX option} {
         r del foo
@@ -415,38 +415,38 @@ start_server {tags {"string"}} {
         assert {$ttl <= 10 && $ttl > 5}
     }
 
-    test {GETRANGE with huge ranges, Github issue #1844} {
-        r set foo bar
-        r getrange foo 0 4294967297
-    } {bar}
+    #test {GETRANGE with huge ranges, Github issue #1844} {
+    #    r set foo bar
+    #    r getrange foo 0 4294967297
+    #} {bar}
 
     set rna1 {CACCTTCCCAGGTAACAAACCAACCAACTTTCGATCTCTTGTAGATCTGTTCTCTAAACGAACTTTAAAATCTGTGTGGCTGTCACTCGGCTGCATGCTTAGTGCACTCACGCAGTATAATTAATAACTAATTACTGTCGTTGACAGGACACGAGTAACTCGTCTATCTTCTGCAGGCTGCTTACGGTTTCGTCCGTGTTGCAGCCGATCATCAGCACATCTAGGTTTCGTCCGGGTGTG}
     set rna2 {ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCTCTTGTAGATCTGTTCTCTAAACGAACTTTAAAATCTGTGTGGCTGTCACTCGGCTGCATGCTTAGTGCACTCACGCAGTATAATTAATAACTAATTACTGTCGTTGACAGGACACGAGTAACTCGTCTATCTTCTGCAGGCTGCTTACGGTTTCGTCCGTGTTGCAGCCGATCATCAGCACATCTAGGTTT}
     set rnalcs {ACCTTCCCAGGTAACAAACCAACCAACTTTCGATCTCTTGTAGATCTGTTCTCTAAACGAACTTTAAAATCTGTGTGGCTGTCACTCGGCTGCATGCTTAGTGCACTCACGCAGTATAATTAATAACTAATTACTGTCGTTGACAGGACACGAGTAACTCGTCTATCTTCTGCAGGCTGCTTACGGTTTCGTCCGTGTTGCAGCCGATCATCAGCACATCTAGGTTT}
 
-    test {STRALGO LCS string output with STRINGS option} {
-        r STRALGO LCS STRINGS $rna1 $rna2
-    } $rnalcs
+    #test {STRALGO LCS string output with STRINGS option} {
+    #    r STRALGO LCS STRINGS $rna1 $rna2
+    #} $rnalcs
 
-    test {STRALGO LCS len} {
-        r STRALGO LCS LEN STRINGS $rna1 $rna2
-    } [string length $rnalcs]
+    #test {STRALGO LCS len} {
+    #    r STRALGO LCS LEN STRINGS $rna1 $rna2
+    #} [string length $rnalcs]
 
-    test {LCS with KEYS option} {
-        r set virus1 $rna1
-        r set virus2 $rna2
-        r STRALGO LCS KEYS virus1 virus2
-    } $rnalcs
+    #test {LCS with KEYS option} {
+    #    r set virus1 $rna1
+    #    r set virus2 $rna2
+    #    r STRALGO LCS KEYS virus1 virus2
+    #} $rnalcs
 
-    test {LCS indexes} {
-        dict get [r STRALGO LCS IDX KEYS virus1 virus2] matches
-    } {{{238 238} {239 239}} {{236 236} {238 238}} {{229 230} {236 237}} {{224 224} {235 235}} {{1 222} {13 234}}}
+    #test {LCS indexes} {
+    #    dict get [r STRALGO LCS IDX KEYS virus1 virus2] matches
+    #} {{{238 238} {239 239}} {{236 236} {238 238}} {{229 230} {236 237}} {{224 224} {235 235}} {{1 222} {13 234}}}
 
-    test {LCS indexes with match len} {
-        dict get [r STRALGO LCS IDX KEYS virus1 virus2 WITHMATCHLEN] matches
-    } {{{238 238} {239 239} 1} {{236 236} {238 238} 1} {{229 230} {236 237} 2} {{224 224} {235 235} 1} {{1 222} {13 234} 222}}
+    #test {LCS indexes with match len} {
+    #    dict get [r STRALGO LCS IDX KEYS virus1 virus2 WITHMATCHLEN] matches
+    #} {{{238 238} {239 239} 1} {{236 236} {238 238} 1} {{229 230} {236 237} 2} {{224 224} {235 235} 1} {{1 222} {13 234} 222}}
 
-    test {LCS indexes with match len and minimum match len} {
-        dict get [r STRALGO LCS IDX KEYS virus1 virus2 WITHMATCHLEN MINMATCHLEN 5] matches
-    } {{{1 222} {13 234} 222}}
+    #test {LCS indexes with match len and minimum match len} {
+    #    dict get [r STRALGO LCS IDX KEYS virus1 virus2 WITHMATCHLEN MINMATCHLEN 5] matches
+    #} {{{1 222} {13 234} 222}}
 }

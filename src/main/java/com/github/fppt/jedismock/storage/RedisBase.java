@@ -29,6 +29,8 @@ import java.util.function.Supplier;
  * Created by Xiaolu on 2015/4/20.
  */
 public class RedisBase {
+    private static final long PROTO_MAX_BULK_LEN = 512 * 1024 * 1024; //512 MB by default
+
     private final Supplier<Clock> clockSupplier;
     private final Map<Slice, Set<RedisClient>> subscribers = new HashMap<>();
     private final Map<Slice, Set<RedisClient>> psubscribers = new HashMap<>();
@@ -326,6 +328,10 @@ public class RedisBase {
         watchedKeys.getOrDefault(key, new HashSet<>()).forEach(OperationExecutorState::watchedKeyIsAffected);
     }
 
+    public long getProtoMaxBulkLen() {
+        return PROTO_MAX_BULK_LEN;
+    }
+
     public String getCachedLuaScript(String sha1) {
         return cachedLuaScripts.get(sha1.toLowerCase());
     }
@@ -337,7 +343,6 @@ public class RedisBase {
     public void flushCachedLuaScrips() {
         cachedLuaScripts.clear();
     }
-
 
     public String addCachedLuaScript(String sha1, String script) {
         return cachedLuaScripts.put(sha1, script);

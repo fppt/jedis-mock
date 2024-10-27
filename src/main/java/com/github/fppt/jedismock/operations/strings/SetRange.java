@@ -22,18 +22,24 @@ public class SetRange extends AbstractRedisOperation {
     protected Slice response() {
         Slice key = params().get(0);
         int offset = convertToInteger(params().get(1).toString());
+        if (offset < 0) {
+            return Response.error("ERR offset is out of range");
+        }
         Slice value = params().get(2);
         String oldValue = Optional.ofNullable(base().getRMString(key))
                 .map(RMString::getStoredDataAsString)
                 .orElse("");
         String padding = "";
+        if (offset + value.length() > base().getProtoMaxBulkLen()) {
+            return Response.error("ERR string exceeds maximum allowed size (proto-max-bulk-len)");
+        }
         if (offset > oldValue.length()) {
             padding = new String(new byte[offset - oldValue.length()]);
         }
         String newValue =
                 oldValue.substring(0, Math.min(offset, oldValue.length()))
                         + padding
-                        + value.toString();
+                        + value;
         if (offset + value.length() < oldValue.length()) {
             newValue += oldValue.substring(offset + value.length());
         }
