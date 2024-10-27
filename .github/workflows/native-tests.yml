@@ -55,6 +55,10 @@ jobs:
       - name: chmod
         run: chmod +x native_tests/testnative
 
+      - name: string
+        run: ./testnative unit/type/string
+        working-directory: native_tests
+
       - name: incr
         run: ./testnative unit/type/incr
         working-directory: native_tests

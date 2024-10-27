@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestSetRange {
@@ -65,4 +66,17 @@ public class TestSetRange {
         assertThat(jedis.setrange("mykey", 1, "foo")).isEqualTo(4);
         assertThat(jedis.get("mykey")).isEqualTo("\000foo");
     }
+
+    @TestTemplate
+    public void setRangeWithOutOfRange(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.setrange("mykey", 512 * 1024 * 1024 - 4, "world"))
+                .hasMessageStartingWith("ERR string exceeds maximum allowed size (proto-max-bulk-len)");
+    }
+
+    @TestTemplate
+    public void setRangeWithNegativeOffset(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.setrange("mykey", -1, "world"))
+                .hasMessageStartingWith("ERR offset is out of range");
+    }
+
 }

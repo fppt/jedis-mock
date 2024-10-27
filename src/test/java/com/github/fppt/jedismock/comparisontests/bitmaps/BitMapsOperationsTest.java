@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,7 +48,6 @@ public class BitMapsOperationsTest {
         byte[] buf2 = jedis.get("bm2".getBytes());
         assertThat(buf2).containsExactlyInAnyOrder(buf);
     }
-
 
     @TestTemplate
     void testValueAftersetbit(Jedis jedis) {
@@ -112,5 +110,19 @@ public class BitMapsOperationsTest {
             System.arraycopy(expectedBytes, 0, expectedTruncated, 0, redisBytes.length);
             assertThat(redisBytes).isEqualTo(expectedTruncated);
         }
+    }
+
+    @TestTemplate
+    public void testNoOp(Jedis jedis) {
+        jedis.setbit("noop", 100, false);
+        assertThat(jedis.get("noop")).hasSize((100 + 7) / 8);
+    }
+
+    @TestTemplate
+    public void loadZeroes(Jedis jedis) {
+        byte[] zeroes = new byte[17];
+        jedis.set("zeroes".getBytes(), zeroes);
+        jedis.setbit("zeroes", 0L, true);
+        assertThat(jedis.get("zeroes".getBytes())).hasSize(17);
     }
 }

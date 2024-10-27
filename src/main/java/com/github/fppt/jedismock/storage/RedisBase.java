@@ -36,6 +36,8 @@ public class RedisBase {
     private final Map<String, String> cachedLuaScripts = new HashMap<>();
     private final ExpiringKeyValueStorage keyValueStorage;
 
+    private final long protoMaxBulkLen = 512 * 1024 * 1024; //512 MB by default
+
     public RedisBase(Supplier<Clock> clockSupplier) {
         this.clockSupplier = Objects.requireNonNull(clockSupplier);
         this.keyValueStorage = new ExpiringKeyValueStorage(clockSupplier, key -> watchedKeys
@@ -326,6 +328,10 @@ public class RedisBase {
         watchedKeys.getOrDefault(key, new HashSet<>()).forEach(OperationExecutorState::watchedKeyIsAffected);
     }
 
+    public long getProtoMaxBulkLen() {
+        return protoMaxBulkLen;
+    }
+
     public String getCachedLuaScript(String sha1) {
         return cachedLuaScripts.get(sha1.toLowerCase());
     }
@@ -337,7 +343,6 @@ public class RedisBase {
     public void flushCachedLuaScrips() {
         cachedLuaScripts.clear();
     }
-
 
     public String addCachedLuaScript(String sha1, String script) {
         return cachedLuaScripts.put(sha1, script);

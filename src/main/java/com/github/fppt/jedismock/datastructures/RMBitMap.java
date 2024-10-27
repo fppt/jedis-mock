@@ -22,22 +22,11 @@ public class RMBitMap extends StringCompatible {
         this.bitSet = BitSet.valueOf(reversed);
     }
 
-    public RMBitMap(int size, BitSet bitSet) {
-        this.size = size;
-        this.bitSet = bitSet;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
     public void setBit(byte bit, int pos) {
         int newSize = (pos + 7) / 8;
-
         if (size < newSize) {
             size = newSize;
         }
-
         bitSet.set(pos, bit == 1);
     }
 
@@ -56,15 +45,14 @@ public class RMBitMap extends StringCompatible {
     }
 
     /**
-     * Produce little-endian bitewise representation of the bit set.
+     * Produce bitewise representation of the bit set.
      */
     private byte[] toByteArray() {
         long[] longs = bitSet.toLongArray();
-        int nBytes = (bitSet.length() + 7) / 8;
-        byte[] bytes = new byte[nBytes];
+        byte[] bytes = new byte[size];
         int byteIndex = 0;
         for (long value : longs) {
-            for (int i = 0; i < 8 && byteIndex < nBytes; i++) {
+            for (int i = 0; i < 8 && byteIndex < size; i++) {
                 bytes[byteIndex++] = reverseBits((byte) (value & 0xFF));
                 value >>>= 8;
             }
