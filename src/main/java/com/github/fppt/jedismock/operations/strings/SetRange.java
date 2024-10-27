@@ -25,13 +25,14 @@ public class SetRange extends AbstractRedisOperation {
         if (offset < 0) {
             return Response.error("ERR offset is out of range");
         }
-            Slice value = params().get(2);
+        Slice value = params().get(2);
         String oldValue = Optional.ofNullable(base().getRMString(key))
                 .map(RMString::getStoredDataAsString)
                 .orElse("");
         String padding = "";
-        if (offset + value.length() > base().getProtoMaxBulkLen())
+        if (offset + value.length() > base().getProtoMaxBulkLen()) {
             return Response.error("ERR string exceeds maximum allowed size (proto-max-bulk-len)");
+        }
         if (offset > oldValue.length()) {
             padding = new String(new byte[offset - oldValue.length()]);
         }
