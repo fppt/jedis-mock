@@ -41,7 +41,7 @@ Add it as a test dependency in Maven as:
 <dependency>
   <groupId>com.github.fppt</groupId>
   <artifactId>jedis-mock</artifactId>
-  <version>1.1.7-SNAPSHOT</version>
+  <version>1.1.7</version>
   <scope>test</scope>
 </dependency>
 ```
