@@ -183,8 +183,11 @@ public class ExpiringKeyValueStorage {
     public long setDeadline(Slice key, long deadline) {
         Objects.requireNonNull(key);
         if (values().containsKey(key)) {
-            ttls().put(key, deadline);
-            return 1L;
+            Long oldValue = ttls().put(key, deadline);
+            //It is considered to be an unsuccessful operation if we
+            //reset deadline for the key which does not have one
+            return (deadline < 0 && (oldValue == null || oldValue < 0)) ?
+                    0L : 1L;
         }
         return 0L;
     }
