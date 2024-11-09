@@ -28,7 +28,9 @@ import static com.github.fppt.jedismock.operations.scripting.Script.getScriptSHA
 public class Eval extends AbstractRedisOperation {
 
     private static final String SCRIPT_RUNTIME_ERROR = "Error running script (call to function returned nil)";
-    private static final String REDIS_LUA = loadResource();
+    private static final String REDIS_LUA = loadResource("/redis.lua");
+    private static final String DKJSON = loadResource("/dkjson.lua");
+    private static final String CJSON = loadResource("/cjson.lua");
     private final Globals globals = JsePlatform.standardGlobals();
     private final OperationExecutorState state;
 
@@ -60,6 +62,8 @@ public class Eval extends AbstractRedisOperation {
         globals.set("KEYS", embedLuaListToValue(args.subList(0, keysNum)));
         globals.set("ARGV", embedLuaListToValue(args.subList(keysNum, args.size())));
         globals.set("_mock", CoerceJavaToLua.coerce(new LuaRedisCallback(state)));
+        globals.set("dkjson", globals.load(DKJSON).call());
+        globals.set("cjson", globals.load(CJSON).call());
         int selected = state.getSelected();
         try {
             final LuaValue result = globals.load(script).call();
@@ -115,8 +119,8 @@ public class Eval extends AbstractRedisOperation {
     }
 
 
-    private static String loadResource() {
-        try (InputStream in = Eval.class.getResourceAsStream("/redis.lua");
+    private static String loadResource(String path) {
+        try (InputStream in = Eval.class.getResourceAsStream(path);
              BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
             return reader.lines().collect(Collectors.joining("\n"));
         } catch (IOException e) {
