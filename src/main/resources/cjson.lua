@@ -4,7 +4,11 @@ local json = require("dkjson")
 
 return {
   encode = function(data)
-    return json.encode(data)
+    local encoded = json.encode(data)
+    if encoded == '[]' then
+      return '{}'
+    end
+    return encoded
   end,
 
   decode = function(data)

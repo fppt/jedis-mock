@@ -305,7 +305,7 @@ encode2 = function (value, indent, level, buffer, buflen, tables, globalorder, s
       isa = false
     end
     local msg
-    if isa and #value ~= 0 then -- JSON array
+    if isa then -- JSON array
       buflen = buflen + 1
       buffer[buflen] = "["
       for i = 1, n do
