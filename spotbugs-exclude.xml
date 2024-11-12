@@ -36,4 +36,8 @@
             <Class name="com.github.fppt.jedismock.operations.strings.SetEx"/>
         </Or>
     </Match>
+    <Match>
+        <Package name="com.github.fppt.jedismock.operations.scripting.cjson"/>
+        <Bug pattern="HE_INHERITS_EQUALS_USE_HASHCODE"/>
+    </Match>
 </FindBugsFilter>
