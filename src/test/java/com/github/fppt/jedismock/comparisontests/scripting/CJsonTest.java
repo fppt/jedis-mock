@@ -239,6 +239,13 @@ class CJsonTest {
                 .isEqualTo("bar");
     }
 
+    @TestTemplate
+    void evalCjsonIsReadOnlyTable(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.eval("cjson.encode = function() return 1 end"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageContaining("Attempt to modify a readonly table");
+    }
+
     // unsupported cjson features
     @TestTemplate
     @Disabled("luaj doesn't pass nil values in org.luaj.vm2.LuaTable: current mock result = {\"1\":1,\"3\":3}")
@@ -269,13 +276,5 @@ class CJsonTest {
     void evalCjsonDecodeScientificNotationNumber(Jedis jedis) {
         String script = "return table.concat(cjson.decode('[3.0e-4]'), ' ')";
         assertThat(jedis.eval(script)).isEqualTo("0.0003");
-    }
-
-    @TestTemplate
-    @Disabled("Cjson in JedisMock is not represented as a read-only table, so user can modify it")
-    void evalCjsonIsReadOnlyTable(Jedis jedis) {
-        assertThatThrownBy(() -> jedis.eval("cjson.encode = function() return 1 end"))
-                .isInstanceOf(JedisDataException.class)
-                .hasMessageContaining("Attempt to modify a readonly table");
     }
 }

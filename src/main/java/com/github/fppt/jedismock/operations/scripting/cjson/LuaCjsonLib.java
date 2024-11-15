@@ -1,18 +1,18 @@
 package com.github.fppt.jedismock.operations.scripting.cjson;
 
-import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.TwoArgFunction;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LuaCjsonLib extends TwoArgFunction {
 
     @Override
     public LuaValue call(LuaValue modname, LuaValue env) {
-        LuaTable cjson = new LuaTable();
-        cjson.set("encode", new Encode());
-        cjson.set("decode", new Decode());
-        env.set("cjson", cjson);
-        env.get("package").get("loaded").set("cjson", cjson);
-        return cjson;
+        Map<LuaValue, LuaValue> cjsonMap = new HashMap<>();
+        cjsonMap.put(LuaValue.valueOf("encode"), new Encode());
+        cjsonMap.put(LuaValue.valueOf("decode"), new Decode());
+        return new ImmutableLuaTable(cjsonMap);
     }
 }
