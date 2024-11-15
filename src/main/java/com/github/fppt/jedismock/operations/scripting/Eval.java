@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.operations.scripting;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.operations.scripting.cjson.LuaCjsonLib;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
@@ -60,6 +61,7 @@ public class Eval extends AbstractRedisOperation {
         globals.set("KEYS", embedLuaListToValue(args.subList(0, keysNum)));
         globals.set("ARGV", embedLuaListToValue(args.subList(keysNum, args.size())));
         globals.set("_mock", CoerceJavaToLua.coerce(new LuaRedisCallback(state)));
+        globals.set("cjson", globals.load(new LuaCjsonLib()));
         int selected = state.getSelected();
         try {
             final LuaValue result = globals.load(script).call();
