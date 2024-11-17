@@ -41,7 +41,7 @@ Add it as a test dependency in Maven as:
 <dependency>
   <groupId>com.github.fppt</groupId>
   <artifactId>jedis-mock</artifactId>
-  <version>1.1.7</version>
+  <version>1.1.8</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -167,7 +167,7 @@ jedis.eval(script, 1, "mylist", "10");
 jedis.lrange("mylist", 0, -1));        
 ```
 
-:warning: Lua language capabilities are restricted to what is provided by current LuaJ version. Methods provided by `redis` global object are currently restricted to what was available in Redis version 2.6.0 (see [redis.lua](src/main/resources/redis.lua)). 
+:warning: Lua language capabilities are restricted to what is provided by current LuaJ version. Methods provided by `redis` global object are currently restricted to what was available in Redis version 2.6.0 (see [redis.lua](src/main/resources/redis.lua)).
 
 Feel free to report an issue if you have any problems with Lua scripting in Jedis-Mock.
 
