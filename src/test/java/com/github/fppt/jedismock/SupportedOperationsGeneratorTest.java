@@ -30,7 +30,7 @@ public class SupportedOperationsGeneratorTest {
     private static final String SYMBOL_UNSUPPORTED = ":x:";
     @Container
     private final GenericContainer<?> redis =
-            new GenericContainer<>(DockerImageName.parse("redis:7.2-alpine")).withExposedPorts(6379);
+            new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(6379);
 
     private final static Set<String> implementedOperations;
 
