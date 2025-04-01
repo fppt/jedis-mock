@@ -9,6 +9,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 class Info implements RedisOperation {
     @Override
     public Slice execute() {
-        return Response.bulkString(Slice.create("Redis Mock Server Info"));
+        //role:master line is needed for Lettuce client
+        return Response.bulkString(Slice.create("Redis Mock Server Info\nrole:master"));
     }
 }
