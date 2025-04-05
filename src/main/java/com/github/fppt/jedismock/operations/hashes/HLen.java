@@ -17,7 +17,7 @@ public class HLen extends AbstractRedisOperation {
 
     protected Slice response() {
         Slice key = params().get(0);
-        Map<Slice, Slice> map = base().getFieldsAndValues(key);
+        Map<Slice, Slice> map = base().getFieldsAndValuesReadOnly(key);
         return Response.integer(map.size());
     }
 }

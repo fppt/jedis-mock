@@ -11,29 +11,27 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class ExpiringKeyValueStorage {
-    private final Supplier<Clock> clockSupplier;
+public class ExpiringKeyValueStorage extends ExpiringStorage {
     private final Map<Slice, RMDataStructure> values = new HashMap<>();
-    private final Map<Slice, Long> ttls = new HashMap<>();
-    private final Consumer<Slice> keyChangeNotifier;
 
     public ExpiringKeyValueStorage(Supplier<Clock> clockSupplier, Consumer<Slice> keyChangeNotifier) {
-        this.clockSupplier = Objects.requireNonNull(clockSupplier);
-        this.keyChangeNotifier = Objects.requireNonNull(keyChangeNotifier);
+        super(clockSupplier, keyChangeNotifier);
     }
 
     public Map<Slice, RMDataStructure> values() {
         return values;
     }
 
-    public Map<Slice, Long> ttls() {
-        return ttls;
-    }
-
+    @Override
     public void delete(Slice key) {
         keyChangeNotifier.accept(key);
         ttls().remove(key);
         values().remove(key);
+    }
+
+    @Override
+    protected boolean keyExists(Slice key) {
+        return values.containsKey(key);
     }
 
     public void delete(Slice key1, Slice key2) {
@@ -43,16 +41,13 @@ public class ExpiringKeyValueStorage {
         if (!verifyKey(key1)) {
             return;
         }
-        RMHash sortedSetByKey = getRMSortedSet(key1);
-        Map<Slice, Slice> storedData = sortedSetByKey.getStoredData();
-
-        if (!storedData.containsKey(key2)) {
+        RMHash hashByKey = getRMHash(key1);
+        if (!hashByKey.keyExists(key2)) {
             return;
         }
+        hashByKey.delete(key2);
 
-        storedData.remove(key2);
-
-        if (storedData.isEmpty()) {
+        if (hashByKey.isEmpty()) {
             values.remove(key1);
         }
 
@@ -91,37 +86,6 @@ public class ExpiringKeyValueStorage {
         return true;
     }
 
-    boolean isKeyOutdated(Slice key) {
-        Long deadline = ttls().get(key);
-        return deadline != null && deadline != -1 && deadline <= getMillis();
-    }
-
-    public Long getTTL(Slice key) {
-        Objects.requireNonNull(key);
-        Long deadline = ttls().get(key);
-        if (deadline == null) {
-            return null;
-        }
-        if (deadline == -1) {
-            return deadline;
-        }
-        long now = getMillis();
-        if (now < deadline) {
-            return deadline - now;
-        }
-        delete(key);
-        return null;
-    }
-
-    public long setTTL(Slice key, long ttl) {
-        keyChangeNotifier.accept(key);
-        return setDeadline(key, ttl + getMillis());
-    }
-
-    private long getMillis() {
-        return clockSupplier.get().millis();
-    }
-
     public void put(Slice key, RMDataStructure value, Long ttl) {
         keyChangeNotifier.accept(key);
         values().put(key, value);
@@ -146,57 +110,29 @@ public class ExpiringKeyValueStorage {
         RMHash mapByKey;
 
         if (!values.containsKey(key1)) {
-            mapByKey = new RMHash();
+            mapByKey = new RMHash(getClockSupplier());
             values.put(key1, mapByKey);
         } else {
-            mapByKey = getRMSortedSet(key1);
+            mapByKey = getRMHash(key1);
         }
         mapByKey.put(key2, value);
         configureTTL(key1, ttl);
     }
 
-    private RMHash getRMSortedSet(Slice key) {
+    private RMHash getRMHash(Slice key) {
         RMDataStructure valueByKey = values.get(key);
-        if (!isSortedSetValue(valueByKey)) {
+        if (!isHashValue(valueByKey)) {
             valueByKey.raiseTypeCastException();
         }
 
         return (RMHash) valueByKey;
     }
 
-    private void configureTTL(Slice key, Long ttl) {
-        if (ttl == null) {
-            // If a TTL hasn't been provided, we don't want to override the TTL. However, if no TTL is set for this key,
-            // we should still set it to -1L
-            if (getTTL(key) == null) {
-                setDeadline(key, -1L);
-            }
-        } else {
-            if (ttl != -1) {
-                setTTL(key, ttl);
-            } else {
-                setDeadline(key, -1L);
-            }
-        }
-    }
-
-    public long setDeadline(Slice key, long deadline) {
-        Objects.requireNonNull(key);
-        if (values().containsKey(key)) {
-            Long oldValue = ttls().put(key, deadline);
-            //It is considered to be an unsuccessful operation if we
-            //reset deadline for the key which does not have one
-            return (deadline < 0 && (oldValue == null || oldValue < 0)) ?
-                    0L : 1L;
-        }
-        return 0L;
-    }
-
     public boolean exists(Slice slice) {
         return verifyKey(slice);
     }
 
-    private boolean isSortedSetValue(RMDataStructure value) {
+    private boolean isHashValue(RMDataStructure value) {
         return value instanceof RMHash;
     }
 
