@@ -18,7 +18,7 @@ public class HStrlen extends AbstractRedisOperation {
     protected Slice response() {
         Slice key = params().get(0);
         Slice field = params().get(1);
-        Slice result = base().getFieldsAndValues(key).get(field);
+        Slice result = base().getSlice(key, field);
         return Response.integer(result == null ? 0 : result.toString().length());
     }
 }

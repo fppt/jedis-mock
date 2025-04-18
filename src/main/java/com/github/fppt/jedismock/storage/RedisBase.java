@@ -131,26 +131,19 @@ public class RedisBase {
     }
 
     public Slice getSlice(Slice key1, Slice key2) {
-        RMHash value = getHash(key1);
-
-        if (value == null) {
+        RMHash hashTable = getHash(key1);
+        if (hashTable == null) {
             return null;
         }
-
-        Map<Slice, Slice> innerMap = value.getStoredData();
-        if (innerMap == null) {
-            return null;
-        }
-
-        return innerMap.get(key2);
+        return hashTable.get(key2);
     }
 
-    public Map<Slice, Slice> getFieldsAndValues(Slice hash) {
+    public Map<Slice, Slice> getFieldsAndValuesReadOnly(Slice hash) {
         RMHash hashTable = getHash(hash);
         if (hashTable == null) {
             return Collections.emptyMap();
         }
-        return hashTable.getStoredData();
+        return hashTable.getStoredDataReadOnly();
     }
 
     public Long getTTL(Slice key) {

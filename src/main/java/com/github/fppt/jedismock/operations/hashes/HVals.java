@@ -20,7 +20,7 @@ public class HVals extends AbstractRedisOperation {
     protected Slice response() {
         Slice hash = params().get(0);
 
-        Map<Slice, Slice> fieldAndValueMap = base().getFieldsAndValues(hash);
+        Map<Slice, Slice> fieldAndValueMap = base().getFieldsAndValuesReadOnly(hash);
 
         return Response.array(
                 fieldAndValueMap.values().stream()

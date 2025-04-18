@@ -26,7 +26,7 @@ public class HScan extends com.github.fppt.jedismock.operations.keys.Scan {
 
     @Override
     protected List<Slice> getMatchingValues(String regex, long cursor, long count) {
-        Map<Slice, Slice> fieldAndValueMap = base().getFieldsAndValues(keySlice);
+        Map<Slice, Slice> fieldAndValueMap = base().getFieldsAndValuesReadOnly(keySlice);
         this.size = fieldAndValueMap.size();
         return fieldAndValueMap.entrySet().stream().skip(cursor)
                 .limit(count)
