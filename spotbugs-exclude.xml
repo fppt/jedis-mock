@@ -31,7 +31,7 @@
     <Match>
         <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
         <Or>
-            <Class name="com.github.fppt.jedismock.operations.keys.PExpire"/>
+            <Class name="com.github.fppt.jedismock.operations.keys.paramsparser.ExpirationTimeParam"/>
             <Class name="com.github.fppt.jedismock.operations.strings.Set"/>
             <Class name="com.github.fppt.jedismock.operations.strings.SetEx"/>
         </Or>

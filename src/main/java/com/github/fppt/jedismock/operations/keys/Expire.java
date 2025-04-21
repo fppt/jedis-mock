@@ -13,7 +13,7 @@ class Expire extends PExpire {
     }
 
     @Override
-    long getValue(List<Slice> params) {
-        return Math.multiplyExact(super.getValue(params), 1000L);
+    protected boolean useMillis() {
+        return false;
     }
 }
