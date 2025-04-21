@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class ExpirationFieldsParam {
-    private List<Slice> fields;
+    private final List<Slice> fields;
 
     public ExpirationFieldsParam(List<Slice> params, int position) throws ExpirationParamsException {
         if (!"FIELDS".equalsIgnoreCase(params.get(position).toString())) {
