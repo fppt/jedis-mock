@@ -35,7 +35,7 @@ class PExpireAt extends AbstractRedisOperation {
                     params(), false
             );
             long newDeadline = expirationTime.getMillis();
-            if (extraParam.checkTiming(base().exists(key),
+            if (base().exists(key) && extraParam.checkTiming(
                     base().getDeadline(key), newDeadline)) {
                 return Response.integer(base().setDeadline(key, newDeadline));
             } else return Response.integer(0);

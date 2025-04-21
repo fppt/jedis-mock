@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ExpirationExtraParamTest {
-    private List<Slice> slices(String... strings) {
+    public static List<Slice> slices(String... strings) {
         return Arrays.stream(strings).map(Slice::create).collect(toList());
     }
 
@@ -75,19 +75,11 @@ class ExpirationExtraParamTest {
     }
 
     @Test
-    void checkTimingNonExistentKey() throws ExpirationParamsException {
-        ExpirationExtraParam param = new ExpirationExtraParam(slices(
-                "_", "_"
-        ), false);
-        assertThat(param.checkTiming(false, 0L, 0L)).isFalse();
-    }
-
-    @Test
     void checkTimingNXTrue() throws ExpirationParamsException {
         ExpirationExtraParam param = new ExpirationExtraParam(slices(
                 "_", "_", "NX"
         ), false);
-        assertThat(param.checkTiming(true, null, 10L)).isTrue();
+        assertThat(param.checkTiming(null, 10L)).isTrue();
     }
 
     @Test
@@ -95,7 +87,7 @@ class ExpirationExtraParamTest {
         ExpirationExtraParam param = new ExpirationExtraParam(slices(
                 "_", "_", "NX"
         ), false);
-        assertThat(param.checkTiming(true, 10L, 100L)).isFalse();
+        assertThat(param.checkTiming(10L, 100L)).isFalse();
     }
 
     @Test
@@ -103,7 +95,7 @@ class ExpirationExtraParamTest {
         ExpirationExtraParam param = new ExpirationExtraParam(slices(
                 "_", "_", "XX"
         ), false);
-        assertThat(param.checkTiming(true, 10L, 11L)).isTrue();
+        assertThat(param.checkTiming(10L, 11L)).isTrue();
     }
 
     @Test
@@ -111,7 +103,7 @@ class ExpirationExtraParamTest {
         ExpirationExtraParam param = new ExpirationExtraParam(slices(
                 "_", "_", "XX"
         ), false);
-        assertThat(param.checkTiming(true, null, 100L)).isFalse();
+        assertThat(param.checkTiming(null, 100L)).isFalse();
     }
 
     @Test
@@ -119,7 +111,7 @@ class ExpirationExtraParamTest {
         ExpirationExtraParam param = new ExpirationExtraParam(slices(
                 "_", "_", "GT"
         ), false);
-        assertThat(param.checkTiming(true, 100L, 10L)).isFalse();
+        assertThat(param.checkTiming(100L, 10L)).isFalse();
     }
 
     @Test
@@ -127,7 +119,7 @@ class ExpirationExtraParamTest {
         ExpirationExtraParam param = new ExpirationExtraParam(slices(
                 "_", "_", "GT"
         ), false);
-        assertThat(param.checkTiming(true, 10L, 100L)).isTrue();
+        assertThat(param.checkTiming(10L, 100L)).isTrue();
     }
 
     @Test
@@ -135,7 +127,7 @@ class ExpirationExtraParamTest {
         ExpirationExtraParam param = new ExpirationExtraParam(slices(
                 "_", "_", "LT"
         ), false);
-        assertThat(param.checkTiming(true, 10L, 100L)).isFalse();
+        assertThat(param.checkTiming(10L, 100L)).isFalse();
     }
 
     @Test
@@ -143,6 +135,6 @@ class ExpirationExtraParamTest {
         ExpirationExtraParam param = new ExpirationExtraParam(slices(
                 "_", "_", "LT"
         ), false);
-        assertThat(param.checkTiming(true, 100L, 10L)).isTrue();
+        assertThat(param.checkTiming(100L, 10L)).isTrue();
     }
 }

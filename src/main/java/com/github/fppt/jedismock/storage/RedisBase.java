@@ -159,7 +159,7 @@ public class RedisBase {
     }
 
     public Long getDeadline(Slice key) {
-        return keyValueStorage.ttls().get(key);
+        return keyValueStorage.getDeadline(key);
     }
 
     public void clear() {

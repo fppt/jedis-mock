@@ -28,7 +28,6 @@ class PExpire extends AbstractRedisOperation {
     }
 
     protected Slice response() {
-
         try {
             Slice key = params().get(0);
             ExpirationTimeParam expirationTime = new ExpirationTimeParam(self().value(),
@@ -37,7 +36,7 @@ class PExpire extends AbstractRedisOperation {
                     params(), false
             );
             long newTTL = expirationTime.getMillis();
-            if (extraParam.checkTiming(base().exists(key),
+            if (base().exists(key) && extraParam.checkTiming(
                     base().getTTL(key), newTTL)) {
                 return Response.integer(base().setTTL(key, newTTL));
             } else return Response.integer(0);

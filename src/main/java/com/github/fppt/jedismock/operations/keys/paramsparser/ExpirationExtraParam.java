@@ -39,10 +39,7 @@ public final class ExpirationExtraParam {
         return index;
     }
 
-    public boolean checkTiming(boolean keyExists, Long oldTTL, long newTTL) {
-        if (!keyExists) {
-            return false;
-        }
+    public boolean checkTiming(Long oldTTL, long newTTL) {
         //Treat empty or negative TTL as infinite
         if (oldTTL == null || oldTTL < 0) {
             oldTTL = Long.MAX_VALUE;

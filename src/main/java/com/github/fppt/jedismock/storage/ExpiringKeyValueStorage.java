@@ -25,7 +25,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
     @Override
     public void delete(Slice key) {
         keyChangeNotifier.accept(key);
-        ttls().remove(key);
+        super.delete(key);
         values().remove(key);
     }
 
@@ -52,10 +52,11 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
         }
 
         if (!values().containsKey(key1)) {
-            ttls().remove(key1);
+            super.delete(key1);
         }
     }
 
+    @Override
     public void clear() {
         for (Slice key : values().keySet()) {
             if (!isKeyOutdated(key)) {
@@ -63,7 +64,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
             }
         }
         values().clear();
-        ttls().clear();
+        super.clear();
     }
 
     public RMDataStructure getValue(Slice key) {

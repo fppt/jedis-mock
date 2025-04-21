@@ -20,22 +20,24 @@ public abstract class ExpiringStorage {
         this.keyChangeNotifier = Objects.requireNonNull(keyChangeNotifier);
     }
 
-    public Map<Slice, Long> ttls() {
-        return ttls;
+    protected void clear() {
+        ttls.clear();
     }
 
-    protected abstract void delete(Slice key);
+    protected void delete(Slice key) {
+        ttls.remove(key);
+    }
 
     protected abstract boolean keyExists(Slice key);
 
-    boolean isKeyOutdated(Slice key) {
-        Long deadline = ttls().get(key);
+    protected boolean isKeyOutdated(Slice key) {
+        Long deadline = ttls.get(key);
         return deadline != null && deadline != -1 && deadline <= getMillis();
     }
 
     public Long getTTL(Slice key) {
         Objects.requireNonNull(key);
-        Long deadline = ttls().get(key);
+        Long deadline = ttls.get(key);
         if (deadline == null) {
             return null;
         }
@@ -48,6 +50,10 @@ public abstract class ExpiringStorage {
         }
         delete(key);
         return null;
+    }
+
+    public Long getDeadline(Slice key) {
+        return ttls.get(key);
     }
 
     public long setTTL(Slice key, long ttl) {
@@ -78,7 +84,7 @@ public abstract class ExpiringStorage {
     public long setDeadline(Slice key, long deadline) {
         Objects.requireNonNull(key);
         if (keyExists(key)) {
-            Long oldValue = ttls().put(key, deadline);
+            Long oldValue = ttls.put(key, deadline);
             //It is considered to be an unsuccessful operation if we
             //reset deadline for the key which does not have one
             return (deadline < 0 && (oldValue == null || oldValue < 0)) ?
