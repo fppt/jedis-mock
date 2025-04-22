@@ -34,11 +34,11 @@
 
 |     |     |     |     |     |
 | --- | --- | --- | --- | --- |
-| :heavy_check_mark: [hdel](https://valkey.io/commands/hdel/) | :heavy_check_mark: [hget](https://valkey.io/commands/hget/) | :heavy_check_mark: [hlen](https://valkey.io/commands/hlen/) | :x: [hpexpireat](https://valkey.io/commands/hpexpireat/) | :heavy_check_mark: [hset](https://valkey.io/commands/hset/) |
-| :heavy_check_mark: [hexists](https://valkey.io/commands/hexists/) | :heavy_check_mark: [hgetall](https://valkey.io/commands/hgetall/) | :heavy_check_mark: [hmget](https://valkey.io/commands/hmget/) | :x: [hpexpiretime](https://valkey.io/commands/hpexpiretime/) | :heavy_check_mark: [hsetnx](https://valkey.io/commands/hsetnx/) |
-| :x: [hexpire](https://valkey.io/commands/hexpire/) | :heavy_check_mark: [hincrby](https://valkey.io/commands/hincrby/) | :heavy_check_mark: [hmset](https://valkey.io/commands/hmset/) | :x: [hpttl](https://valkey.io/commands/hpttl/) | :heavy_check_mark: [hstrlen](https://valkey.io/commands/hstrlen/) |
-| :x: [hexpireat](https://valkey.io/commands/hexpireat/) | :heavy_check_mark: [hincrbyfloat](https://valkey.io/commands/hincrbyfloat/) | :x: [hpersist](https://valkey.io/commands/hpersist/) | :x: [hrandfield](https://valkey.io/commands/hrandfield/) | :x: [httl](https://valkey.io/commands/httl/) |
-| :x: [hexpiretime](https://valkey.io/commands/hexpiretime/) | :heavy_check_mark: [hkeys](https://valkey.io/commands/hkeys/) | :x: [hpexpire](https://valkey.io/commands/hpexpire/) | :heavy_check_mark: [hscan](https://valkey.io/commands/hscan/) | :heavy_check_mark: [hvals](https://valkey.io/commands/hvals/) |
+| :heavy_check_mark: [hdel](https://valkey.io/commands/hdel/) | :heavy_check_mark: [hget](https://valkey.io/commands/hget/) | :heavy_check_mark: [hlen](https://valkey.io/commands/hlen/) | :heavy_check_mark: [hpexpireat](https://valkey.io/commands/hpexpireat/) | :heavy_check_mark: [hset](https://valkey.io/commands/hset/) |
+| :heavy_check_mark: [hexists](https://valkey.io/commands/hexists/) | :heavy_check_mark: [hgetall](https://valkey.io/commands/hgetall/) | :heavy_check_mark: [hmget](https://valkey.io/commands/hmget/) | :heavy_check_mark: [hpexpiretime](https://valkey.io/commands/hpexpiretime/) | :heavy_check_mark: [hsetnx](https://valkey.io/commands/hsetnx/) |
+| :heavy_check_mark: [hexpire](https://valkey.io/commands/hexpire/) | :heavy_check_mark: [hincrby](https://valkey.io/commands/hincrby/) | :heavy_check_mark: [hmset](https://valkey.io/commands/hmset/) | :heavy_check_mark: [hpttl](https://valkey.io/commands/hpttl/) | :heavy_check_mark: [hstrlen](https://valkey.io/commands/hstrlen/) |
+| :heavy_check_mark: [hexpireat](https://valkey.io/commands/hexpireat/) | :heavy_check_mark: [hincrbyfloat](https://valkey.io/commands/hincrbyfloat/) | :heavy_check_mark: [hpersist](https://valkey.io/commands/hpersist/) | :x: [hrandfield](https://valkey.io/commands/hrandfield/) | :heavy_check_mark: [httl](https://valkey.io/commands/httl/) |
+| :heavy_check_mark: [hexpiretime](https://valkey.io/commands/hexpiretime/) | :heavy_check_mark: [hkeys](https://valkey.io/commands/hkeys/) | :heavy_check_mark: [hpexpire](https://valkey.io/commands/hpexpire/) | :heavy_check_mark: [hscan](https://valkey.io/commands/hscan/) | :heavy_check_mark: [hvals](https://valkey.io/commands/hvals/) |
 
 ## HyperLogLog
 
