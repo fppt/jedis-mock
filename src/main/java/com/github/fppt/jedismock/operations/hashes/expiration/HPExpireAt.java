@@ -50,8 +50,9 @@ public class HPExpireAt extends AbstractRedisOperation {
                         response.add(Response.integer(-2L));
                     } else if (extraParam.checkTiming(
                             hash.getDeadline(field), newDeadline)) {
-                        hash.setDeadline(field, newDeadline);
-                        response.add(Response.integer(2L));
+                        long result = hash.setDeadline(field, newDeadline);
+                        response.add(Response.integer(newDeadline < base().getClock().millis() ?
+                                2 : result));
                     } else {
                         response.add(Response.integer(0L));
                     }
@@ -65,4 +66,5 @@ public class HPExpireAt extends AbstractRedisOperation {
         } catch (ExpirationParamsException e) {
             return Response.error(e.getMessage());
         }
-    }}
+    }
+}

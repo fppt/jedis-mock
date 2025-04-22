@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 public class RMHash extends ExpiringStorage implements RMDataStructure {
@@ -71,5 +72,23 @@ public class RMHash extends ExpiringStorage implements RMDataStructure {
             return false;
         }
         return true;
+    }
+
+    /*This is needed for HLEN, which does not take into account expired keys*/
+    public int sizeIncludingExpired() {
+        return storedData.size();
+    }
+
+    public boolean isLazilyExpired() {
+        //Check if all the fields are expired more than 1 second ago...
+        if (storedData.keySet().stream().allMatch(this::isKeyOutdated)) {
+            //All of them are expired, let's see how long ago...
+            OptionalLong max = storedData.keySet().stream().mapToLong(this::getDeadline).max();
+            if (max.isPresent() && getMillis() - max.getAsLong() > 1000) {
+                storedData.clear();
+                clear();
+            }
+        }
+        return storedData.isEmpty();
     }
 }

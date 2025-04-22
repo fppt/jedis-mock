@@ -37,6 +37,9 @@ public class HPExpire extends AbstractRedisOperation {
                     params(), extraParam.getIndex()
             );
             long newTTL = expirationTime.getMillis();
+            if (newTTL < 0) {
+                return Response.error("ERR invalid expire time, must be >= 0");
+            }
             List<Slice> response = new ArrayList<>();
             RMHash hash = base().getHash(key);
             if (hash != null) {
@@ -45,7 +48,8 @@ public class HPExpire extends AbstractRedisOperation {
                         response.add(Response.integer(-2L));
                     } else if (extraParam.checkTiming(
                             hash.getTTL(field), newTTL)) {
-                        response.add(Response.integer(hash.setTTL(field, newTTL)));
+                        long result = hash.setTTL(field, newTTL);
+                        response.add(Response.integer(newTTL == 0 ? 2 : result));
                     } else {
                         response.add(Response.integer(0));
                     }

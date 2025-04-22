@@ -84,6 +84,13 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
             delete(key);
             return false;
         }
+
+        RMDataStructure o = values.get(key);
+        //Do not actively expire at this point, but if it's empty -- then clean it up
+        if (o instanceof RMHash && ((RMHash) o).isLazilyExpired()) {
+            delete(key);
+            return false;
+        }
         return true;
     }
 

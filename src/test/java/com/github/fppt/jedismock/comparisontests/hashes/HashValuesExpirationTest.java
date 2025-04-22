@@ -5,6 +5,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.args.ExpiryOption;
 import redis.clients.jedis.util.SafeEncoder;
@@ -15,7 +16,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(ComparisonBase.class)
 public class HashValuesExpirationTest {
@@ -224,9 +225,70 @@ public class HashValuesExpirationTest {
     @TestTemplate
     void hexpireAtFieldsOverride(Jedis jedis) {
         jedis.hexpire("mykey", 100, "field1");
-        List<Long> result = jedis.hexpireAt("mykey", 200,
+        long expireAt = Long.parseLong(jedis.time().get(0)) + 60;
+        List<Long> result = jedis.hexpireAt("mykey", expireAt,
                 "field1", "field2", "field3");
-        assertThat(result).containsExactly(2L, 2L, -2L);
+        assertThat(result).containsExactly(1L, 1L, -2L);
+    }
+
+    @TestTemplate
+    void hexpireAtInThePast(Jedis jedis) {
+        long expireAt = Long.parseLong(jedis.time().get(0)) - 60;
+        List<Long> result = jedis.hexpireAt("mykey", expireAt,
+                "field1");
+        assertThat(result).containsExactly(2L);
+        assertThat(jedis.hexists("mykey", "field1")).isFalse();
+    }
+
+    @TestTemplate
+    void hexpireWithZeroTime(Jedis jedis) {
+        List<Long> result = jedis.hexpire("mykey", 0, "field1");
+        assertThat(result).containsExactly(2L);
+        assertThat(jedis.hexists("mykey", "field1")).isFalse();
+    }
+
+    @TestTemplate
+    void hexpireWithNegativeTime(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.hexpire("mykey", -1, "field1"))
+                .hasMessageContaining("must be >= 0");
+    }
+
+    @TestTemplate
+    public void lazyExpire(Jedis jedis) throws InterruptedException {
+        /*After small period of time, hmaps don't disappear on their own.
+         * COUNT does not care about expired fields */
+        do {
+            jedis.del("myhash");
+            jedis.hset("myhash", "f1", "v1");
+            jedis.hset("myhash", "f2", "v2");
+            jedis.hset("myhash", "f3", "v3");
+            jedis.hpexpire("myhash", 1, "f1", "f2", "f3");
+            Thread.sleep(2);
+            //Sometimes "real" Redis is too fast with active expire, so
+            //we wait for a convenient chance
+        } while (!jedis.exists("myhash"));
+        assertThat(jedis.hlen("myhash")).isEqualTo(3);
+        assertThat(jedis.hexists("myhash", "f1")).isFalse();
+        assertThat(jedis.hlen("myhash")).isEqualTo(2);
+
+        assertThat(jedis.hget("myhash", "f2")).isNull();
+        assertThat(jedis.hlen("myhash")).isEqualTo(1);
+
+        assertThat(jedis.hstrlen("myhash", "f3")).isZero();
+        assertThat(jedis.hlen("myhash")).isZero();
+        assertThat(jedis.exists("myhash")).isFalse();
+    }
+
+    @TestTemplate
+    public void activeExpire(Jedis jedis) throws InterruptedException {
+        /*Eventually, hash with all the expired fields disappears */
+        jedis.hset("myhash", "f1", "v1");
+        jedis.hset("myhash", "f2", "v2");
+        jedis.hset("myhash", "f3", "v3");
+        jedis.hpexpire("myhash", 1, "f1", "f2", "f3");
+        Thread.sleep(2);
+        assertThat(jedis.exists("myhash")).isTrue();
+        Awaitility.await().until(() -> !jedis.exists("myhash"));
     }
 
 }

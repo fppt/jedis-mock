@@ -61,7 +61,7 @@ public abstract class ExpiringStorage {
         return setDeadline(key, ttl + getMillis());
     }
 
-    private long getMillis() {
+    protected final long getMillis() {
         return clockSupplier.get().millis();
     }
 
