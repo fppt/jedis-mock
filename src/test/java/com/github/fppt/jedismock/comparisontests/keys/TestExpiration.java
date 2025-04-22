@@ -153,4 +153,19 @@ public class TestExpiration {
         assertThat(jedis.expireAt("foo", expireAt)).isEqualTo(1);
     }
 
+    @TestTemplate
+    public void expireAtWithParams(Jedis jedis) {
+        long expireAt = Long.parseLong(jedis.time().get(0)) + 4000;
+        jedis.set("mykey", "Hello World");
+        assertThat(jedis.ttl("mykey")).isEqualTo(-1);
+        assertThat(jedis.expireAt("mykey", expireAt, ExpiryOption.XX)).isZero();
+        assertThat(jedis.expireTime("mykey")).isEqualTo(-1);
+        assertThat(jedis.expireAt("mykey", expireAt, ExpiryOption.NX)).isEqualTo(1);
+        assertThat(jedis.expireTime("mykey")).isEqualTo(expireAt);
+        assertThat(jedis.expireAt("mykey", expireAt, ExpiryOption.GT)).isEqualTo(0);
+        assertThat(jedis.expireTime("mykey")).isEqualTo(expireAt);
+        assertThat(jedis.expireAt("mykey", expireAt - 1, ExpiryOption.LT)).isEqualTo(1);
+        assertThat(jedis.expireTime("mykey")).isEqualTo(expireAt - 1);
+    }
+
 }
