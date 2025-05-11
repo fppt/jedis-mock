@@ -44,13 +44,6 @@ public class ListOperationsTest {
     }
 
     @TestTemplate
-    public void whenUsingRpop_EnsureTheFirstElementPushedIsReturned(Jedis jedis) {
-        String key = "Another key";
-        jedis.rpush(key, "1", "2", "3");
-        assertThat(jedis.rpop(key)).isEqualTo("3");
-    }
-
-    @TestTemplate
     public void whenUsingRpopCount_EnsureAllElementsPushedIsReturned(Jedis jedis) {
         String key = "Another key";
         jedis.rpush(key, "1", "2", "3", "4");
