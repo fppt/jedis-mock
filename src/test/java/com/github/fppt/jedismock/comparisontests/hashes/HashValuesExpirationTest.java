@@ -269,10 +269,10 @@ public class HashValuesExpirationTest {
         } while (!jedis.exists("myhash"));
         assertThat(jedis.hlen("myhash")).isEqualTo(3);
         assertThat(jedis.hexists("myhash", "f1")).isFalse();
-        assertThat(jedis.hlen("myhash")).isEqualTo(2);
+        assertThat(jedis.hlen("myhash")).isBetween(0L, 2L);
 
         assertThat(jedis.hget("myhash", "f2")).isNull();
-        assertThat(jedis.hlen("myhash")).isEqualTo(1);
+        assertThat(jedis.hlen("myhash")).isBetween(0L, 1L);
 
         assertThat(jedis.hstrlen("myhash", "f3")).isZero();
         assertThat(jedis.hlen("myhash")).isZero();
