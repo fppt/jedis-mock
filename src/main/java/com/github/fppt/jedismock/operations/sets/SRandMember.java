@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.sets;
 
+import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
@@ -9,7 +10,6 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -57,9 +57,8 @@ public class SRandMember extends AbstractRedisOperation {
                     Response.array(Response.bulkString(list.get(index))) :
                     Response.bulkString(list.get(index));
         } else if (number > 1) {
-            Collections.shuffle(list);
-            return Response.array(
-                    list.stream()
+            Utils.shufflePartially(list, number, ThreadLocalRandom.current());
+            return Response.array(Utils.lastNElements(list, number).stream()
                             .map(Response::bulkString)
                             .limit(number)
                             .collect(Collectors.toList()));
