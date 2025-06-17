@@ -8,9 +8,9 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.resps.Tuple;
 
-import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,9 +24,13 @@ public class TestZRandMember {
 
     @TestTemplate
     void zrandMemberReturnsSingleElement(Jedis jedis) {
-        jedis.zadd("myzset", Map.of("a", 1.0, "b", 2.0, "c", 3.0));
+        jedis.zadd("myzset", new HashMap<String, Double>() {{
+            put("a", 1.0);
+            put("b", 2.0);
+            put("c", 3.0);
+        }});
         String member = jedis.zrandmember("myzset");
-        assertThat(Set.of("a", "b", "c")).contains(member);
+        assertThat(new HashSet<String>() {{ add("a"); add("b"); add("c");}}).contains(member);
     }
 
     @TestTemplate
@@ -41,23 +45,35 @@ public class TestZRandMember {
 
     @TestTemplate
     void zrandMemberWithCountReturnsElements(Jedis jedis) {
-        jedis.zadd("myzset", Map.of("a", 1.0, "b", 2.0, "c", 3.0));
+        jedis.zadd("myzset", new HashMap<String, Double>() {{
+            put("a", 1.0);
+            put("b", 2.0);
+            put("c", 3.0);
+        }});
         List<String> members = jedis.zrandmember("myzset", 2);
         assertThat(members.size()).isLessThanOrEqualTo(2);
-        assertThat(Set.of("a", "b", "c")).containsAll(members);
+        assertThat(new HashSet<String>() {{ add("a"); add("b"); add("c");}}).containsAll(members);
     }
 
     @TestTemplate
     void zrandMemberWithNegativeCountReturnsRepeatedElements(Jedis jedis) {
-        jedis.zadd("myzset", Map.of("x", 1.0, "y", 2.0, "z", 3.0));
+        jedis.zadd("myzset", new HashMap<String, Double>() {{
+            put("x", 1.0);
+            put("y", 2.0);
+            put("z", 3.0);
+        }});
         List<String> members = jedis.zrandmember("myzset", -10);
         assertThat(members).hasSize(10);
-        assertThat(Set.of("x", "y", "z")).containsAll(members);
+        assertThat(new HashSet<String>() {{ add("x"); add("y"); add("z");}}).containsAll(members);
     }
 
     @TestTemplate
     void zrandMemberWithCountAndWithScores(Jedis jedis) {
-        jedis.zadd("myzset", Map.of("apple", 5.0, "banana", 7.0, "carrot", 9.0));
+        jedis.zadd("myzset", new HashMap<String, Double>() {{
+            put("apple", 5.0);
+            put("banana", 7.0);
+            put("carrot", 9.0);
+        }});
         List<Tuple> result = jedis.zrandmemberWithScores("myzset", 2);
         assertThat(result.size()).isEqualTo(2);
 
@@ -70,25 +86,43 @@ public class TestZRandMember {
 
     @TestTemplate
     void zrandMemberReturnsAllWhenCountExceedsSet(Jedis jedis) {
-        jedis.zadd("myzset", Map.of("1", 1.0, "2", 2.0, "3", 3.0));
+        jedis.zadd("myzset", new HashMap<String, Double>() {{
+            put("1", 1.0);
+            put("2", 2.0);
+            put("3", 3.0);
+        }});
         List<String> members = jedis.zrandmember("myzset", 10);
         assertThat(members).containsExactlyInAnyOrder("1", "2", "3");
     }
 
     @TestTemplate
     void zrandMemberZeroCountReturnsEmptyList(Jedis jedis) {
-        jedis.zadd("myzset", Map.of("1", 1.0, "2", 2.0));
+        jedis.zadd("myzset", new HashMap<String, Double>() {{
+            put("1", 1.0);
+            put("2", 2.0);
+        }});
         List<String> result = jedis.zrandmember("myzset", 0);
         assertThat(result).isEmpty();
     }
 
     @TestTemplate
     void zrandMemberWithInvalidWithScoresThrowsError(Jedis jedis) {
-        jedis.zadd("myzset", Map.of("x", 1.0));
+        jedis.zadd("myzset", new HashMap<String, Double>() {{
+            put("1", 1.0);
+        }});
         try {
             jedis.sendCommand(Protocol.Command.ZRANDMEMBER, "myzset", "1", "WRONGARG");
         } catch (Exception e) {
             assertThat(e.getMessage()).contains("ERR syntax error");
+        }
+    }
+
+    @TestTemplate
+    void zrandMemberWithInvalidArgumentAndNonExistingKeyThrowsError(Jedis jedis) {
+        try {
+            jedis.sendCommand(Protocol.Command.ZRANDMEMBER, "myzset", "WRONGARG");
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("ERR value is not an integer or out of range");
         }
     }
 }

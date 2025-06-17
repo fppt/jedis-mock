@@ -11,11 +11,16 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.github.fppt.jedismock.Utils.reservoirSampling;
 
 
 @RedisCommand("zrandmember")
@@ -38,15 +43,13 @@ public class ZRandMember extends AbstractRedisOperation {
     @Override
     protected Slice response() {
         RMZSet set = base().getZSet(params().get(0));
-
         boolean isArrayResponse = params().size() > 1;
-
-        if (set == null) {
-            return isArrayResponse ? Response.EMPTY_ARRAY : Response.NULL;
-        }
 
         int count = parseCount();
         boolean withScores = parseWithScores();
+        if (set == null) {
+            return isArrayResponse ? Response.EMPTY_ARRAY : Response.NULL;
+        }
 
         List<ZSetEntry> selectedEntries = selectEntries(set, count);
         return isArrayResponse
@@ -73,15 +76,10 @@ public class ZRandMember extends AbstractRedisOperation {
     }
 
     private List<ZSetEntry> selectEntries(RMZSet set, int count) {
-        List<ZSetEntry> entries = new ArrayList<>(set.entries(false));
-        if (entries.isEmpty()) return Collections.emptyList();
-
-        if (count == 1) {
-            return List.of(entries.get(ThreadLocalRandom.current().nextInt(entries.size())));
-        } else if (count > 1) {
-            Utils.shufflePartially(entries, count, ThreadLocalRandom.current());
-            return Utils.lastNElements(entries, count);
+        if (count > 0) {
+            return reservoirSampling(set.entries(false), count, ThreadLocalRandom.current());
         } else {
+            List<ZSetEntry> entries = new ArrayList<>(set.entries(false));
             return ThreadLocalRandom.current()
                     .ints(-count, 0, entries.size())
                     .mapToObj(entries::get)

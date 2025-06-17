@@ -3,7 +3,6 @@ package com.github.fppt.jedismock.operations.sets;
 import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
@@ -11,8 +10,12 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+
+import static com.github.fppt.jedismock.Utils.reservoirSampling;
 
 @RedisCommand("srandmember")
 public class SRandMember extends AbstractRedisOperation {
@@ -28,47 +31,27 @@ public class SRandMember extends AbstractRedisOperation {
     @Override
     protected Slice response() {
         RMSet set = base().getSet(params().get(0));
-        int number;
-        if (params().size() > 1) {
-            if (set == null) {
-                return Response.EMPTY_ARRAY;
-            }
-            int result;
-            String value = params().get(1).toString();
-            try {
-                result = Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                throw new WrongValueTypeException("ERR value is out of range");
-            }
-            number = result;
-        } else {
-            if (set == null) {
-                return Response.NULL;
-            }
-            number = 1;
+        boolean isArrayResponse = params().size() > 1;
+
+        int number = isArrayResponse ? Utils.convertToInteger(params().get(1).toString()) : 1;
+        if (set == null) {
+            return isArrayResponse ? Response.EMPTY_ARRAY : Response.NULL;
         }
 
-        // TODO: more effective algorithms should be used here,
-        // avoiding conversion of set to list, shuffling all the elements etc.
-        List<Slice> list = new ArrayList<>(set.getStoredData());
-        if (number == 1) {
-            int index = ThreadLocalRandom.current().nextInt(list.size());
-            return params().size() > 1 ?
-                    Response.array(Response.bulkString(list.get(index))) :
-                    Response.bulkString(list.get(index));
-        } else if (number > 1) {
-            Utils.shufflePartially(list, number, ThreadLocalRandom.current());
-            return Response.array(Utils.lastNElements(list, number).stream()
-                            .map(Response::bulkString)
-                            .limit(number)
-                            .collect(Collectors.toList()));
+        List<Slice> result = selectEntries(set.getStoredData(), number, ThreadLocalRandom.current());
+        return isArrayResponse ?
+                Response.array(result.stream().map(Response::bulkString).collect(Collectors.toList())) :
+                Response.bulkString(result.get(0));
+    }
+
+    private List<Slice> selectEntries(Set<Slice> set, int count, Random random) {
+        if (count > 0) {
+            return reservoirSampling(set, count, random);
         } else {
-            List<Slice> result =
-                    ThreadLocalRandom.current().ints(-number, 0, list.size())
-                            .mapToObj(list::get)
-                            .map(Response::bulkString)
-                            .collect(Collectors.toList());
-            return Response.array(result);
+            List<Slice> list = new ArrayList<>(set);
+            return ThreadLocalRandom.current().ints(-count, 0, list.size())
+                    .mapToObj(list::get)
+                    .collect(Collectors.toList());
         }
     }
 }
