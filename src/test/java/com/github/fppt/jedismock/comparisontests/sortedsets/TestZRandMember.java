@@ -91,4 +91,13 @@ public class TestZRandMember {
             assertThat(e.getMessage()).contains("ERR syntax error");
         }
     }
+
+    @TestTemplate
+    void zrandMemberWithInvalidArgumentAndNonExistingKeyThrowsError(Jedis jedis) {
+        try {
+            jedis.sendCommand(Protocol.Command.ZRANDMEMBER, "myzset", "WRONGARG");
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("ERR syntax error");
+        }
+    }
 }

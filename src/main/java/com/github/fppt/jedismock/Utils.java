@@ -3,7 +3,10 @@ package com.github.fppt.jedismock;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -94,31 +97,52 @@ public class Utils {
         return out.toString();
     }
 
-    public static <E> List<E> lastNElements(List<E> list, int n) {
-        return list.size() < n ? list : list.subList(list.size() - n, list.size());
-    }
-
     /**
-     * Randomly shuffles the last {@code n} elements of the given list using the provided {@link Random} instance.
+     * Performs reservoir sampling on a given collection, returning a random subset of up to {@code count} elements.
      * <p>
-     * If {@code n} is greater than the size of the list, the entire list is shuffled.
-     * This method performs a partial Fisher-Yates shuffle from the end of the list.
+     * This implementation uses Algorithm L (a fast reservoir sampling method) to efficiently sample elements
+     * with uniform probability without needing to store or shuffle the entire dataset.
      *
-     * @param list the list to be partially shuffled
-     * @param n the number of elements from the end of the list to shuffle
-     * @param r the random number generator to use for shuffling
-     * @param <E> the type of elements in the list
+     * @param collection the input collection to sample from
+     * @param count the number of elements to sample; must be non-negative and less than or equal to the size of the collection
+     * @param random a {@link Random} instance used for generating random numbers
+     * @param <E> the type of elements in the input collection
+     * @return a list containing up to {@code count} randomly sampled elements from the collection
+     * @throws IllegalArgumentException if {@code count} is negative
      */
-    public static <E> void shufflePartially(List<E> list, int n, Random r) {
-        int length = list.size();
-        if (length < n) {
-            n = length;
+    public static <E> List<E> reservoirSampling(Collection<E> collection, int count, Random random) {
+        if (count < 0) {
+            throw new IllegalArgumentException("count must be non-negative");
         }
-        // We don't need to shuffle the whole list
-        for (int i = length - 1; i >= length - n; --i)
-        {
-            Collections.swap(list, i , r.nextInt(i + 1));
+
+        if (count == 0) {
+            return Collections.emptyList();
         }
+
+        if (count > collection.size()) {
+            count = collection.size();
+        }
+
+        List<E> result = new ArrayList<>(count);
+        Iterator<E> iter = collection.iterator();
+        for (int i = 0; i < count; i++) {
+            result.add(iter.next());
+        }
+
+        double W = Math.exp(Math.log(random.nextDouble()) / count);
+        while (iter.hasNext()) {
+            int skip = (int)Math.floor(Math.log(random.nextDouble()) / Math.log(1 - W));
+            for (int j = 0; j < skip; j++) {
+                if (!iter.hasNext()) break;
+                iter.next();
+            }
+            if (iter.hasNext()) {
+                result.set(random.nextInt(count), iter.next());
+                W = W * Math.exp(Math.log(random.nextDouble()) / count);
+            }
+        }
+
+        return result;
     }
 
     public static long toNanoTimeout(String value) {
