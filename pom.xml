@@ -52,7 +52,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <junit.version>5.13.4</junit.version>
         <assertj.version>3.27.3</assertj.version>
-        <jedis.version>6.0.0</jedis.version>
+        <jedis.version>6.1.0</jedis.version>
         <testcontainers.version>1.21.3</testcontainers.version>
         <spotbugs.version>4.8.6.6</spotbugs.version>
         <slf4j.version>2.0.17</slf4j.version>
