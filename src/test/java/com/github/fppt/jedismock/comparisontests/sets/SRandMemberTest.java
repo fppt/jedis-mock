@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Protocol;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -101,5 +102,14 @@ public class SRandMemberTest {
         assertThat(jedis.srandmember("key", 1)).containsExactly("a");
         assertThat(jedis.srandmember("key", 0)).isEmpty();
         assertThat(jedis.srandmember("key", -1)).containsExactly("a");
+    }
+
+    @TestTemplate
+    void randMemberWithInvalidArgumentAndNonExistingKeyThrowsError(Jedis jedis) {
+        try {
+            jedis.sendCommand(Protocol.Command.SRANDMEMBER, "myzset", "WRONGARG");
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("ERR value is not an integer or out of range");
+        }
     }
 }
