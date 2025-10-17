@@ -32,6 +32,17 @@ public class TestZRangeByLex {
     }
 
     @TestTemplate
+    void unsignedComparison(Jedis jedis) {
+        byte[] key = "f".getBytes();
+        byte[] v1 = new byte[]{0x7F};
+        byte[] v2 = new byte[]{(byte) 0x80};
+        jedis.zadd(key, 0.0, v1);
+        jedis.zadd(key, 0.0, v2);
+        List<byte[]> result = jedis.zrangeByLex(key, "-".getBytes(), "+".getBytes());
+        assertThat(result).containsExactly(v1, v2);
+    }
+
+    @TestTemplate
     public void zrangebylexKeysCorrectOrderUnbounded(Jedis jedis) {
         List<String> results = jedis.zrangeByLex(key, "-", "+");
         assertThat(results).containsExactly("aaa", "bbb", "ccc", "ddd");

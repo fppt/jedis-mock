@@ -34,7 +34,7 @@ public class Response {
         ByteArrayOutputStream bo = new ByteArrayOutputStream();
 
         try {
-            bo.write(String.format("$%d%s", slice.data().length, LINE_SEPARATOR).getBytes());
+            bo.write(String.format("$%d%s", slice.length(), LINE_SEPARATOR).getBytes());
             bo.write(slice.data());
             bo.write(LINE_SEPARATOR.getBytes());
         } catch (IOException e) {

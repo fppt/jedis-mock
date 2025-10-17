@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Objects;
 
 public final class Slice implements Comparable<Slice>, Serializable {
     private static final long serialVersionUID = 1L;
@@ -15,9 +16,7 @@ public final class Slice implements Comparable<Slice>, Serializable {
 
 
     private Slice(byte[] storedData) {
-        if (storedData == null) {
-            throw new NullPointerException("Null data");
-        }
+        Objects.requireNonNull(storedData);
         this.storedData = storedData;
     }
 
@@ -34,43 +33,44 @@ public final class Slice implements Comparable<Slice>, Serializable {
     }
 
     public byte[] data() {
-        return Arrays.copyOf(storedData, storedData.length);
+        return storedData.clone();
     }
 
     public int length() {
-        return data().length;
+        return storedData.length;
     }
 
     @Override
     public String toString() {
-        return new String(data());
+        return new String(storedData);
     }
 
     @Override
-    public boolean equals(Object b) {
-        return b instanceof Slice && Arrays.equals(data(), ((Slice) b).data());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Slice)) return false;
+        Slice other = (Slice) o;
+        return Arrays.equals(this.storedData, other.storedData);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(data());
+        return Arrays.hashCode(storedData);
     }
 
-    public int compareTo(Slice b) {
-        int len1 = data().length;
-        int len2 = b.data().length;
+    public int compareTo(Slice other) {
+        Objects.requireNonNull(other, "other");
+        int len1 = this.storedData.length;
+        int len2 = other.storedData.length;
         int lim = Math.min(len1, len2);
-
-        int k = 0;
-        while (k < lim) {
-            byte b1 = data()[k];
-            byte b2 = b.data()[k];
-            if (b1 != b2) {
-                return b1 - b2;
+        for (int i = 0; i < lim; i++) {
+            int a = Byte.toUnsignedInt(this.storedData[i]);
+            int b = Byte.toUnsignedInt(other.storedData[i]);
+            if (a != b) {
+                return Integer.compare(a, b);
             }
-            k++;
         }
-        return len1 - len2;
+        return Integer.compare(len1, len2);
     }
 
     public RMDataStructure extract() {
@@ -88,6 +88,6 @@ public final class Slice implements Comparable<Slice>, Serializable {
             }
         }
 
-        return RMString.create(this.data());
+        return RMString.create(storedData);
     }
 }

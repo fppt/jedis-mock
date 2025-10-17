@@ -43,7 +43,7 @@ public class RMHyperLogLog extends StringCompatible implements Serializable {
         s.defaultWriteObject();
         s.writeInt(storedData.size());
         for (Slice storedDatum : storedData) {
-            s.writeInt(storedDatum.data().length);
+            s.writeInt(storedDatum.length());
             for (byte datum : storedDatum.data()) {
                 s.writeByte(datum);
             }
