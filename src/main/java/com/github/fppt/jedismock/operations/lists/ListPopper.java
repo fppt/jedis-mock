@@ -41,7 +41,7 @@ abstract class ListPopper extends AbstractRedisOperation {
                 throw new WrongValueTypeException("value is out of range, must be positive");
             }
             List<Slice> responseList = new ArrayList<>();
-            while (count > 0 && list.size() > 0) {
+            while (count > 0 && !list.isEmpty()) {
                 responseList.add(Response.bulkString(pop(key, list)));
                 count--;
             }

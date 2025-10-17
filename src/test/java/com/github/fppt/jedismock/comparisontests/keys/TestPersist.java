@@ -27,7 +27,7 @@ public class TestPersist {
     }
 
     @TestTemplate
-    public void testPersistExistingWithoutTTL(Jedis jedis) throws Exception {
+    public void testPersistExistingWithoutTTL(Jedis jedis) {
         jedis.set("key", "value");
         assertThat(jedis.persist("key")).isEqualTo(0);
         assertThat(jedis.ttl("key")).isEqualTo(-1);
@@ -35,7 +35,7 @@ public class TestPersist {
     }
 
     @TestTemplate
-    public void testPersistNotExisting(Jedis jedis) throws Exception {
+    public void testPersistNotExisting(Jedis jedis) {
         assertThat(jedis.persist("foo")).isEqualTo(0);
         assertThat(jedis.ttl("foo")).isEqualTo(-2);
     }

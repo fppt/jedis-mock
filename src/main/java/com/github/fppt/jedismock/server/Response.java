@@ -153,7 +153,7 @@ public class Response {
     public static Slice clientResponse(String command, Slice response) {
         String stringResponse = response.toString().replace("\n", "").replace("\r", "");
         if (!response.equals(SKIP)) {
-            LOG.debug("Received command [" + command + "] sending reply [" + stringResponse + "]");
+            LOG.debug("Received command [{}] sending reply [{}]", command, stringResponse);
         }
         return response;
     }

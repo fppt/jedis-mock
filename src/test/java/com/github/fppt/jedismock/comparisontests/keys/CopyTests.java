@@ -6,8 +6,6 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
 
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(ComparisonBase.class)

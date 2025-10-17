@@ -9,7 +9,6 @@ import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.util.KeyValue;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestBZPopMax {

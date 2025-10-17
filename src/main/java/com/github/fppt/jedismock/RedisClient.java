@@ -90,7 +90,7 @@ public final class RedisClient implements Runnable {
                 out.write(response.data());
             }
         } catch (IOException e) {
-            LOG.error("unable to send [" + response + "] as response to [" + respondingTo + "]", e);
+            LOG.error("unable to send [{}] as response to [{}]", response, respondingTo, e);
         }
     }
 

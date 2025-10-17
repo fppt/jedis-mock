@@ -105,7 +105,7 @@ class ZRangeStore extends AbstractZRangeByIndex {
             }
         }
         base().deleteValue(keyDest);
-        if (resultZSet.size() > 0) {
+        if (!resultZSet.isEmpty()) {
             base().putValue(keyDest, resultZSet);
             lock.notifyAll();
         }

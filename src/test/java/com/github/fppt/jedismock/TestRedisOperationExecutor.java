@@ -3,7 +3,6 @@ package com.github.fppt.jedismock;
 import com.github.fppt.jedismock.commands.RedisCommandParser;
 import com.github.fppt.jedismock.exception.ParseErrorException;
 import com.github.fppt.jedismock.server.RedisOperationExecutor;
-import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import org.junit.jupiter.api.BeforeEach;
