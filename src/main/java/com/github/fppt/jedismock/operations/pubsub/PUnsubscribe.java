@@ -11,7 +11,7 @@ import java.util.List;
 
 @RedisCommand(value = "punsubscribe", transactional = false)
 public class PUnsubscribe extends AbstractRedisOperation {
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Unsubscribe.class);
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(PUnsubscribe.class);
     private final OperationExecutorState state;
 
     public PUnsubscribe(OperationExecutorState state, List<Slice> params) {
@@ -30,7 +30,7 @@ public class PUnsubscribe extends AbstractRedisOperation {
         }
 
         for (Slice channel : channelsToUbsubscribeFrom) {
-            LOG.debug("PUnsubscribing from channel [" + channel + "]");
+            LOG.debug("PUnsubscribing from channel [{}]", channel);
             if(base().removePSubscriber(channel, state.owner())) {
                 int numSubscriptions = base().getPSubscriptions(state.owner()).size();
                 Slice response = Response.punsubscribe(channel, numSubscriptions);

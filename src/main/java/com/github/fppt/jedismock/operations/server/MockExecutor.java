@@ -3,7 +3,6 @@ package com.github.fppt.jedismock.operations.server;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisOperation;
-import com.github.fppt.jedismock.server.RedisOperationExecutor;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,7 @@ import java.util.List;
 
 public class MockExecutor {
 
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisOperationExecutor.class);
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(MockExecutor.class);
 
     /**
      * Proceed with execution, mocking the Redis behaviour.

@@ -9,8 +9,6 @@ import redis.clients.jedis.params.ZParams;
 import redis.clients.jedis.resps.Tuple;
 
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -30,7 +30,7 @@ public class Unsubscribe extends AbstractRedisOperation {
         }
 
         for (Slice channel : channelsToUbsubscribeFrom) {
-            LOG.debug("Unsubscribing from channel [" + channel + "]");
+            LOG.debug("Unsubscribing from channel [{}]", channel);
             if(base().removeSubscriber(channel, state.owner())) {
                 int numSubscriptions = base().getSubscriptions(state.owner()).size();
                 Slice response = Response.unsubscribe(channel, numSubscriptions);
