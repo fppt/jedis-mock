@@ -1,5 +1,5 @@
 [![GitHub release](https://img.shields.io/github/release/fppt/jedis-mock.svg)](https://github.com/fppt/jedis-mock/releases/latest)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.fppt/jedis-mock/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.fppt/jedis-mock)
+![Maven Central](https://img.shields.io/maven-central/v/com.github.fppt/jedis-mock)
 [![Actions Status: build](https://github.com/fppt/jedis-mock/workflows/build/badge.svg)](https://github.com/fppt/jedis-mock/actions?query=workflow%3A"build") 
 
 # Jedis-Mock
@@ -41,7 +41,7 @@ Add it as a test dependency in Maven as:
 <dependency>
   <groupId>com.github.fppt</groupId>
   <artifactId>jedis-mock</artifactId>
-  <version>1.1.11</version>
+  <version>1.1.12</version>
   <scope>test</scope>
 </dependency>
 ```
