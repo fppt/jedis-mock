@@ -38,7 +38,7 @@
             <email>zxl0714@gmail.com</email>
         </developer>
     </developers>
-    
+
     <licenses>
         <license>
             <name>Apache-2.0</name>
@@ -57,6 +57,8 @@
         <spotbugs.version>4.8.6.6</spotbugs.version>
         <slf4j.version>2.0.17</slf4j.version>
         <java.version>1.8</java.version>
+        <maven.enforcer.plugin.version>3.6.2</maven.enforcer.plugin.version>
+        <extra.enforcer.rules.version>1.11.0</extra.enforcer.rules.version>
     </properties>
 
     <distributionManagement>
@@ -160,6 +162,47 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven.enforcer.plugin.version}</version>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>extra-enforcer-rules</artifactId>
+                        <version>${extra.enforcer.rules.version}</version>
+                    </dependency>
+                </dependencies>
+
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[3.8.6,)</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>[17,)</version>
+                                </requireJavaVersion>
+                                <enforceBytecodeVersion>
+                                    <maxJdkVersion>8</maxJdkVersion>
+                                    <searchTransitive>true</searchTransitive>
+                                    <ignoredScopes>
+                                        <ignoredScope>test</ignoredScope>
+                                    </ignoredScopes>
+                                </enforceBytecodeVersion>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -178,8 +221,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.15.0</version>
                 <configuration>
-                    <target>${java.version}</target>
-                    <source>${java.version}</source>
+                    <release>8</release>
+                    <testRelease>17</testRelease>
                 </configuration>
             </plugin>
             <plugin>
