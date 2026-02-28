@@ -5,8 +5,3 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 10
-    ignore:
-      - dependency-name: com.puppycrawl.tools:checkstyle
-        versions:
-          - ">= 10"
-
