@@ -81,12 +81,12 @@ public class LuaRedisCallback {
                 return toLuaValue(new RedisInputStream(new ByteArrayInputStream(data)));
             }
         }
-        throw new RuntimeException("Operation not implemented!");
+        throw new IllegalStateException("Operation not implemented!");
     }
 
     private static void throwOnUnsupported(RedisOperation operation) {
         if (operation.getClass().equals(Eval.class)) {
-            throw new RuntimeException("This Redis command is not allowed from scripts");
+            throw new IllegalStateException("This Redis command is not allowed from scripts");
         }
     }
 
@@ -128,7 +128,7 @@ public class LuaRedisCallback {
             for (int offset = 0; offset < len; offset += size) {
                 size = is.read(read, offset, len - offset);
                 if (size == -1) {
-                    throw new RuntimeException("It seems like server has closed the connection.");
+                    throw new IllegalStateException("It seems like server has closed the connection.");
                 }
             }
             is.readByte();
