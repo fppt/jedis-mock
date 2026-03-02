@@ -59,7 +59,7 @@ public class Script extends AbstractRedisOperation {
             final byte[] scriptSHA1 = sha1.digest(script.getBytes());
             return byteArrayToHexString(scriptSHA1);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
