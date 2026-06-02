@@ -22,6 +22,13 @@ public class Subscribe extends AbstractRedisOperation {
         params().forEach(channel -> base().addSubscriber(channel, state.owner()));
         List<Slice> numSubscriptions = base().getSubscriptions(state.owner());
 
-        return Response.subscribedToChannel(numSubscriptions);
+        // Send the subscribe acknowledgement while still holding the global lock (this
+        // runs inside MockExecutor's synchronized block). A concurrent PUBLISH needs the
+        // same lock, so it cannot deliver a message to this subscriber before the ack is
+        // written -- preserving Redis's ordering guarantee. See issue #768.
+        state.owner().sendResponse(Response.subscribedToChannel(numSubscriptions), "subscribe");
+
+        //Skip is sent because we have already responded
+        return Response.SKIP;
     }
 }
