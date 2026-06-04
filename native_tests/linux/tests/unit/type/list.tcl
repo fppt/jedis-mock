@@ -331,50 +331,50 @@ start_server {
         r lrange blist 0 -1
     } {a b c}
 
-#    test "BRPOPLPUSH with multiple blocked clients" {
-#        set rd1 [redis_deferring_client]
-#        set rd2 [redis_deferring_client]
-#        r del blist target1 target2
-#        r set target1 nolist
-#        $rd1 brpoplpush blist target1 0
-#        $rd2 brpoplpush blist target2 0
-#        r lpush blist foo
-#
-#        assert_error "WRONGTYPE*" {$rd1 read}
-#        assert_equal {foo} [$rd2 read]
-#        assert_equal {foo} [r lrange target2 0 -1]
-#    }
+    test "BRPOPLPUSH with multiple blocked clients" {
+        set rd1 [redis_deferring_client]
+        set rd2 [redis_deferring_client]
+        r del blist target1 target2
+        r set target1 nolist
+        $rd1 brpoplpush blist target1 0
+        $rd2 brpoplpush blist target2 0
+        r lpush blist foo
 
-#    test "Linked BRPOPLPUSH" {
-#      set rd1 [redis_deferring_client]
-#      set rd2 [redis_deferring_client]
-#
-#      r del list1 list2 list3
-#
-#      $rd1 brpoplpush list1 list2 0
-#      $rd2 brpoplpush list2 list3 0
-#
-#      r rpush list1 foo
-#
-#      assert_equal {} [r lrange list1 0 -1]
-#      assert_equal {} [r lrange list2 0 -1]
-#      assert_equal {foo} [r lrange list3 0 -1]
-#    }
+        assert_error "WRONGTYPE*" {$rd1 read}
+        assert_equal {foo} [$rd2 read]
+        assert_equal {foo} [r lrange target2 0 -1]
+    }
 
-#    test "Circular BRPOPLPUSH" {
-#      set rd1 [redis_deferring_client]
-#      set rd2 [redis_deferring_client]
-#
-#      r del list1 list2
-#
-#      $rd1 brpoplpush list1 list2 0
-#      $rd2 brpoplpush list2 list1 0
-#
-#      r rpush list1 foo
-#
-#      assert_equal {foo} [r lrange list1 0 -1]
-#      assert_equal {} [r lrange list2 0 -1]
-#    }
+    test "Linked BRPOPLPUSH" {
+      set rd1 [redis_deferring_client]
+      set rd2 [redis_deferring_client]
+
+      r del list1 list2 list3
+
+      $rd1 brpoplpush list1 list2 0
+      $rd2 brpoplpush list2 list3 0
+
+      r rpush list1 foo
+
+      assert_equal {} [r lrange list1 0 -1]
+      assert_equal {} [r lrange list2 0 -1]
+      assert_equal {foo} [r lrange list3 0 -1]
+    }
+
+    test "Circular BRPOPLPUSH" {
+      set rd1 [redis_deferring_client]
+      set rd2 [redis_deferring_client]
+
+      r del list1 list2
+
+      $rd1 brpoplpush list1 list2 0
+      $rd2 brpoplpush list2 list1 0
+
+      r rpush list1 foo
+
+      assert_equal {foo} [r lrange list1 0 -1]
+      assert_equal {} [r lrange list2 0 -1]
+    }
 
     test "Self-referential BRPOPLPUSH" {
       set rd [redis_deferring_client]
