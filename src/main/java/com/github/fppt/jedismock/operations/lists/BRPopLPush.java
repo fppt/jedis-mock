@@ -13,14 +13,23 @@ import static com.github.fppt.jedismock.Utils.toNanoTimeout;
 
 @RedisCommand("brpoplpush")
 class BRPopLPush extends RPopLPush {
+    /**
+     * Upper bound on a single {@code wait()} so the loop wakes up periodically
+     * to re-check whether the client is still connected, even with no notify
+     * and an infinite ({@code timeout 0}) block.
+     */
+    private static final long POLL_MILLIS = 100L;
+
     private long count = 0L;
     private final Object lock;
     private final boolean isInTransaction;
+    private final OperationExecutorState state;
 
     BRPopLPush(OperationExecutorState state, List<Slice> params) {
         super(state, params);
         this.lock = state.lock();
         this.isInTransaction = state.isTransactionModeOn();
+        this.state = state;
     }
 
     protected void doOptionalWork() {
@@ -37,8 +46,12 @@ class BRPopLPush extends RPopLPush {
         try {
             while (count == 0L &&
                     !isInTransaction &&
-                    (waitTimeNanos = timeoutNanos == 0 ? 0 : waitEnd - System.nanoTime()) >= 0) {
-                lock.wait(waitTimeNanos / 1_000_000, (int) waitTimeNanos % 1_000_000);
+                    state.isClientConnected() &&
+                    (waitTimeNanos = timeoutNanos == 0 ? Long.MAX_VALUE : waitEnd - System.nanoTime()) >= 0) {
+                long remainingMillis = waitTimeNanos / 1_000_000;
+                long waitMillis = Math.min(remainingMillis, POLL_MILLIS);
+                int waitNano = waitMillis == remainingMillis ? (int) (waitTimeNanos % 1_000_000) : 0;
+                lock.wait(waitMillis, waitNano);
                 count = getCount(source);
             }
         } catch (InterruptedException e) {
@@ -48,6 +61,10 @@ class BRPopLPush extends RPopLPush {
     }
 
     protected Slice response() {
+        if (!state.isClientConnected()) {
+            //Client disconnected while blocked: don't move anything, don't reply.
+            return Response.SKIP;
+        }
         if (count != 0) {
             return super.response();
         } else {

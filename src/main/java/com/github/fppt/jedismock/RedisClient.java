@@ -95,6 +95,30 @@ public final class RedisClient implements Runnable {
     }
 
     /**
+     * Best-effort liveness probe, safe to call from a blocking operation that
+     * holds the shared data lock (it neither reads the input stream nor blocks).
+     * It sends a single TCP urgent (out-of-band) byte: a live peer silently
+     * discards it (SO_OOBINLINE is off by default, so it never enters the RESP
+     * stream), while a peer that has gone away makes the write fail. This lets
+     * blocking commands (BLPOP, BRPOPLPUSH, blocking XREAD, …) notice that their
+     * client disconnected and bail out instead of consuming data meant for a
+     * later client on a reused key.
+     *
+     * @return {@code true} if the connection still appears to be alive.
+     */
+    public boolean isConnected() {
+        if (!running.get() || socket.isClosed() || !socket.isConnected()) {
+            return false;
+        }
+        try {
+            socket.sendUrgentData(0xFF);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /**
      * Close all the streams used by this client effectively closing the client.
      * Also signals the client to stop working.
      */

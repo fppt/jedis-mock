@@ -13,15 +13,24 @@ import java.util.List;
 import static com.github.fppt.jedismock.Utils.toNanoTimeout;
 
 public abstract class AbstractBPop extends AbstractRedisOperation {
+    /**
+     * Upper bound on a single {@code wait()} so the loop wakes up periodically
+     * to re-check whether the client is still connected, even with no notify
+     * and an infinite ({@code timeout 0}) block.
+     */
+    private static final long POLL_MILLIS = 100L;
+
     protected long timeoutNanos;
     protected List<Slice> keys;
     private final Object lock;
     private final boolean isInTransaction;
+    private final OperationExecutorState state;
 
     protected AbstractBPop(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
         this.lock = state.lock();
         this.isInTransaction = state.isTransactionModeOn();
+        this.state = state;
     }
 
     @Override
@@ -51,9 +60,11 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
         try {
             while (source == null &&
                     !isInTransaction &&
-                    (waitTimeNanos = timeoutNanos == 0 ? 0 : waitEnd - System.nanoTime()) >= 0) {
-                long waitMillis = waitTimeNanos / 1_000_000 > 1000 ? 1000 : waitTimeNanos / 1_000_000;
-                int waitNano = (int) (waitTimeNanos % 1_000_000);
+                    state.isClientConnected() &&
+                    (waitTimeNanos = timeoutNanos == 0 ? Long.MAX_VALUE : waitEnd - System.nanoTime()) >= 0) {
+                long remainingMillis = waitTimeNanos / 1_000_000;
+                long waitMillis = Math.min(remainingMillis, POLL_MILLIS);
+                int waitNano = waitMillis == remainingMillis ? (int) (waitTimeNanos % 1_000_000) : 0;
                 lock.wait(waitMillis, waitNano);
                 source = getKey(keys, false);
             }
@@ -61,6 +72,10 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
             //wait interrupted prematurely
             Thread.currentThread().interrupt();
             return Response.NULL;
+        }
+        if (!state.isClientConnected()) {
+            //Client disconnected while blocked: don't consume anything, don't reply.
+            return Response.SKIP;
         }
         if (source == null) {
             return Response.NULL_ARRAY;

@@ -27,11 +27,13 @@ import static com.github.fppt.jedismock.datastructures.streams.StreamErrors.XREA
 public class XRead extends AbstractRedisOperation {
     private final Object lock;
     private final boolean isInTransaction;
+    private final OperationExecutorState state;
 
     public XRead(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
         lock = state.lock();
         isInTransaction = state.isTransactionModeOn();
+        this.state = state;
     }
 
     @Override
@@ -114,7 +116,8 @@ public class XRead extends AbstractRedisOperation {
             boolean updated = false; // should be unblocked after XADD was invoked
             if (blockTimeNanosec > 0) {
                 try {
-                    while (!isInTransaction && !updated && (waitTimeNanos = waitEnd - System.nanoTime()) >= 0) {
+                    while (!isInTransaction && !updated && state.isClientConnected()
+                            && (waitTimeNanos = waitEnd - System.nanoTime()) >= 0) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
                             if (base().exists(entry.getKey())
                                     && entry.getValue()
@@ -138,7 +141,7 @@ public class XRead extends AbstractRedisOperation {
                 }
             } else {
                 try {
-                    while (!isInTransaction && !updated) {
+                    while (!isInTransaction && !updated && state.isClientConnected()) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
                             if (base().exists(entry.getKey())
                                     && getStreamFromBaseOrCreateEmpty(entry.getKey())
@@ -155,6 +158,11 @@ public class XRead extends AbstractRedisOperation {
                     Thread.currentThread().interrupt();
                     return Response.NULL;
                 }
+            }
+
+            if (!state.isClientConnected()) {
+                //Client disconnected while blocked: don't reply.
+                return Response.SKIP;
             }
         }
 

@@ -76,6 +76,15 @@ public class OperationExecutorState {
         return redisBases;
     }
 
+    /**
+     * @return whether the client owning this state is still connected. Used by
+     * blocking operations to cancel themselves when their client disconnects,
+     * so they don't consume data intended for later clients.
+     */
+    public boolean isClientConnected() {
+        return owner.isConnected();
+    }
+
     public void checkWatchedKeysNotExpired() {
         for (Slice key : watchedKeys) {
             base().exists(key);
