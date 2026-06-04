@@ -57,10 +57,14 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
 
         long waitEnd = System.nanoTime() + timeoutNanos;
         long waitTimeNanos;
+        //Remember why the loop ended: we must not re-probe the connection at
+        //delivery time. A transient liveness-probe failure right when data has
+        //arrived would otherwise drop a legitimate reply and hang the client.
+        boolean connected = true;
         try {
             while (source == null &&
                     !isInTransaction &&
-                    state.isClientConnected() &&
+                    (connected = state.isClientConnected()) &&
                     (waitTimeNanos = timeoutNanos == 0 ? Long.MAX_VALUE : waitEnd - System.nanoTime()) >= 0) {
                 long remainingMillis = waitTimeNanos / 1_000_000;
                 long waitMillis = Math.min(remainingMillis, POLL_MILLIS);
@@ -73,7 +77,7 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
             Thread.currentThread().interrupt();
             return Response.NULL;
         }
-        if (!state.isClientConnected()) {
+        if (!connected) {
             //Client disconnected while blocked: don't consume anything, don't reply.
             return Response.SKIP;
         }

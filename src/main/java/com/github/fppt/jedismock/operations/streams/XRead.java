@@ -114,9 +114,13 @@ public class XRead extends AbstractRedisOperation {
 
         if (isBlocking) {
             boolean updated = false; // should be unblocked after XADD was invoked
+            //Records why the wait loop ended, so we don't re-probe the connection
+            //at delivery time (a transient probe failure would otherwise drop a
+            //legitimate reply and hang the client).
+            boolean connected = true;
             if (blockTimeNanosec > 0) {
                 try {
-                    while (!isInTransaction && !updated && state.isClientConnected()
+                    while (!isInTransaction && !updated && (connected = state.isClientConnected())
                             && (waitTimeNanos = waitEnd - System.nanoTime()) >= 0) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
                             if (base().exists(entry.getKey())
@@ -141,7 +145,7 @@ public class XRead extends AbstractRedisOperation {
                 }
             } else {
                 try {
-                    while (!isInTransaction && !updated && state.isClientConnected()) {
+                    while (!isInTransaction && !updated && (connected = state.isClientConnected())) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
                             if (base().exists(entry.getKey())
                                     && getStreamFromBaseOrCreateEmpty(entry.getKey())
@@ -160,7 +164,7 @@ public class XRead extends AbstractRedisOperation {
                 }
             }
 
-            if (!state.isClientConnected()) {
+            if (!connected) {
                 //Client disconnected while blocked: don't reply.
                 return Response.SKIP;
             }

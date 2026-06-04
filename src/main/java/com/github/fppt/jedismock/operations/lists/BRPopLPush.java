@@ -21,6 +21,10 @@ class BRPopLPush extends RPopLPush {
     private static final long POLL_MILLIS = 100L;
 
     private long count = 0L;
+    //Records why the wait loop ended, so response() doesn't re-probe the
+    //connection at delivery time (a transient probe failure would otherwise
+    //drop a legitimate reply and hang the client).
+    private boolean connected = true;
     private final Object lock;
     private final boolean isInTransaction;
     private final OperationExecutorState state;
@@ -46,7 +50,7 @@ class BRPopLPush extends RPopLPush {
         try {
             while (count == 0L &&
                     !isInTransaction &&
-                    state.isClientConnected() &&
+                    (connected = state.isClientConnected()) &&
                     (waitTimeNanos = timeoutNanos == 0 ? Long.MAX_VALUE : waitEnd - System.nanoTime()) >= 0) {
                 long remainingMillis = waitTimeNanos / 1_000_000;
                 long waitMillis = Math.min(remainingMillis, POLL_MILLIS);
@@ -61,7 +65,7 @@ class BRPopLPush extends RPopLPush {
     }
 
     protected Slice response() {
-        if (!state.isClientConnected()) {
+        if (!connected) {
             //Client disconnected while blocked: don't move anything, don't reply.
             return Response.SKIP;
         }
