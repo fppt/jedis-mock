@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.server.SliceParser;
+import com.github.fppt.jedismock.storage.BlockingManager;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 
@@ -25,12 +26,14 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
     private final Object lock;
     private final boolean isInTransaction;
     private final OperationExecutorState state;
+    private final BlockingManager blockingManager;
 
     protected AbstractBPop(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
         this.lock = state.lock();
         this.isInTransaction = state.isTransactionModeOn();
         this.state = state;
+        this.blockingManager = state.blockingManager();
     }
 
     @Override
@@ -55,27 +58,48 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
 
         Slice source = getKey(keys, true);
 
+        if (source != null || isInTransaction) {
+            //Element already available, or inside MULTI where we must not block.
+            if (source == null) {
+                return Response.NULL_ARRAY;
+            }
+            return popper(Collections.singletonList(source));
+        }
+
         long waitEnd = System.nanoTime() + timeoutNanos;
         long waitTimeNanos;
         //Remember why the loop ended: we must not re-probe the connection at
         //delivery time. A transient liveness-probe failure right when data has
         //arrived would otherwise drop a legitimate reply and hang the client.
         boolean connected = true;
+        //Register as a FIFO waiter on every key so that, among several clients
+        //blocked on the same key, the oldest is served first (matching real
+        //Redis). Without this, notifyAll() lets an arbitrary waiter steal the
+        //element, which can leave an older waiter blocked forever.
+        long ticket = blockingManager.nextTicket();
+        blockingManager.register(ticket, keys);
         try {
-            while (source == null &&
-                    !isInTransaction &&
-                    (connected = state.isClientConnected()) &&
+            while ((connected = state.isClientConnected()) &&
                     (waitTimeNanos = timeoutNanos == 0 ? Long.MAX_VALUE : waitEnd - System.nanoTime()) >= 0) {
+                Slice candidate = getKey(keys, false);
+                if (candidate != null && blockingManager.isFirst(ticket, candidate)) {
+                    source = candidate;
+                    break;
+                }
                 long remainingMillis = waitTimeNanos / 1_000_000;
                 long waitMillis = Math.min(remainingMillis, POLL_MILLIS);
                 int waitNano = waitMillis == remainingMillis ? (int) (waitTimeNanos % 1_000_000) : 0;
                 lock.wait(waitMillis, waitNano);
-                source = getKey(keys, false);
             }
         } catch (InterruptedException e) {
             //wait interrupted prematurely
             Thread.currentThread().interrupt();
             return Response.NULL;
+        } finally {
+            blockingManager.unregister(ticket, keys);
+            //Hand the turn to the next-in-line waiter, which re-evaluates whether
+            //it is now the oldest one able to claim an element.
+            lock.notifyAll();
         }
         if (!connected) {
             //Client disconnected while blocked: don't consume anything, don't reply.
