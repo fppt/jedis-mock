@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.comparisontests.lists;
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
@@ -12,6 +13,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -61,7 +64,7 @@ public class BlockingFairnessComparisonTest {
                         done.countDown();
                     }
                 });
-                Thread.sleep(200); // ensure client1 is the older waiter
+                waitForBlockedClients(jedis, 1); // ensure client1 is the older waiter
                 pool.submit(() -> {
                     try {
                         rd2Result.set(client2.brpoplpush(src, dst2, 0));
@@ -71,7 +74,7 @@ public class BlockingFairnessComparisonTest {
                         done.countDown();
                     }
                 });
-                Thread.sleep(200); // let both register their blocks
+                waitForBlockedClients(jedis, 2); // both registered, in order
 
                 jedis.lpush(src, "foo");
 
@@ -94,5 +97,21 @@ public class BlockingFairnessComparisonTest {
                 client2.close();
             }
         }
+    }
+
+    private static final Pattern BLOCKED_CLIENTS = Pattern.compile("blocked_clients:(\\d+)");
+
+    /**
+     * Waits until {@code INFO}'s {@code blocked_clients} reaches {@code n}, the
+     * way the tcl suite's {@code wait_for_blocked_clients_count} does. This
+     * makes blocking-order deterministic for both real Redis and the mock.
+     */
+    private void waitForBlockedClients(Jedis jedis, int n) {
+        Awaitility.await().until(() -> blockedClients(jedis) == n);
+    }
+
+    private int blockedClients(Jedis jedis) {
+        Matcher matcher = BLOCKED_CLIENTS.matcher(jedis.info("clients"));
+        return matcher.find() ? Integer.parseInt(matcher.group(1)) : 0;
     }
 }

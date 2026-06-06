@@ -29,6 +29,7 @@ import java.util.TreeSet;
  */
 public final class BlockingManager {
     private long nextTicket = 0L;
+    private int blockedClients = 0;
     private final Map<Slice, NavigableSet<Long>> waitersByKey = new HashMap<>();
 
     /**
@@ -40,8 +41,11 @@ public final class BlockingManager {
 
     /**
      * Record that the given ticket is blocked on each of the supplied keys.
+     * Must be paired with exactly one {@link #unregister} call per blocked
+     * client so that {@link #blockedClients()} stays accurate.
      */
     public void register(long ticket, List<Slice> keys) {
+        blockedClients++;
         for (Slice key : keys) {
             waitersByKey.computeIfAbsent(key, k -> new TreeSet<>()).add(ticket);
         }
@@ -51,6 +55,7 @@ public final class BlockingManager {
      * Remove the given ticket from all of the supplied keys.
      */
     public void unregister(long ticket, List<Slice> keys) {
+        blockedClients--;
         for (Slice key : keys) {
             NavigableSet<Long> tickets = waitersByKey.get(key);
             if (tickets != null) {
@@ -60,6 +65,16 @@ public final class BlockingManager {
                 }
             }
         }
+    }
+
+    /**
+     * @return the number of clients currently blocked on a blocking command.
+     * Mirrors the {@code blocked_clients} field of Redis {@code INFO clients},
+     * which test suites poll (via {@code wait_for_blocked_client}) to
+     * synchronize before unblocking.
+     */
+    public int blockedClients() {
+        return blockedClients;
     }
 
     /**

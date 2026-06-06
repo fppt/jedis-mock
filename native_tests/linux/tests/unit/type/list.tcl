@@ -337,7 +337,9 @@ start_server {
         r del blist target1 target2
         r set target1 nolist
         $rd1 brpoplpush blist target1 0
+        wait_for_blocked_clients_count 1
         $rd2 brpoplpush blist target2 0
+        wait_for_blocked_clients_count 2
         r lpush blist foo
 
         assert_error "WRONGTYPE*" {$rd1 read}
@@ -345,6 +347,11 @@ start_server {
         assert_equal {foo} [r lrange target2 0 -1]
     }
 
+    # Known unsupported: jedis-mock serves blocked clients on their own
+    # threads, so a BRPOPLPUSH cascade (rd1 pushing the value that unblocks
+    # rd2) completes asynchronously. The assertions below race that cascade,
+    # whereas real Redis serves blocked clients to fixpoint inside the RPUSH.
+    # Re-enable once blocked-client serving is driven synchronously.
 #    test "Linked BRPOPLPUSH" {
 #      set rd1 [redis_deferring_client]
 #      set rd2 [redis_deferring_client]
