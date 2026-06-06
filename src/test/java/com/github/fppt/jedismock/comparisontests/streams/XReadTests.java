@@ -13,6 +13,8 @@ import redis.clients.jedis.params.XAddParams;
 import redis.clients.jedis.params.XReadParams;
 import redis.clients.jedis.resps.StreamEntry;
 
+import org.testcontainers.shaded.org.awaitility.Awaitility;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,6 +34,8 @@ import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 
 @ExtendWith(ComparisonBase.class)
 public class XReadTests {
+    private static final Pattern BLOCKED_CLIENTS = Pattern.compile("blocked_clients:(\\d+)");
+
     private ScheduledExecutorService scheduledThreadPool;
     private Jedis blockedClient;
 
@@ -186,6 +192,35 @@ public class XReadTests {
         blockingReadJob.get();
 
         assertThat(blockingReadJob.isCancelled()).isFalse();
+    }
+
+    /**
+     * Mirrors the tcl stream suite, which calls {@code wait_for_blocked_client}
+     * (polling INFO's {@code blocked_clients}) before XADD. A blocked XREAD must
+     * be reflected in that count, and must drop back to zero once served.
+     */
+    @TestTemplate
+    void blockedXreadIsReportedInInfoBlockedClients(Jedis jedis)
+            throws ExecutionException, InterruptedException {
+        assertThat(blockedClients(jedis)).isZero();
+
+        Future<?> blockingReadJob = scheduledThreadPool.submit(() ->
+                blockedClient.xread(
+                        XReadParams.xReadParams().block(0),
+                        Collections.singletonMap("st", new StreamEntryID(0, 7))
+                ));
+
+        Awaitility.await().until(() -> blockedClients(jedis) == 1);
+
+        jedis.xadd("st", XAddParams.xAddParams().id(0, 8), Collections.singletonMap("a", "b"));
+
+        blockingReadJob.get();
+        Awaitility.await().until(() -> blockedClients(jedis) == 0);
+    }
+
+    private int blockedClients(Jedis jedis) {
+        Matcher matcher = BLOCKED_CLIENTS.matcher(jedis.info("clients"));
+        return matcher.find() ? Integer.parseInt(matcher.group(1)) : 0;
     }
 
     @TestTemplate

@@ -76,13 +76,11 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
         //blocked on the same key, the oldest is served first (matching real
         //Redis). Without this, notifyAll() lets an arbitrary waiter steal the
         //element, which can leave an older waiter blocked forever.
-        long ticket = blockingManager.nextTicket();
-        blockingManager.register(ticket, keys);
-        try {
+        try (BlockingManager.Ticket ticket = blockingManager.register(keys)) {
             while ((connected = state.isClientConnected()) &&
                     (waitTimeNanos = timeoutNanos == 0 ? Long.MAX_VALUE : waitEnd - System.nanoTime()) >= 0) {
                 Slice candidate = getKey(keys, false);
-                if (candidate != null && blockingManager.isFirst(ticket, candidate)) {
+                if (candidate != null && ticket.isFirst(candidate)) {
                     source = candidate;
                     break;
                 }
@@ -96,9 +94,9 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
             Thread.currentThread().interrupt();
             return Response.NULL;
         } finally {
-            blockingManager.unregister(ticket, keys);
             //Hand the turn to the next-in-line waiter, which re-evaluates whether
-            //it is now the oldest one able to claim an element.
+            //it is now the oldest one able to claim an element. The ticket has
+            //already been unregistered by try-with-resources.
             lock.notifyAll();
         }
         if (!connected) {

@@ -61,13 +61,11 @@ class BRPopLPush extends RPopLPush {
         //this, notifyAll() lets an arbitrary waiter steal the element, which can
         //leave an older waiter blocked forever.
         List<Slice> waitKeys = Collections.singletonList(source);
-        long ticket = blockingManager.nextTicket();
-        blockingManager.register(ticket, waitKeys);
         boolean acquired = false;
-        try {
+        try (BlockingManager.Ticket ticket = blockingManager.register(waitKeys)) {
             while ((connected = state.isClientConnected()) &&
                     (waitTimeNanos = timeoutNanos == 0 ? Long.MAX_VALUE : waitEnd - System.nanoTime()) >= 0) {
-                if (getCount(source) != 0 && blockingManager.isFirst(ticket, source)) {
+                if (getCount(source) != 0 && ticket.isFirst(source)) {
                     acquired = true;
                     break;
                 }
@@ -80,9 +78,9 @@ class BRPopLPush extends RPopLPush {
             //wait interrupted prematurely
             Thread.currentThread().interrupt();
         } finally {
-            blockingManager.unregister(ticket, waitKeys);
             //Hand the turn to the next-in-line waiter, which re-evaluates whether
-            //it is now the oldest one able to claim the element.
+            //it is now the oldest one able to claim the element. The ticket has
+            //already been unregistered by try-with-resources.
             lock.notifyAll();
         }
         //Only claim the element if we actually won our turn; otherwise behave as

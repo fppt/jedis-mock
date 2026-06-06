@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.exception.WrongStreamKeyException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.BlockingManager;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.ArrayList;
@@ -28,12 +29,14 @@ public class XRead extends AbstractRedisOperation {
     private final Object lock;
     private final boolean isInTransaction;
     private final OperationExecutorState state;
+    private final BlockingManager blockingManager;
 
     public XRead(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
         lock = state.lock();
         isInTransaction = state.isTransactionModeOn();
         this.state = state;
+        this.blockingManager = state.blockingManager();
     }
 
     @Override
@@ -112,15 +115,24 @@ public class XRead extends AbstractRedisOperation {
         long waitEnd = System.nanoTime() + blockTimeNanosec;
         long waitTimeNanos;
 
-        if (isBlocking) {
+        if (isBlocking && !isInTransaction) {
             boolean updated = false; // should be unblocked after XADD was invoked
             //Records why the wait loop ended, so we don't re-probe the connection
             //at delivery time (a transient probe failure would otherwise drop a
             //legitimate reply and hang the client).
             boolean connected = true;
-            if (blockTimeNanosec > 0) {
-                try {
-                    while (!isInTransaction && !updated && (connected = state.isClientConnected())
+            //Register so INFO's blocked_clients reflects this waiter (the tcl
+            //suite's wait_for_blocked_client polls it before XADD). Unlike a
+            //list pop, a stream read is non-exclusive — a new entry satisfies
+            //every blocked reader — so there is no FIFO isFirst() check; we only
+            //need the count to be accurate.
+            List<Slice> streamKeys = new ArrayList<>();
+            for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
+                streamKeys.add(entry.getKey());
+            }
+            try (BlockingManager.Ticket ignored = blockingManager.register(streamKeys)) {
+                if (blockTimeNanosec > 0) {
+                    while (!updated && (connected = state.isClientConnected())
                             && (waitTimeNanos = waitEnd - System.nanoTime()) >= 0) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
                             if (base().exists(entry.getKey())
@@ -139,13 +151,8 @@ public class XRead extends AbstractRedisOperation {
                             lock.wait(500, 0);
                         }
                     }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return Response.NULL;
-                }
-            } else {
-                try {
-                    while (!isInTransaction && !updated && (connected = state.isClientConnected())) {
+                } else {
+                    while (!updated && (connected = state.isClientConnected())) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
                             if (base().exists(entry.getKey())
                                     && getStreamFromBaseOrCreateEmpty(entry.getKey())
@@ -158,10 +165,10 @@ public class XRead extends AbstractRedisOperation {
                         }
                         lock.wait(500, 0);
                     }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return Response.NULL;
                 }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return Response.NULL;
             }
 
             if (!connected) {
