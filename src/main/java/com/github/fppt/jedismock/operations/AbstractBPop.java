@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.server.SliceParser;
+import com.github.fppt.jedismock.storage.BlockingManager;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 
@@ -13,15 +14,26 @@ import java.util.List;
 import static com.github.fppt.jedismock.Utils.toNanoTimeout;
 
 public abstract class AbstractBPop extends AbstractRedisOperation {
+    /**
+     * Upper bound on a single {@code wait()} so the loop wakes up periodically
+     * to re-check whether the client is still connected, even with no notify
+     * and an infinite ({@code timeout 0}) block.
+     */
+    private static final long POLL_MILLIS = 100L;
+
     protected long timeoutNanos;
     protected List<Slice> keys;
     private final Object lock;
     private final boolean isInTransaction;
+    private final OperationExecutorState state;
+    private final BlockingManager blockingManager;
 
     protected AbstractBPop(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
         this.lock = state.lock();
         this.isInTransaction = state.isTransactionModeOn();
+        this.state = state;
+        this.blockingManager = state.blockingManager();
     }
 
     @Override
@@ -46,21 +58,50 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
 
         Slice source = getKey(keys, true);
 
+        if (source != null || isInTransaction) {
+            //Element already available, or inside MULTI where we must not block.
+            if (source == null) {
+                return Response.NULL_ARRAY;
+            }
+            return popper(Collections.singletonList(source));
+        }
+
         long waitEnd = System.nanoTime() + timeoutNanos;
         long waitTimeNanos;
-        try {
-            while (source == null &&
-                    !isInTransaction &&
-                    (waitTimeNanos = timeoutNanos == 0 ? 0 : waitEnd - System.nanoTime()) >= 0) {
-                long waitMillis = waitTimeNanos / 1_000_000 > 1000 ? 1000 : waitTimeNanos / 1_000_000;
-                int waitNano = (int) (waitTimeNanos % 1_000_000);
+        //Remember why the loop ended: we must not re-probe the connection at
+        //delivery time. A transient liveness-probe failure right when data has
+        //arrived would otherwise drop a legitimate reply and hang the client.
+        boolean connected = true;
+        //Register as a FIFO waiter on every key so that, among several clients
+        //blocked on the same key, the oldest is served first (matching real
+        //Redis). Without this, notifyAll() lets an arbitrary waiter steal the
+        //element, which can leave an older waiter blocked forever.
+        try (BlockingManager.Ticket ticket = blockingManager.register(keys)) {
+            while ((connected = state.isClientConnected()) &&
+                    (waitTimeNanos = timeoutNanos == 0 ? Long.MAX_VALUE : waitEnd - System.nanoTime()) >= 0) {
+                Slice candidate = getKey(keys, false);
+                if (candidate != null && ticket.isFirst(candidate)) {
+                    source = candidate;
+                    break;
+                }
+                long remainingMillis = waitTimeNanos / 1_000_000;
+                long waitMillis = Math.min(remainingMillis, POLL_MILLIS);
+                int waitNano = waitMillis == remainingMillis ? (int) (waitTimeNanos % 1_000_000) : 0;
                 lock.wait(waitMillis, waitNano);
-                source = getKey(keys, false);
             }
         } catch (InterruptedException e) {
             //wait interrupted prematurely
             Thread.currentThread().interrupt();
             return Response.NULL;
+        } finally {
+            //Hand the turn to the next-in-line waiter, which re-evaluates whether
+            //it is now the oldest one able to claim an element. The ticket has
+            //already been unregistered by try-with-resources.
+            lock.notifyAll();
+        }
+        if (!connected) {
+            //Client disconnected while blocked: don't consume anything, don't reply.
+            return Response.SKIP;
         }
         if (source == null) {
             return Response.NULL_ARRAY;

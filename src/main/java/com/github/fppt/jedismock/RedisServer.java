@@ -2,6 +2,7 @@ package com.github.fppt.jedismock;
 
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.server.ServiceOptions;
+import com.github.fppt.jedismock.storage.BlockingManager;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ public class RedisServer {
     private final int bindPort;
     private final InetAddress bindAddress;
     private final Map<Integer, RedisBase> redisBases;
+    private final BlockingManager blockingManager = new BlockingManager();
     private volatile ExecutorService singleThreadPool;
     private volatile RedisServiceJob service;
     private volatile Clock clock = Clock.systemDefaultZone();
@@ -116,6 +118,10 @@ public class RedisServer {
 
     Map<Integer, RedisBase> getRedisBases() {
         return redisBases;
+    }
+
+    BlockingManager getBlockingManager() {
+        return blockingManager;
     }
 
     public ServiceOptions options() {

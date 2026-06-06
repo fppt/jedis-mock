@@ -16,6 +16,7 @@ public class OperationExecutorState {
 
     private final RedisClient owner;
     private final Map<Integer, RedisBase> redisBases;
+    private final BlockingManager blockingManager;
     private TransactionState transactionState = TransactionState.NORMAL;
     private final List<RedisOperation> tx = new ArrayList<>();
     private final Set<Slice> watchedKeys = new HashSet<>();
@@ -24,8 +25,14 @@ public class OperationExecutorState {
     private String clientName;
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases) {
+        this(owner, redisBases, new BlockingManager());
+    }
+
+    public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases,
+                                  BlockingManager blockingManager) {
         this.owner = owner;
         this.redisBases = redisBases;
+        this.blockingManager = blockingManager;
     }
 
     public RedisBase base() {
@@ -74,6 +81,24 @@ public class OperationExecutorState {
 
     public Object lock() {
         return redisBases;
+    }
+
+    /**
+     * @return the server-wide registry used to serve blocked clients in FIFO
+     * order. Shared by every client of the same server; only mutate it while
+     * holding {@link #lock()}.
+     */
+    public BlockingManager blockingManager() {
+        return blockingManager;
+    }
+
+    /**
+     * @return whether the client owning this state is still connected. Used by
+     * blocking operations to cancel themselves when their client disconnects,
+     * so they don't consume data intended for later clients.
+     */
+    public boolean isClientConnected() {
+        return owner.isConnected();
     }
 
     public void checkWatchedKeysNotExpired() {
