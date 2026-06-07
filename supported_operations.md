@@ -5,7 +5,7 @@
 |     |     |     |     |     |     |
 | --- | --- | --- | --- | --- | --- |
 | :x: [acl](https://valkey.io/commands/acl/) | :heavy_check_mark: [cluster](https://valkey.io/commands/cluster/) | :x: [lastsave](https://valkey.io/commands/lastsave/) | :x: [pfdebug](https://valkey.io/commands/pfdebug/) | :x: [replicaof](https://valkey.io/commands/replicaof/) | :x: [slaveof](https://valkey.io/commands/slaveof/) |
-| :x: [bgrewriteaof](https://valkey.io/commands/bgrewriteaof/) | :x: [config](https://valkey.io/commands/config/) | :x: [latency](https://valkey.io/commands/latency/) | :x: [pfselftest](https://valkey.io/commands/pfselftest/) | :x: [role](https://valkey.io/commands/role/) | :x: [slowlog](https://valkey.io/commands/slowlog/) |
+| :x: [bgrewriteaof](https://valkey.io/commands/bgrewriteaof/) | :heavy_check_mark: [config](https://valkey.io/commands/config/) | :x: [latency](https://valkey.io/commands/latency/) | :x: [pfselftest](https://valkey.io/commands/pfselftest/) | :x: [role](https://valkey.io/commands/role/) | :x: [slowlog](https://valkey.io/commands/slowlog/) |
 | :x: [bgsave](https://valkey.io/commands/bgsave/) | :x: [debug](https://valkey.io/commands/debug/) | :x: [module](https://valkey.io/commands/module/) | :x: [psync](https://valkey.io/commands/psync/) | :x: [save](https://valkey.io/commands/save/) | :x: [sync](https://valkey.io/commands/sync/) |
 | :heavy_check_mark: [client](https://valkey.io/commands/client/) | :x: [failover](https://valkey.io/commands/failover/) | :x: [monitor](https://valkey.io/commands/monitor/) | :x: [replconf](https://valkey.io/commands/replconf/) | :x: [shutdown](https://valkey.io/commands/shutdown/) |  |
 
