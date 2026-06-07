@@ -4,6 +4,8 @@ import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.BlockingManager;
 import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.RedisConfiguration;
+import com.github.fppt.jedismock.storage.ScriptingManager;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,6 +34,8 @@ public class RedisServer {
     private final InetAddress bindAddress;
     private final Map<Integer, RedisBase> redisBases;
     private final BlockingManager blockingManager = new BlockingManager();
+    private final ScriptingManager scriptingManager = new ScriptingManager();
+    private final RedisConfiguration configuration = new RedisConfiguration();
     private volatile ExecutorService singleThreadPool;
     private volatile RedisServiceJob service;
     private volatile Clock clock = Clock.systemDefaultZone();
@@ -122,6 +126,14 @@ public class RedisServer {
 
     BlockingManager getBlockingManager() {
         return blockingManager;
+    }
+
+    ScriptingManager getScriptingManager() {
+        return scriptingManager;
+    }
+
+    RedisConfiguration getConfiguration() {
+        return configuration;
     }
 
     public ServiceOptions options() {

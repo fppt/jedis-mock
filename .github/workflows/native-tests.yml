@@ -93,3 +93,8 @@ jobs:
         if: always()
         run: ./testnative unit/expire
         working-directory: native_tests
+
+      - name: multi
+        if: always()
+        run: ./testnative unit/multi
+        working-directory: native_tests

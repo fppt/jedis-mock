@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.operations.scripting.cjson.LuaCjsonLib;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.ScriptingManager;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaString;
@@ -62,13 +63,22 @@ public class Eval extends AbstractRedisOperation {
         globals.set("ARGV", embedLuaListToValue(args.subList(keysNum, args.size())));
         globals.set("_mock", CoerceJavaToLua.coerce(new LuaRedisCallback(state)));
         globals.set("cjson", globals.load(new LuaCjsonLib()));
+        //Install a per-instruction hook so a concurrent SCRIPT KILL can abort
+        //this script, even a tight infinite loop.
+        final ScriptingManager scripting = state.scriptingManager();
+        globals.load(new InterruptibleDebugLib(scripting));
         int selected = state.getSelected();
+        scripting.start();
         try {
             final LuaValue result = globals.load(script).call();
             return resolveResult(result);
         } catch (LuaError e) {
+            if (scripting.isKillRequested()) {
+                return Response.error("Script killed by user with SCRIPT KILL...");
+            }
             return Response.error(String.format("Error running script: %s", e.getMessage()));
         } finally {
+            scripting.stop();
             state.changeActiveRedisBase(selected);
         }
     }

@@ -30,7 +30,10 @@ public class SetRange extends AbstractRedisOperation {
                 .map(RMString::getStoredDataAsString)
                 .orElse("");
         String padding = "";
-        if (offset + value.length() > base().getProtoMaxBulkLen()) {
+        //(long) cast: offset is an int near Integer.MAX_VALUE, so a plain
+        //int+int could overflow to a negative, skip this guard, and then attempt
+        //a multi-GB allocation below.
+        if ((long) offset + value.length() > base().getProtoMaxBulkLen()) {
             return Response.error("ERR string exceeds maximum allowed size (proto-max-bulk-len)");
         }
         if (offset > oldValue.length()) {

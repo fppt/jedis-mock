@@ -17,6 +17,8 @@ public class OperationExecutorState {
     private final RedisClient owner;
     private final Map<Integer, RedisBase> redisBases;
     private final BlockingManager blockingManager;
+    private final ScriptingManager scriptingManager;
+    private final RedisConfiguration configuration;
     private TransactionState transactionState = TransactionState.NORMAL;
     private final List<RedisOperation> tx = new ArrayList<>();
     private final Set<Slice> watchedKeys = new HashSet<>();
@@ -25,14 +27,18 @@ public class OperationExecutorState {
     private String clientName;
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases) {
-        this(owner, redisBases, new BlockingManager());
+        this(owner, redisBases, new BlockingManager(), new ScriptingManager(), new RedisConfiguration());
     }
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases,
-                                  BlockingManager blockingManager) {
+                                  BlockingManager blockingManager,
+                                  ScriptingManager scriptingManager,
+                                  RedisConfiguration configuration) {
         this.owner = owner;
         this.redisBases = redisBases;
         this.blockingManager = blockingManager;
+        this.scriptingManager = scriptingManager;
+        this.configuration = configuration;
     }
 
     public RedisBase base() {
@@ -40,7 +46,7 @@ public class OperationExecutorState {
     }
 
     public RedisBase base(int baseIndex) {
-        return redisBases.computeIfAbsent(baseIndex, key -> new RedisBase(this::getClock));
+        return redisBases.computeIfAbsent(baseIndex, key -> new RedisBase(this::getClock, configuration));
     }
 
     public RedisClient owner() {
@@ -90,6 +96,23 @@ public class OperationExecutorState {
      */
     public BlockingManager blockingManager() {
         return blockingManager;
+    }
+
+    /**
+     * @return the server-wide registry coordinating Lua script execution (used
+     * by {@code SCRIPT KILL}). Shared by every client of the same server.
+     */
+    public ScriptingManager scriptingManager() {
+        return scriptingManager;
+    }
+
+    /**
+     * @return the server-wide thin {@code CONFIG} namespace (a plain key→value
+     * store for parameters that don't affect mock behaviour). Shared by every
+     * client of the same server.
+     */
+    public RedisConfiguration configuration() {
+        return configuration;
     }
 
     /**

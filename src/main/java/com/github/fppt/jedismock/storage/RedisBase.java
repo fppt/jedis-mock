@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,9 +28,8 @@ import java.util.function.Supplier;
  * Created by Xiaolu on 2015/4/20.
  */
 public class RedisBase {
-    private static final long PROTO_MAX_BULK_LEN = 512 * 1024 * 1024; //512 MB by default
-
     private final Supplier<Clock> clockSupplier;
+    private final RedisConfiguration configuration;
     private final Map<Slice, Set<RedisClient>> subscribers = new HashMap<>();
     private final Map<Slice, Set<RedisClient>> psubscribers = new HashMap<>();
     private final Map<Slice, Set<OperationExecutorState>> watchedKeys = new HashMap<>();
@@ -39,7 +37,12 @@ public class RedisBase {
     private final ExpiringKeyValueStorage keyValueStorage;
 
     public RedisBase(Supplier<Clock> clockSupplier) {
+        this(clockSupplier, new RedisConfiguration());
+    }
+
+    public RedisBase(Supplier<Clock> clockSupplier, RedisConfiguration configuration) {
         this.clockSupplier = Objects.requireNonNull(clockSupplier);
+        this.configuration = Objects.requireNonNull(configuration);
         this.keyValueStorage = new ExpiringKeyValueStorage(clockSupplier, key -> watchedKeys
                 .getOrDefault(key, Collections.emptySet())
                 .forEach(OperationExecutorState::watchedKeyIsAffected));
@@ -50,15 +53,22 @@ public class RedisBase {
     }
 
     public Set<Slice> keys() {
-        Iterator<Slice> slices = keyValueStorage.values().keySet().iterator();
+        Set<Slice> outdated = new HashSet<>();
         Set<Slice> result = new HashSet<>();
-        while (slices.hasNext()) {
-            Slice key = slices.next();
+        for (Slice key : keyValueStorage.values().keySet()) {
             if (keyValueStorage.isKeyOutdated(key)) {
-                slices.remove();
+                outdated.add(key);
             } else {
                 result.add(key);
             }
+        }
+        //Purge expired keys through the notifying delete (not a raw removal) so
+        //that WATCHers of an expired key are flagged: a passive expiry counts as
+        //a modification in real Redis, aborting a transaction that watched it.
+        //Otherwise a DBSIZE/KEYS sweep would drop the key silently and a later
+        //EXEC could no longer detect that the watched key had expired.
+        for (Slice key : outdated) {
+            keyValueStorage.delete(key);
         }
         return result;
     }
@@ -322,7 +332,7 @@ public class RedisBase {
     }
 
     public long getProtoMaxBulkLen() {
-        return PROTO_MAX_BULK_LEN;
+        return configuration.getProtoMaxBulkLen();
     }
 
     public String getCachedLuaScript(String sha1) {
