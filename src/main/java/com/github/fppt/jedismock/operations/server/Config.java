@@ -11,15 +11,18 @@ import java.util.List;
 
 /**
  * Thin {@code CONFIG GET}/{@code CONFIG SET} support. The aim is not to model
- * real Redis configuration but to let clients that issue {@code CONFIG} under
- * the hood (e.g. Lettuce, Redisson) work, and to let a value written with
- * {@code SET} be read back with {@code GET}.
+ * real Redis configuration but to let code that issues {@code CONFIG} work
+ * (e.g. Spring Data Redis / Spring Session, which send
+ * {@code CONFIG SET notify-keyspace-events} automatically when a key-expiration
+ * listener is registered) and to let a value written with {@code SET} be read
+ * back with {@code GET}.
  * <p>
  * Most parameters are simply stored verbatim in a server-wide namespace
  * ({@link OperationExecutorState#configuration()}) and have no effect on the
- * mock. The exception is {@code lua-time-limit} (and its newer alias
- * {@code busy-reply-threshold}), which actually drives script-timeout behaviour
- * and is therefore routed to the {@link com.github.fppt.jedismock.storage.ScriptingManager}.
+ * mock. The exceptions are the behavioural parameters that the mock actually
+ * honours — {@code lua-time-limit} (alias {@code busy-reply-threshold}), routed
+ * to the {@link com.github.fppt.jedismock.storage.ScriptingManager}, and
+ * {@code proto-max-bulk-len}, routed to the configuration's typed accessor.
  * <p>
  * Glob-style patterns in {@code CONFIG GET} are not supported; each argument is
  * treated as a literal parameter name.
@@ -28,6 +31,7 @@ import java.util.List;
 class Config extends AbstractRedisOperation {
     private static final String LUA_TIME_LIMIT = "lua-time-limit";
     private static final String BUSY_REPLY_THRESHOLD = "busy-reply-threshold";
+    private static final String PROTO_MAX_BULK_LEN = "proto-max-bulk-len";
 
     private final OperationExecutorState state;
 
@@ -60,6 +64,8 @@ class Config extends AbstractRedisOperation {
             if (isLuaTimeLimit(name)) {
                 //Behavioural parameter: route to the component that uses it.
                 state.scriptingManager().setLuaTimeLimitMillis(Long.parseLong(value));
+            } else if (PROTO_MAX_BULK_LEN.equalsIgnoreCase(name)) {
+                state.configuration().setProtoMaxBulkLen(Long.parseLong(value));
             } else {
                 //Everything else just round-trips through the thin namespace.
                 state.configuration().set(name, value);
@@ -81,6 +87,9 @@ class Config extends AbstractRedisOperation {
     private String valueOf(String name) {
         if (isLuaTimeLimit(name)) {
             return Long.toString(state.scriptingManager().getLuaTimeLimitMillis());
+        }
+        if (PROTO_MAX_BULK_LEN.equalsIgnoreCase(name)) {
+            return Long.toString(state.configuration().getProtoMaxBulkLen());
         }
         return state.configuration().get(name);
     }

@@ -20,6 +20,11 @@ class Append extends AbstractRedisOperation {
         Slice value = params().get(1);
         RMString s = base().getRMString(key);
 
+        long currentLength = (s == null) ? 0 : s.size();
+        if (currentLength + value.length() > base().getProtoMaxBulkLen()) {
+            return Response.error("ERR string exceeds maximum allowed size (proto-max-bulk-len)");
+        }
+
         if (s == null) {
             base().putValue(key, value.extract());
             return Response.integer(value.length());

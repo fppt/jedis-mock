@@ -175,6 +175,24 @@ A long-running (or even infinite) script does not lock up the mock. Once a scrip
 
 Feel free to report an issue if you have any problems with Lua scripting in Jedis-Mock.
 
+## `CONFIG GET` / `CONFIG SET`
+
+`CONFIG` is supported as a deliberately *thin* mock. Fully modelling Redis configuration is a non-goal; the point is twofold:
+
+* Real-world code issues `CONFIG` even when you never call it directly. Most notably, Spring Data Redis / Spring Session send `CONFIG SET notify-keyspace-events` automatically when a key-expiration listener is registered (via `ConfigureNotifyKeyspaceEventsAction`); drivers such as Lettuce, Jedis and Redisson also expose `CONFIG GET`/`SET` in their API. None of this should fail with an "unsupported operation" error ([#40](https://github.com/fppt/jedis-mock/issues/40)).
+* A value written with `CONFIG SET` should read back with `CONFIG GET`.
+
+So **arbitrary parameters are accepted and round-trip** through a separate namespace without affecting the mock in any way (an unset parameter reads back as an empty string, matching real Redis). For example, setting `maxmemory-policy` stores the value and returns it on `GET`, but does not actually change eviction behaviour.
+
+Only **two parameters are "behavioural"** — they are actually honoured by the mock:
+
+| Parameter | Effect | Default |
+| --- | --- | --- |
+| `lua-time-limit` (alias `busy-reply-threshold`) | how long a Lua script may run before other clients get `-BUSY` (see [Script timeouts](#script-timeouts-busy-and-script-kill)) | `5000` (ms); `0` disables |
+| `proto-max-bulk-len` | largest string a command may build, enforced by `SETRANGE`/`APPEND` (`-ERR string exceeds maximum allowed size`) | `536870912` (512 MB) |
+
+`proto-max-bulk-len` is capped at `Integer.MAX_VALUE`, since the mock stores strings as `byte[]` and cannot honour a larger limit. Glob-style patterns in `CONFIG GET` are not supported; each argument is treated as a literal parameter name.
+
 ## <a name="clockinjection">Clock injection</a>
 
 [`java.time.Clock`](https://docs.oracle.com/javase/8/docs/api/java/time/Clock.html) injection is supported via `setClock` method on `RedisServer`. The injected clock is used for calculation and verification of the keys expiration time. Thus, it's possible to "freeze" or "skip" time for better testing of keys expiration. `setClock` is a thread-safe method which can be called as needed from any place of the code.

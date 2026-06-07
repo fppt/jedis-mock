@@ -46,7 +46,7 @@ public class OperationExecutorState {
     }
 
     public RedisBase base(int baseIndex) {
-        return redisBases.computeIfAbsent(baseIndex, key -> new RedisBase(this::getClock));
+        return redisBases.computeIfAbsent(baseIndex, key -> new RedisBase(this::getClock, configuration));
     }
 
     public RedisClient owner() {
