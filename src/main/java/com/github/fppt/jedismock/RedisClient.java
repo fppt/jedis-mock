@@ -42,7 +42,8 @@ public final class RedisClient implements Runnable {
         Objects.requireNonNull(onClose);
         this.server = server;
         OperationExecutorState state = new OperationExecutorState(this,
-                server.getRedisBases(), server.getBlockingManager());
+                server.getRedisBases(), server.getBlockingManager(), server.getScriptingManager(),
+                server.getConfiguration());
         this.executor = new RedisOperationExecutor(state);
         this.socket = socket;
         this.in = socket.getInputStream();

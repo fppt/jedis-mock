@@ -151,7 +151,7 @@ try (Jedis jedis = new Jedis(server.getHost(),
 
 ## Lua scripting support
 
-JedisMock supports Lua scripting (`EVAL`, `EVALSHA`, `SCRIPT LOAD/EXISTS/FLUSH` commands) via [luaj](https://github.com/luaj/luaj).  
+JedisMock supports Lua scripting (`EVAL`, `EVALSHA`, `SCRIPT LOAD/EXISTS/FLUSH/KILL` commands) via [luaj](https://github.com/luaj/luaj).  
 
 ```java
 String script =
@@ -168,6 +168,10 @@ jedis.lrange("mylist", 0, -1));
 ```
 
 :warning: Lua language capabilities are restricted to what is provided by current LuaJ version. Methods provided by `redis` global object are currently restricted to what was available in Redis version 2.6.0 (see [redis.lua](src/main/resources/redis.lua)).
+
+### Script timeouts: `BUSY` and `SCRIPT KILL`
+
+A long-running (or even infinite) script does not lock up the mock. Once a script has been running longer than `lua-time-limit` milliseconds, other connections get the same `-BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.` reply as real Redis, and `SCRIPT KILL` aborts the running script (replying `-NOTBUSY` when nothing is running). The threshold defaults to 5000 ms and can be changed with `CONFIG SET lua-time-limit <ms>` (its alias `busy-reply-threshold` is also accepted); `0` disables it. This lets you test client behaviour around busy scripts and transactions interrupted by a script timeout.
 
 Feel free to report an issue if you have any problems with Lua scripting in Jedis-Mock.
 

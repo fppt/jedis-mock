@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,15 +49,22 @@ public class RedisBase {
     }
 
     public Set<Slice> keys() {
-        Iterator<Slice> slices = keyValueStorage.values().keySet().iterator();
+        Set<Slice> outdated = new HashSet<>();
         Set<Slice> result = new HashSet<>();
-        while (slices.hasNext()) {
-            Slice key = slices.next();
+        for (Slice key : keyValueStorage.values().keySet()) {
             if (keyValueStorage.isKeyOutdated(key)) {
-                slices.remove();
+                outdated.add(key);
             } else {
                 result.add(key);
             }
+        }
+        //Purge expired keys through the notifying delete (not a raw removal) so
+        //that WATCHers of an expired key are flagged: a passive expiry counts as
+        //a modification in real Redis, aborting a transaction that watched it.
+        //Otherwise a DBSIZE/KEYS sweep would drop the key silently and a later
+        //EXEC could no longer detect that the watched key had expired.
+        for (Slice key : outdated) {
+            keyValueStorage.delete(key);
         }
         return result;
     }
