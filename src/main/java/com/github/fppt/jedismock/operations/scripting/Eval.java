@@ -76,11 +76,21 @@ public class Eval extends AbstractRedisOperation {
             if (scripting.isKillRequested()) {
                 return Response.error("Script killed by user with SCRIPT KILL...");
             }
-            return Response.error(String.format("Error running script: %s", e.getMessage()));
+            return Response.error(String.format("Error running script: %s", stripTraceback(e.getMessage())));
         } finally {
             scripting.stop();
             state.changeActiveRedisBase(selected);
         }
+    }
+
+    private static String stripTraceback(String message) {
+        if (message == null) {
+            return "";
+        }
+        //luaj appends a multi-line Lua stack traceback; drop it so the message
+        //is a single line (real Redis does not echo the traceback in the reply).
+        int trace = message.indexOf("stack traceback:");
+        return (trace >= 0 ? message.substring(0, trace) : message).trim();
     }
 
     private static List<LuaValue> getLuaValues(List<Slice> slices) {
@@ -105,11 +115,14 @@ public class Eval extends AbstractRedisOperation {
             case "number":
                 return Response.integer(result.tolong());
             case "table":
-                if (!result.get("err").isnil()) {
-                    return Response.error(result.get("err").tojstring());
+                //Use raw access (no metatable) throughout, matching real Redis,
+                //which converts a returned table with lua_rawget*. Otherwise a
+                //table carrying an __index metamethod would trigger it here.
+                if (!result.rawget("err").isnil()) {
+                    return Response.error(result.rawget("err").tojstring());
                 }
-                if (!result.get("ok").isnil()) {
-                    return resolveResult(result.get("ok"));
+                if (!result.rawget("ok").isnil()) {
+                    return resolveResult(result.rawget("ok"));
                 }
                 return Response.array(luaTableToList(result));
             case "boolean":
@@ -119,9 +132,14 @@ public class Eval extends AbstractRedisOperation {
     }
 
     private ArrayList<Slice> luaTableToList(LuaValue result) {
+        //Like Redis: raw-get indices 1, 2, ... and stop at the first nil.
         final ArrayList<Slice> list = new ArrayList<>();
-        for (int i = 0; i < result.length(); i++) {
-            list.add(resolveResult(result.get(i + 1)));
+        for (int i = 1; ; i++) {
+            LuaValue element = result.rawget(i);
+            if (element.isnil()) {
+                break;
+            }
+            list.add(resolveResult(element));
         }
         return list;
     }

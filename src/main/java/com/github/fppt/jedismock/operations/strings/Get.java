@@ -14,6 +14,16 @@ class Get extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 1;
+    }
+
+    @Override
+    protected int maxArgs() {
+        return 1;
+    }
+
     protected Slice response() {
         return Response.bulkString(base().getSlice(params().get(0)));
     }

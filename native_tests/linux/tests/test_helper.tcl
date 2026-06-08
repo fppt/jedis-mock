@@ -35,11 +35,13 @@ set ::portcount 8000; # we don't wanna use more than 10000 to avoid collision wi
 set ::traceleaks 0
 set ::valgrind 0
 set ::durable 0
+set ::log_req_res 0; # request/response logging mode (not supported here)
+set ::force_resp3 0; # force RESP3 mode (not supported here)
 set ::tls 0
 set ::stack_logging 0
 set ::verbose 0
 set ::quiet 0
-set ::denytags {}
+set ::denytags {large-memory needs:debug needs:repl repl}; # jedis-mock can't run multi-GB values, DEBUG, or replication
 set ::skiptests {}
 set ::skipunits {}
 set ::no_latency 0

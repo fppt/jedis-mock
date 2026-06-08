@@ -32,7 +32,7 @@ public class RMHyperLogLog extends StringCompatible implements Serializable {
 
     @Override
     public void raiseTypeCastException() {
-        throw new WrongValueTypeException("WRONGTYPE HyperLogLog is used in the wrong place");
+        throw new WrongValueTypeException("WRONGTYPE Operation against a key holding the wrong kind of value");
     }
 
     /* NB: we use custom serialization in order to always provide

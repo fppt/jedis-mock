@@ -44,7 +44,11 @@ public class Response {
     }
 
     public static Slice error(String s) {
-        return Slice.create(String.format("-%s%s", s, LINE_SEPARATOR));
+        //A RESP error reply is a single line terminated by CRLF; an embedded
+        //CR or LF (e.g. a Lua stack traceback) would break framing for strict
+        //clients, so collapse them to spaces.
+        String sanitized = s.replace('\r', ' ').replace('\n', ' ');
+        return Slice.create(String.format("-%s%s", sanitized, LINE_SEPARATOR));
     }
 
     public static Slice integer(long v) {

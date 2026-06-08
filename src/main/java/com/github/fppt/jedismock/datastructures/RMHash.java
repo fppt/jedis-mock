@@ -32,7 +32,7 @@ public class RMHash extends ExpiringStorage implements RMDataStructure {
 
     @Override
     public void raiseTypeCastException() {
-        throw new WrongValueTypeException("WRONGTYPE RMSortedSet value is used in the wrong place");
+        throw new WrongValueTypeException("WRONGTYPE Operation against a key holding the wrong kind of value");
     }
 
     @Override

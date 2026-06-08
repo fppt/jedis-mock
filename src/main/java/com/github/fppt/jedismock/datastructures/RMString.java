@@ -46,7 +46,7 @@ public class RMString implements RMDataStructure, Serializable {
 
     @Override
     public void raiseTypeCastException() {
-        throw new WrongValueTypeException("WRONGTYPE RMString value is used in the wrong place");
+        throw new WrongValueTypeException("WRONGTYPE Operation against a key holding the wrong kind of value");
     }
 
     @Override

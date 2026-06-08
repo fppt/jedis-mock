@@ -28,6 +28,7 @@ import static com.github.fppt.jedismock.datastructures.streams.StreamErrors.XREA
 public class XRead extends AbstractRedisOperation {
     private final Object lock;
     private final boolean isInTransaction;
+    private final boolean isInScript;
     private final OperationExecutorState state;
     private final BlockingManager blockingManager;
 
@@ -35,6 +36,8 @@ public class XRead extends AbstractRedisOperation {
         super(state.base(), params);
         lock = state.lock();
         isInTransaction = state.isTransactionModeOn();
+        //See AbstractBPop: a blocking command must not block inside a Lua script.
+        isInScript = state.scriptingManager().isRunning();
         this.state = state;
         this.blockingManager = state.blockingManager();
     }
@@ -115,7 +118,7 @@ public class XRead extends AbstractRedisOperation {
         long waitEnd = System.nanoTime() + blockTimeNanosec;
         long waitTimeNanos;
 
-        if (isBlocking && !isInTransaction) {
+        if (isBlocking && !isInTransaction && !isInScript) {
             boolean updated = false; // should be unblocked after XADD was invoked
             //Records why the wait loop ended, so we don't re-probe the connection
             //at delivery time (a transient probe failure would otherwise drop a

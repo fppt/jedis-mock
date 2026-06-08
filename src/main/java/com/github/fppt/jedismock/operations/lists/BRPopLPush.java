@@ -29,6 +29,7 @@ class BRPopLPush extends RPopLPush {
     private boolean connected = true;
     private final Object lock;
     private final boolean isInTransaction;
+    private final boolean isInScript;
     private final OperationExecutorState state;
     private final BlockingManager blockingManager;
 
@@ -36,6 +37,8 @@ class BRPopLPush extends RPopLPush {
         super(state, params);
         this.lock = state.lock();
         this.isInTransaction = state.isTransactionModeOn();
+        //See AbstractBPop: a blocking command must not block inside a Lua script.
+        this.isInScript = state.scriptingManager().isRunning();
         this.state = state;
         this.blockingManager = state.blockingManager();
     }
@@ -49,8 +52,9 @@ class BRPopLPush extends RPopLPush {
         }
 
         count = getCount(source);
-        if (isInTransaction || count != 0) {
-            //Inside MULTI we never block; otherwise the element is already there.
+        if (isInTransaction || isInScript || count != 0) {
+            //Inside MULTI or a Lua script we never block; otherwise the element
+            //is already there.
             return;
         }
 

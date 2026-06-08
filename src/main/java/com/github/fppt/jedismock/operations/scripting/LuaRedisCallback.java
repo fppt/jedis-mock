@@ -33,6 +33,9 @@ public class LuaRedisCallback {
     }
 
     public LuaValue call(LuaValue args) {
+        if (args.length() < 1) {
+            throw new IllegalStateException("Please specify at least one argument for this redis lib call");
+        }
         String operationName = args.get(1).tojstring();
         List<Slice> a = new ArrayList<>();
         for (int i = 2; i <= args.length(); i++) {
@@ -71,17 +74,27 @@ public class LuaRedisCallback {
                 //see https://redis.io/docs/manual/programmability/lua-api/#using-selectcommandsselect-inside-scripts
                 "select".equalsIgnoreCase(operationName) ? new Select(state, args) :
                         CommandFactory.buildOperation(operationName.toLowerCase(), true, state, args);
-        if (operation != null) {
-            throwOnUnsupported(operation);
-            Slice result = operation.execute();
-            if (Response.NULL.equals(result)) {
-                return LuaValue.FALSE;
-            } else {
-                byte[] data = result.data();
-                return toLuaValue(new RedisInputStream(new ByteArrayInputStream(data)));
-            }
+        if (operation == null) {
+            throw new IllegalStateException("Unknown Redis command called from script");
         }
-        throw new IllegalStateException("Operation not implemented!");
+        throwOnUnsupported(operation);
+        Slice result = operation.execute();
+        if (isWrongNumberOfArguments(result)) {
+            //Real Redis rejects an arity mismatch before dispatch with this
+            //script-specific message; translate the command's own arity error.
+            throw new IllegalStateException("Wrong number of args calling Redis command from script");
+        }
+        if (Response.NULL.equals(result)) {
+            return LuaValue.FALSE;
+        } else {
+            byte[] data = result.data();
+            return toLuaValue(new RedisInputStream(new ByteArrayInputStream(data)));
+        }
+    }
+
+    private static boolean isWrongNumberOfArguments(Slice result) {
+        String data = result.toString();
+        return data.startsWith("-") && data.contains("wrong number of arguments");
     }
 
     private static void throwOnUnsupported(RedisOperation operation) {
@@ -94,7 +107,12 @@ public class LuaRedisCallback {
         byte b = is.readByte();
         switch (b) {
             case '+':
-                return LuaValue.valueOf(processStatusCodeReply(is));
+                //A status reply ("+OK") converts to a Lua table {ok="OK"}, not a
+                //bare string — matching real Redis, where scripts read
+                //redis.call('set', ...)['ok'].
+                LuaTable statusTable = new LuaTable();
+                statusTable.set(LuaValue.valueOf("ok"), LuaValue.valueOf(processStatusCodeReply(is)));
+                return statusTable;
             case '$':
                 return LuaValue.valueOf(processBulkReply(is));
             case '*':
