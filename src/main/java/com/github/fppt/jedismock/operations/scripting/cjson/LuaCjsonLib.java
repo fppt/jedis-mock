@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.scripting.cjson;
 
+import com.github.fppt.jedismock.operations.scripting.ImmutableLuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.TwoArgFunction;
 

@@ -37,7 +37,13 @@
         </Or>
     </Match>
     <Match>
-        <Package name="com.github.fppt.jedismock.operations.scripting.cjson"/>
+        <!--luaj table/function objects (the read-only table and the sandbox
+            metamethods/helpers) inherit LuaValue's identity equals but no
+            hashCode; they are never used as value keys.-->
+        <Or>
+            <Package name="com.github.fppt.jedismock.operations.scripting.cjson"/>
+            <Package name="com.github.fppt.jedismock.operations.scripting"/>
+        </Or>
         <Bug pattern="HE_INHERITS_EQUALS_USE_HASHCODE"/>
     </Match>
 </FindBugsFilter>

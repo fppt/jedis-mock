@@ -9,6 +9,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.storage.ScriptingManager;
 import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaClosure;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaTable;
@@ -80,12 +81,27 @@ public class Eval extends AbstractRedisOperation {
         //this script, even a tight infinite loop.
         final ScriptingManager scripting = state.scriptingManager();
         globals.load(new InterruptibleDebugLib(scripting));
+        //Lock down the environment (read-only globals, no host access) and run the
+        //user script inside it, exactly as real Redis sandboxes Lua.
+        final LuaTable sandbox = LuaSandbox.install(globals, state);
         int selected = state.getSelected();
         scripting.start();
         try {
             //Load under a fixed chunk name so error locations read "user_script:N"
             //(as in real Redis) instead of echoing the whole script body.
-            final LuaValue result = globals.load(script, "@user_script").call();
+            final LuaValue chunk = globals.load(script, "@user_script");
+            //Run the chunk inside the read-only sandbox by redirecting its _ENV
+            //upvalue. We can't simply pass the sandbox as the load environment:
+            //luaj only wires the per-instruction hook (used by SCRIPT KILL and
+            //lua-time-limit) when the chunk's environment is a Globals instance,
+            //so a plain sandbox table would make the script uninterruptible.
+            if (chunk instanceof LuaClosure) {
+                LuaClosure closure = (LuaClosure) chunk;
+                if (closure.upValues.length > 0) {
+                    closure.upValues[0].setValue(sandbox);
+                }
+            }
+            final LuaValue result = chunk.call();
             return resolveResult(result);
         } catch (LuaError e) {
             if (scripting.isKillRequested()) {
@@ -167,7 +183,10 @@ public class Eval extends AbstractRedisOperation {
         //patterns match across Lua implementations.
         return msg
                 .replace("attempt to call nil", "attempt to call a nil value")
-                .replace("attempt to index nil", "attempt to index a nil value");
+                .replace("attempt to index nil", "attempt to index a nil value")
+                //luaj reports indexing/assigning a nil value as "index expected,
+                //got nil"; reference Lua (and Redis) say "attempt to index ...".
+                .replace("index expected, got nil", "attempt to index a nil value");
     }
 
     private static String ensureErrorCode(String msg) {
@@ -212,6 +231,12 @@ public class Eval extends AbstractRedisOperation {
                     //{ok=...} is a status (simple-string) reply, e.g. the table
                     //produced by redis.status_reply("X") -> "+X".
                     return Response.simpleString(ok.tojstring());
+                }
+                LuaValue dbl = result.rawget("double");
+                if (!dbl.isnil()) {
+                    //{double=...} is the RESP3 double convention; in RESP2 real
+                    //Redis returns it as a bulk string of the number.
+                    return Response.bulkString(Slice.create(Double.toString(dbl.todouble())));
                 }
                 return Response.array(luaTableToList(result));
             case "boolean":
