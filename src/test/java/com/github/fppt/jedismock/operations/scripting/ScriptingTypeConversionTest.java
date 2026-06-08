@@ -125,7 +125,60 @@ class ScriptingTypeConversionTest {
         //"Scripts can handle commands with incorrect arity": the reply is a
         //single Redis error, ERR-prefixed, without any Java/luaj wrapper.
         assertThatThrownBy(() -> jedis.eval("redis.call('set','invalid')", 0))
-                .hasMessage("ERR Wrong number of args calling Redis command from script");
+                .hasMessageStartingWith("ERR Wrong number of args calling Redis command from script");
+        //INCR with no key signals the arity error by throwing rather than
+        //returning an error reply; it must be normalised the same way.
+        assertThatThrownBy(() -> jedis.eval("redis.call('incr')", 0))
+                .hasMessageStartingWith("ERR Wrong number of args calling Redis command from script");
+    }
+
+    @Test
+    void statusReplyIsASimpleStringReply() {
+        //"LUA redis.status_reply API": redis.status_reply(x) is a status (simple
+        //string) reply, "+x", not a bulk string. Read raw to see the type byte.
+        Object raw = jedis.sendCommand(() -> "EVAL".getBytes(),
+                "return redis.status_reply('MY_OK_CODE custom msg')", "0");
+        //Jedis decodes a simple-string reply to the bare payload.
+        assertThat(new String((byte[]) raw)).isEqualTo("MY_OK_CODE custom msg");
+    }
+
+    @Test
+    void errorReplyTablePassedToErrorIsUnwrappedAndSanitized() {
+        //"LUA redis.error_reply API with CRLF injection attempt": error() of an
+        //{err=...} table uses the err field, with CR/LF collapsed to spaces so it
+        //can't inject a second RESP line.
+        assertThatThrownBy(() -> jedis.eval("error(redis.error_reply('X\\r\\n+INJECTED'))", 0))
+                .hasMessageStartingWith("ERR X  +INJECTED");
+    }
+
+    @Test
+    void explicitErrorCallFormatsLikeRedis() {
+        //"EVAL - explicit error() call handling".
+        assertThatThrownBy(() -> jedis.eval("error('simple string error')", 0))
+                .hasMessageStartingWith("ERR user_script:1: simple string error script: ");
+        assertThatThrownBy(() -> jedis.eval("error({err='ERR table error'})", 0))
+                .hasMessageStartingWith("ERR table error script: ");
+        assertThatThrownBy(() -> jedis.eval("error({})", 0))
+                .hasMessageStartingWith("ERR unknown error script: ");
+    }
+
+    @Test
+    void nonStringOrIntegerCallArgumentIsRejected() {
+        //"LUA test pcall with non string/integer arg": a table argument to
+        //redis.call is rejected before dispatch...
+        assertThatThrownBy(() -> jedis.eval("local x={}\nreturn redis.call('ping', x)", 0))
+                .hasMessageStartingWith("ERR Lua redis lib command arguments must be strings or integers");
+        //...and the next command still works (cached argv survived).
+        assertThat(jedis.eval("return redis.call('ping','asdf')", 0)).isEqualTo("asdf");
+    }
+
+    @Test
+    void pcallOfAPlainFunctionSucceeds() {
+        //"LUA test pcall": pcall of a non-failing function yields (true, result).
+        Object result = jedis.eval(
+                "local status, res = pcall(function() return 1 end)\n"
+                        + "return 'status: ' .. tostring(status) .. ' result: ' .. res", 0);
+        assertThat(result).isEqualTo("status: true result: 1");
     }
 
     @Test

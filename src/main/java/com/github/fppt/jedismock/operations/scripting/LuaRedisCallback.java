@@ -26,6 +26,8 @@ public class LuaRedisCallback {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LuaRedisCallback.class);
     private static final String NOSCRIPT_PREFIX = "NOSCRIPT ";
+    private static final String WRONG_ARGS_FROM_SCRIPT =
+            "Wrong number of args calling Redis command from script";
     //Commands real Redis flags as not-callable from a script and which jedis-mock
     //does not (fully) model. Kept lower-case for case-insensitive lookup.
     private static final Set<String> SCRIPT_DISALLOWED_COMMANDS = Collections.singleton("cluster");
@@ -46,8 +48,13 @@ public class LuaRedisCallback {
             LuaValue arg = args.get(i);
             if (arg instanceof LuaString) {
                 a.add(Slice.create(((LuaString) arg).m_bytes));
+            } else if (arg.isnumber()) {
+                a.add(Slice.create(arg.tojstring()));
             } else {
-                a.add(Slice.create(args.get(i).tojstring()));
+                //Reject tables/booleans/nil before dispatch, as real Redis does,
+                //so the cached argv array is left intact for the next command.
+                throw new IllegalStateException(
+                        "Lua redis lib command arguments must be strings or integers");
             }
         }
         return execute(operationName, a);
@@ -93,11 +100,22 @@ public class LuaRedisCallback {
             throw new IllegalStateException("Unknown Redis command called from script");
         }
         throwOnUnsupported(operation);
-        Slice result = operation.execute();
-        if (isWrongNumberOfArguments(result)) {
+        final Slice result;
+        try {
+            result = operation.execute();
+        } catch (IllegalArgumentException e) {
+            //Some commands signal an arity mismatch by throwing (e.g. INCR with no
+            //key trips an IndexOutOfBounds, wrapped here) rather than returning an
+            //error reply; normalise it like the returned-error case below.
+            if (isArityError(e.getMessage())) {
+                throw new IllegalStateException(WRONG_ARGS_FROM_SCRIPT);
+            }
+            throw e;
+        }
+        if (result.toString().startsWith("-") && isArityError(result.toString())) {
             //Real Redis rejects an arity mismatch before dispatch with this
             //script-specific message; translate the command's own arity error.
-            throw new IllegalStateException("Wrong number of args calling Redis command from script");
+            throw new IllegalStateException(WRONG_ARGS_FROM_SCRIPT);
         }
         if (Response.NULL.equals(result)) {
             return LuaValue.FALSE;
@@ -107,9 +125,8 @@ public class LuaRedisCallback {
         }
     }
 
-    private static boolean isWrongNumberOfArguments(Slice result) {
-        String data = result.toString();
-        return data.startsWith("-") && data.contains("wrong number of arguments");
+    private static boolean isArityError(String message) {
+        return message != null && message.contains("wrong number of arguments");
     }
 
     private static void throwOnUnsupported(RedisOperation operation) {

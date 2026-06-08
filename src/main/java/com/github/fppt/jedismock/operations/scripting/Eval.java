@@ -33,7 +33,7 @@ public class Eval extends AbstractRedisOperation {
 
     private static final String SCRIPT_RUNTIME_ERROR = "Error running script (call to function returned nil)";
     private static final String REDIS_LUA = loadResource();
-    private static final Pattern CHUNK_LOCATION = Pattern.compile("^@?user_script:\\d+:?\\s*");
+    private static final Pattern LOCATION_SEPARATOR = Pattern.compile("^(user_script:\\d+) ");
     private static final Pattern JAVA_EXCEPTION =
             Pattern.compile("^(?:[\\w$]+\\.)+[\\w$]*(?:Exception|Error):\\s*");
     private static final Pattern ERROR_CODE = Pattern.compile("^[A-Z][A-Z0-9_]+ ");
@@ -53,8 +53,9 @@ public class Eval extends AbstractRedisOperation {
     @Override
     public Slice response() {
         final String script = params().get(0).toString();
+        final String sha = getScriptSHA(script);
 
-        this.base().addCachedLuaScript(getScriptSHA(script), script);
+        this.base().addCachedLuaScript(sha, script);
 
         int keysNum = Integer.parseInt(params().get(1).toString());
         final List<LuaValue> args = getLuaValues(params().subList(2, params().size()));
@@ -90,7 +91,7 @@ public class Eval extends AbstractRedisOperation {
             if (scripting.isKillRequested()) {
                 return Response.error("Script killed by user with SCRIPT KILL...");
             }
-            return Response.error(toRedisError(e.getMessage()));
+            return Response.error(scriptErrorReply(e, sha));
         } finally {
             scripting.stop();
             state.changeActiveRedisBase(selected);
@@ -108,28 +109,51 @@ public class Eval extends AbstractRedisOperation {
     }
 
     /**
-     * Translate a luaj {@link LuaError} message into a Redis-style single-line
-     * error reply. luaj reports a Java exception thrown from a redis.* callback
-     * as {@code "<chunk>:<line> vm error: java.lang.SomeException: <message>"},
-     * and a pure Lua runtime error as {@code "<chunk>:<line> <message>"}. Real
-     * Redis surfaces neither the Java class nor the chunk/line, and prefixes a
-     * generic {@code "ERR "} when the message carries no error code of its own.
+     * Build a Redis-style error reply from a raised {@link LuaError}. Real Redis
+     * (7.x):
+     * <ul>
+     *   <li>{@code error({err=X})} / {@code error({})} -&gt; {@code X} verbatim
+     *       (or {@code "unknown error"}), ERR-prefixed when it has no code;</li>
+     *   <li>{@code error("msg")} and other runtime errors -&gt; keep luaj's
+     *       {@code "user_script:<line>:"} location;</li>
+     *   <li>command/callback failures -&gt; unwrap luaj's
+     *       {@code "vm error: java.lang.SomeException: .."} wrapper.</li>
+     * </ul>
+     * In every case it appends Redis's {@code " script: <sha>, on @user_script:N."}
+     * context. CR/LF in the message are collapsed to spaces by {@link Response#error}.
      */
-    private static String toRedisError(String raw) {
-        String msg = stripTraceback(raw);
+    private static String scriptErrorReply(LuaError e, String sha) {
+        LuaValue obj = e.getMessageObject();
+        if (obj != null && obj.istable()) {
+            LuaValue err = obj.rawget("err");
+            String msg = err.isnil() ? "unknown error" : err.tojstring();
+            return appendScriptContext(ensureErrorCode(msg), sha);
+        }
+        String msg = stripTraceback(e.getMessage());
         int vm = msg.indexOf("vm error:");
         if (vm >= 0) {
             //A Redis command/callback raised: unwrap the Java exception wrapper.
-            return ensureErrorCode(stripJavaExceptionClass(
-                    msg.substring(vm + "vm error:".length()).trim()));
+            msg = stripJavaExceptionClass(msg.substring(vm + "vm error:".length()).trim());
+        } else {
+            //A pure Lua runtime error (incl. error("string")): keep the location.
+            msg = fixLuaWording(normalizeLocation(stripAtMarker(msg)));
         }
-        //A pure Lua runtime error: drop the "<chunk>:<line>" location prefix.
-        return ensureErrorCode(fixLuaWording(stripChunkLocation(msg)));
+        return appendScriptContext(ensureErrorCode(msg), sha);
     }
 
-    private static String stripChunkLocation(String msg) {
-        Matcher m = CHUNK_LOCATION.matcher(msg);
-        return (m.find() ? msg.substring(m.end()) : msg).trim();
+    private static String stripAtMarker(String msg) {
+        //luaj keeps the chunk-name "@" that Lua/Redis strip from error locations.
+        return msg.startsWith("@") ? msg.substring(1) : msg;
+    }
+
+    private static String normalizeLocation(String msg) {
+        //luaj separates the location from the message with a space; Lua/Redis use
+        //a colon ("user_script:1: msg", not "user_script:1 msg").
+        return LOCATION_SEPARATOR.matcher(msg).replaceFirst("$1: ");
+    }
+
+    private static String appendScriptContext(String msg, String sha) {
+        return msg + " script: " + sha + ", on @user_script:1.";
     }
 
     private static String stripJavaExceptionClass(String msg) {
@@ -183,8 +207,11 @@ public class Eval extends AbstractRedisOperation {
                 if (!result.rawget("err").isnil()) {
                     return Response.error(result.rawget("err").tojstring());
                 }
-                if (!result.rawget("ok").isnil()) {
-                    return resolveResult(result.rawget("ok"));
+                LuaValue ok = result.rawget("ok");
+                if (!ok.isnil()) {
+                    //{ok=...} is a status (simple-string) reply, e.g. the table
+                    //produced by redis.status_reply("X") -> "+X".
+                    return Response.simpleString(ok.tojstring());
                 }
                 return Response.array(luaTableToList(result));
             case "boolean":

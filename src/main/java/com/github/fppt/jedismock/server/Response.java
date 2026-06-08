@@ -51,6 +51,14 @@ public class Response {
         return Slice.create(String.format("-%s%s", sanitized, LINE_SEPARATOR));
     }
 
+    public static Slice simpleString(String s) {
+        //A RESP simple-string reply ("+...") is a single CRLF-terminated line, as
+        //produced by e.g. redis.status_reply in a Lua script; sanitize CR/LF like
+        //an error reply so an embedded newline can't break framing.
+        String sanitized = s.replace('\r', ' ').replace('\n', ' ');
+        return Slice.create(String.format("+%s%s", sanitized, LINE_SEPARATOR));
+    }
+
     public static Slice integer(long v) {
         return Slice.create(String.format(":%d%s", v, LINE_SEPARATOR));
     }
