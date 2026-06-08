@@ -111,6 +111,49 @@ class ScriptingTypeConversionTest {
     }
 
     @Test
+    void negativeKeyCountIsAnErrorNotACrash() {
+        //"Verify negative arg count is error instead of crash (issue #1842)":
+        //a negative numkeys must be rejected cleanly, not leak a Java exception.
+        //Sent raw so the client doesn't reject the negative count first.
+        assertThatThrownBy(() -> jedis.sendCommand(() -> "EVAL".getBytes(),
+                "return 'hello'", "-12"))
+                .hasMessage("ERR Number of keys can't be negative");
+    }
+
+    @Test
+    void redisCallWithWrongArityIsPrefixedWithErr() {
+        //"Scripts can handle commands with incorrect arity": the reply is a
+        //single Redis error, ERR-prefixed, without any Java/luaj wrapper.
+        assertThatThrownBy(() -> jedis.eval("redis.call('set','invalid')", 0))
+                .hasMessage("ERR Wrong number of args calling Redis command from script");
+    }
+
+    @Test
+    void sha1hexWithoutArgumentReportsArityError() {
+        //"Functions in the Redis namespace are able to report errors":
+        //redis.sha1hex() with no argument must not crash with a NullPointer.
+        assertThatThrownBy(() -> jedis.eval("redis.sha1hex()", 0))
+                .hasMessageContaining("wrong number");
+    }
+
+    @Test
+    void clusterCommandIsNotAllowedFromScript() {
+        //"CLUSTER RESET can not be invoke from within a script": CLUSTER is
+        //flagged no-script, distinct from a genuinely unknown command.
+        assertThatThrownBy(() -> jedis.eval("redis.call('cluster', 'reset', 'hard')", 0))
+                .hasMessageContaining("command is not allowed");
+    }
+
+    @Test
+    void callingANilValueUsesReferenceLuaWording() {
+        //"Binary code loading failed": loadstring of a binary dump yields nil in
+        //luaj; calling it must report the reference-Lua "a nil value" wording.
+        assertThatThrownBy(() -> jedis.eval(
+                "return loadstring(string.dump(function() return 1 end))()", 0))
+                .hasMessageContaining("attempt to call a nil value");
+    }
+
+    @Test
     void scriptDoesNotBlockOnXreadWithBlockOption() {
         //"EVAL - Scripts do not block on XREAD with BLOCK option": a blocking
         //XREAD inside a script must return immediately, never block.

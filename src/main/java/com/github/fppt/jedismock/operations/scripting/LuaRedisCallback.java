@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.github.fppt.jedismock.operations.scripting.Eval.embedLuaListToValue;
 
@@ -25,6 +26,9 @@ public class LuaRedisCallback {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LuaRedisCallback.class);
     private static final String NOSCRIPT_PREFIX = "NOSCRIPT ";
+    //Commands real Redis flags as not-callable from a script and which jedis-mock
+    //does not (fully) model. Kept lower-case for case-insensitive lookup.
+    private static final Set<String> SCRIPT_DISALLOWED_COMMANDS = Collections.singleton("cluster");
 
     private final OperationExecutorState state;
 
@@ -60,6 +64,11 @@ public class LuaRedisCallback {
     }
 
     public String sha1hex(String x) {
+        if (x == null) {
+            //redis.sha1hex() with no argument: real Redis reports an arity error
+            //instead of crashing (here, a NullPointerException down the stack).
+            throw new IllegalStateException("wrong number of arguments to redis.sha1hex()");
+        }
         return Script.getScriptSHA(x);
     }
 
@@ -68,6 +77,12 @@ public class LuaRedisCallback {
     }
 
     private LuaValue execute(final String operationName, final List<Slice> args) {
+        if (SCRIPT_DISALLOWED_COMMANDS.contains(operationName.toLowerCase())) {
+            //Commands that exist in real Redis but are flagged no-script. They are
+            //not (fully) modelled here, so reject them with Redis's own wording
+            //rather than the generic "Unknown Redis command".
+            throw new IllegalStateException("This Redis command is not allowed from script");
+        }
 
         final RedisOperation operation =
                 //Specific support for SELECT,
