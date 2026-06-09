@@ -171,6 +171,6 @@ public class Response {
         CR or LF (e.g. a Lua stack traceback) would break framing for strict
         clients, so collapse them to spaces.
          */
-        return String.valueOf(s).replaceAll("[\\r,\\n]", " ");
+        return String.valueOf(s).replaceAll("[\\r\\n]", " ");
     }
 }
