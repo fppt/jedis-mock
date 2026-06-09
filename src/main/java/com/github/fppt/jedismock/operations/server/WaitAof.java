@@ -28,6 +28,11 @@ class WaitAof extends AbstractRedisOperation {
     }
 
     @Override
+    protected int maxArgs() {
+        return 3;
+    }
+
+    @Override
     protected Slice response() {
         return Response.array(Response.integer(0), Response.integer(0));
     }

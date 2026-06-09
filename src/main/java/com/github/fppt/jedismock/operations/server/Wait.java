@@ -29,6 +29,11 @@ class Wait extends AbstractRedisOperation {
     }
 
     @Override
+    protected int maxArgs() {
+        return 2;
+    }
+
+    @Override
     protected Slice response() {
         return Response.integer(0);
     }
