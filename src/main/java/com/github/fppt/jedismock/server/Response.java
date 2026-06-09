@@ -44,19 +44,11 @@ public class Response {
     }
 
     public static Slice error(String s) {
-        //A RESP error reply is a single line terminated by CRLF; an embedded
-        //CR or LF (e.g. a Lua stack traceback) would break framing for strict
-        //clients, so collapse them to spaces.
-        String sanitized = s.replace('\r', ' ').replace('\n', ' ');
-        return Slice.create(String.format("-%s%s", sanitized, LINE_SEPARATOR));
+        return Slice.create(String.format("-%s%s", sanitize(s), LINE_SEPARATOR));
     }
 
     public static Slice simpleString(String s) {
-        //A RESP simple-string reply ("+...") is a single CRLF-terminated line, as
-        //produced by e.g. redis.status_reply in a Lua script; sanitize CR/LF like
-        //an error reply so an embedded newline can't break framing.
-        String sanitized = s.replace('\r', ' ').replace('\n', ' ');
-        return Slice.create(String.format("+%s%s", sanitized, LINE_SEPARATOR));
+        return Slice.create(String.format("+%s%s", sanitize(s), LINE_SEPARATOR));
     }
 
     public static Slice integer(long v) {
@@ -163,10 +155,22 @@ public class Response {
     }
 
     public static Slice clientResponse(String command, Slice response) {
-        String stringResponse = response.toString().replace("\n", "").replace("\r", "");
+        String stringResponse = sanitize(response.toString());
         if (!response.equals(SKIP)) {
             LOG.debug("Received command [{}] sending reply [{}]", command, stringResponse);
         }
         return response;
+    }
+
+    /**
+     * Null-safe string sanitizer.
+     */
+    private static String sanitize(String s) {
+        /*
+        A relpy is a single line terminated by CRLF; an embedded
+        CR or LF (e.g. a Lua stack traceback) would break framing for strict
+        clients, so collapse them to spaces.
+         */
+        return String.valueOf(s).replaceAll("[\\r,\\n]", " ");
     }
 }
