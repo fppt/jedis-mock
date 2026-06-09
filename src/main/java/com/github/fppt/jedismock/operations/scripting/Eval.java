@@ -35,6 +35,7 @@ public class Eval extends AbstractRedisOperation {
     private static final String SCRIPT_RUNTIME_ERROR = "Error running script (call to function returned nil)";
     private static final String REDIS_LUA = loadResource();
     private static final Pattern LOCATION_SEPARATOR = Pattern.compile("^(user_script:\\d+) ");
+    private static final Pattern USER_SCRIPT_LINE = Pattern.compile("@?user_script:(\\d+)");
     private static final Pattern JAVA_EXCEPTION =
             Pattern.compile("^(?:[\\w$]+\\.)+[\\w$]*(?:Exception|Error):\\s*");
     private static final Pattern ERROR_CODE = Pattern.compile("^[A-Z][A-Z0-9_]+ ");
@@ -139,13 +140,19 @@ public class Eval extends AbstractRedisOperation {
      * context. CR/LF in the message are collapsed to spaces by {@link Response#error}.
      */
     private static String scriptErrorReply(LuaError e, String sha) {
+        String raw = stripTraceback(e.getMessage());
+        //Derive the script line from luaj's location before any stripping; it is
+        //present for runtime errors ("user_script:N: ..") and command/callback
+        //errors ("user_script:N vm error: .."). Only error({err=..})/error({})
+        //tables carry no location, in which case we fall back to line 1.
+        String line = lineOf(raw);
         LuaValue obj = e.getMessageObject();
         if (obj != null && obj.istable()) {
             LuaValue err = obj.rawget("err");
             String msg = err.isnil() ? "unknown error" : err.tojstring();
-            return appendScriptContext(ensureErrorCode(msg), sha);
+            return appendScriptContext(ensureErrorCode(msg), sha, line);
         }
-        String msg = stripTraceback(e.getMessage());
+        String msg = raw;
         int vm = msg.indexOf("vm error:");
         if (vm >= 0) {
             //A Redis command/callback raised: unwrap the Java exception wrapper.
@@ -154,7 +161,13 @@ public class Eval extends AbstractRedisOperation {
             //A pure Lua runtime error (incl. error("string")): keep the location.
             msg = fixLuaWording(normalizeLocation(stripAtMarker(msg)));
         }
-        return appendScriptContext(ensureErrorCode(msg), sha);
+        return appendScriptContext(ensureErrorCode(msg), sha, line);
+    }
+
+    private static String lineOf(String message) {
+        Matcher m = USER_SCRIPT_LINE.matcher(message);
+        //Fall back to 1 only when luaj gives no location (e.g. an error() table).
+        return m.find() ? m.group(1) : "1";
     }
 
     private static String stripAtMarker(String msg) {
@@ -168,8 +181,8 @@ public class Eval extends AbstractRedisOperation {
         return LOCATION_SEPARATOR.matcher(msg).replaceFirst("$1: ");
     }
 
-    private static String appendScriptContext(String msg, String sha) {
-        return msg + " script: " + sha + ", on @user_script:1.";
+    private static String appendScriptContext(String msg, String sha, String line) {
+        return msg + " script: " + sha + ", on @user_script:" + line + ".";
     }
 
     private static String stripJavaExceptionClass(String msg) {

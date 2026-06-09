@@ -163,6 +163,18 @@ class ScriptingTypeConversionTest {
     }
 
     @Test
+    void scriptContextReportsTheActualErrorLine() {
+        //The "script: <sha>, on @user_script:N." context must carry the real line,
+        //not a hard-coded 1. The error() is on line 3 of the script.
+        assertThatThrownBy(() -> jedis.eval("local a = 1\nlocal b = 2\nerror('boom')", 0))
+                .hasMessageContaining("user_script:3: boom")
+                .hasMessageEndingWith("on @user_script:3.");
+        //A redis.call failure on line 2 keeps its line through the vm-error unwrap.
+        assertThatThrownBy(() -> jedis.eval("local a = 1\nredis.call('incr')", 0))
+                .hasMessageEndingWith("on @user_script:2.");
+    }
+
+    @Test
     void nonStringOrIntegerCallArgumentIsRejected() {
         //"LUA test pcall with non string/integer arg": a table argument to
         //redis.call is rejected before dispatch...
