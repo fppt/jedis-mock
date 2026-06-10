@@ -44,7 +44,11 @@ public class Response {
     }
 
     public static Slice error(String s) {
-        return Slice.create(String.format("-%s%s", s, LINE_SEPARATOR));
+        return Slice.create(String.format("-%s%s", sanitize(s), LINE_SEPARATOR));
+    }
+
+    public static Slice simpleString(String s) {
+        return Slice.create(String.format("+%s%s", sanitize(s), LINE_SEPARATOR));
     }
 
     public static Slice integer(long v) {
@@ -151,10 +155,21 @@ public class Response {
     }
 
     public static Slice clientResponse(String command, Slice response) {
-        String stringResponse = response.toString().replace("\n", "").replace("\r", "");
-        if (!response.equals(SKIP)) {
-            LOG.debug("Received command [{}] sending reply [{}]", command, stringResponse);
+        if (LOG.isDebugEnabled() && !response.equals(SKIP)) {
+            LOG.debug("Received command [{}] sending reply [{}]", command, sanitize(response.toString()));
         }
         return response;
+    }
+
+    /**
+     * Null-safe string sanitizer.
+     */
+    private static String sanitize(String s) {
+        /*
+        A reply is a single line terminated by CRLF; an embedded
+        CR or LF (e.g. a Lua stack traceback) would break framing for strict
+        clients, so collapse them to spaces.
+         */
+        return String.valueOf(s).replace('\r', ' ').replace('\n', ' ');
     }
 }

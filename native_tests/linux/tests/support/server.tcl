@@ -250,6 +250,12 @@ proc start_server {options {code undefined}} {
             "keep_persistence" {
                 set keep_persistence $value
             }
+            "args" {
+                # Extra server command-line args (e.g. --lua-enable-insecure-api).
+                # jedis-mock takes no CLI args, so accept and ignore them; this also
+                # lets denytag filtering below skip such stanzas instead of erroring
+                # here on an option we don't model.
+            }
             default {
                 error "Unknown option $option"
             }

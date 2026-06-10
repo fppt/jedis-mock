@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.github.fppt.jedismock.operations.scripting.Eval.embedLuaListToValue;
 
@@ -25,6 +26,11 @@ public class LuaRedisCallback {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LuaRedisCallback.class);
     private static final String NOSCRIPT_PREFIX = "NOSCRIPT ";
+    private static final String WRONG_ARGS_FROM_SCRIPT =
+            "Wrong number of args calling command from script";
+    //Commands real Redis flags as not-callable from a script and which jedis-mock
+    //does not (fully) model. Kept lower-case for case-insensitive lookup.
+    private static final Set<String> SCRIPT_DISALLOWED_COMMANDS = Collections.singleton("cluster");
 
     private final OperationExecutorState state;
 
@@ -33,14 +39,22 @@ public class LuaRedisCallback {
     }
 
     public LuaValue call(LuaValue args) {
+        if (args.length() < 1) {
+            throw new IllegalStateException("Please specify at least one argument for this redis lib call");
+        }
         String operationName = args.get(1).tojstring();
         List<Slice> a = new ArrayList<>();
         for (int i = 2; i <= args.length(); i++) {
             LuaValue arg = args.get(i);
             if (arg instanceof LuaString) {
                 a.add(Slice.create(((LuaString) arg).m_bytes));
+            } else if (arg.isnumber()) {
+                a.add(Slice.create(arg.tojstring()));
             } else {
-                a.add(Slice.create(args.get(i).tojstring()));
+                //Reject tables/booleans/nil before dispatch, as real Redis does,
+                //so the cached argv array is left intact for the next command.
+                throw new IllegalStateException(
+                        "Command arguments must be strings or integers");
             }
         }
         return execute(operationName, a);
@@ -51,12 +65,18 @@ public class LuaRedisCallback {
             return call(args);
         } catch (final Exception e) {
             LuaTable errorTable = new LuaTable();
-            errorTable.set(LuaValue.valueOf("err"), LuaValue.valueOf(e.getMessage()));
+            //Some exceptions carry no message; String.valueOf avoids an NPE in valueOf.
+            errorTable.set(LuaValue.valueOf("err"), LuaValue.valueOf(String.valueOf(e.getMessage())));
             return errorTable;
         }
     }
 
     public String sha1hex(String x) {
+        if (x == null) {
+            //redis.sha1hex() with no argument: real Redis reports an arity error
+            //instead of crashing (here, a NullPointerException down the stack).
+            throw new IllegalStateException("wrong number of arguments to redis.sha1hex()");
+        }
         return Script.getScriptSHA(x);
     }
 
@@ -65,28 +85,54 @@ public class LuaRedisCallback {
     }
 
     private LuaValue execute(final String operationName, final List<Slice> args) {
+        if (SCRIPT_DISALLOWED_COMMANDS.contains(operationName.toLowerCase())) {
+            //Commands that exist in the server but are flagged no-script. They are
+            //not (fully) modelled here, so reject them with the server's own
+            //wording rather than the generic "Unknown command".
+            throw new IllegalStateException("This command is not allowed from script");
+        }
 
         final RedisOperation operation =
                 //Specific support for SELECT,
                 //see https://redis.io/docs/manual/programmability/lua-api/#using-selectcommandsselect-inside-scripts
                 "select".equalsIgnoreCase(operationName) ? new Select(state, args) :
                         CommandFactory.buildOperation(operationName.toLowerCase(), true, state, args);
-        if (operation != null) {
-            throwOnUnsupported(operation);
-            Slice result = operation.execute();
-            if (Response.NULL.equals(result)) {
-                return LuaValue.FALSE;
-            } else {
-                byte[] data = result.data();
-                return toLuaValue(new RedisInputStream(new ByteArrayInputStream(data)));
-            }
+        if (operation == null) {
+            throw new IllegalStateException("Unknown command called from script");
         }
-        throw new IllegalStateException("Operation not implemented!");
+        throwOnUnsupported(operation);
+        final Slice result;
+        try {
+            result = operation.execute();
+        } catch (IllegalArgumentException e) {
+            //Some commands signal an arity mismatch by throwing (e.g. INCR with no
+            //key trips an IndexOutOfBounds, wrapped here) rather than returning an
+            //error reply; normalise it like the returned-error case below.
+            if (isArityError(e.getMessage())) {
+                throw new IllegalStateException(WRONG_ARGS_FROM_SCRIPT);
+            }
+            throw e;
+        }
+        if (result.toString().startsWith("-") && isArityError(result.toString())) {
+            //Real Redis rejects an arity mismatch before dispatch with this
+            //script-specific message; translate the command's own arity error.
+            throw new IllegalStateException(WRONG_ARGS_FROM_SCRIPT);
+        }
+        if (Response.NULL.equals(result)) {
+            return LuaValue.FALSE;
+        } else {
+            byte[] data = result.data();
+            return toLuaValue(new RedisInputStream(new ByteArrayInputStream(data)));
+        }
+    }
+
+    private static boolean isArityError(String message) {
+        return message != null && message.contains("wrong number of arguments");
     }
 
     private static void throwOnUnsupported(RedisOperation operation) {
         if (operation.getClass().equals(Eval.class)) {
-            throw new IllegalStateException("This Redis command is not allowed from scripts");
+            throw new IllegalStateException("This command is not allowed from scripts");
         }
     }
 
@@ -94,7 +140,12 @@ public class LuaRedisCallback {
         byte b = is.readByte();
         switch (b) {
             case '+':
-                return LuaValue.valueOf(processStatusCodeReply(is));
+                //A status reply ("+OK") converts to a Lua table {ok="OK"}, not a
+                //bare string — matching real Redis, where scripts read
+                //redis.call('set', ...)['ok'].
+                LuaTable statusTable = new LuaTable();
+                statusTable.set(LuaValue.valueOf("ok"), LuaValue.valueOf(processStatusCodeReply(is)));
+                return statusTable;
             case '$':
                 return LuaValue.valueOf(processBulkReply(is));
             case '*':
@@ -151,7 +202,9 @@ public class LuaRedisCallback {
                 try {
                     ret.add(toLuaValue(is));
                 } catch (JedisDataException e) {
-                    System.err.println(e.getMessage());
+                    //An error reply nested inside a multi-bulk is dropped from the
+                    //resulting Lua array (matching how scripts see partial errors).
+                    LOG.warn("Skipping error element in multi-bulk reply: {}", e.getMessage());
                 }
             }
             return ret;

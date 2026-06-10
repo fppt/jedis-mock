@@ -25,6 +25,7 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
     protected List<Slice> keys;
     private final Object lock;
     private final boolean isInTransaction;
+    private final boolean isInScript;
     private final OperationExecutorState state;
     private final BlockingManager blockingManager;
 
@@ -32,6 +33,10 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
         super(state.base(), params);
         this.lock = state.lock();
         this.isInTransaction = state.isTransactionModeOn();
+        //A blocking command invoked from a Lua script must not block: real Redis
+        //runs it non-blockingly (scripts can't block). A script's redis.call is
+        //dispatched while the script is running, so this is true exactly then.
+        this.isInScript = state.scriptingManager().isRunning();
         this.state = state;
         this.blockingManager = state.blockingManager();
     }
@@ -58,8 +63,9 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
 
         Slice source = getKey(keys, true);
 
-        if (source != null || isInTransaction) {
-            //Element already available, or inside MULTI where we must not block.
+        if (source != null || isInTransaction || isInScript) {
+            //Element already available, or we must not block (inside MULTI, or
+            //inside a Lua script — neither may block in real Redis).
             if (source == null) {
                 return Response.NULL_ARRAY;
             }

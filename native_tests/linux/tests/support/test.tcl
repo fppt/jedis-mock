@@ -53,6 +53,39 @@ proc assert_lessthan {value expected {detail ""}} {
     }
 }
 
+proc assert_lessthan_equal {value expected {detail ""}} {
+    if {!($value <= $expected)} {
+        if {$detail ne ""} {
+            set detail "(detail: $detail)"
+        } else {
+            set detail "(context: [info frame -1])"
+        }
+        error "assertion:Expected '$value' to be lessthan or equal to '$expected' $detail"
+    }
+}
+
+proc assert_morethan {value expected {detail ""}} {
+    if {!($value > $expected)} {
+        if {$detail ne ""} {
+            set detail "(detail: $detail)"
+        } else {
+            set detail "(context: [info frame -1])"
+        }
+        error "assertion:Expected '$value' to be morethan to '$expected' $detail"
+    }
+}
+
+proc assert_morethan_equal {value expected {detail ""}} {
+    if {!($value >= $expected)} {
+        if {$detail ne ""} {
+            set detail "(detail: $detail)"
+        } else {
+            set detail "(context: [info frame -1])"
+        }
+        error "assertion:Expected '$value' to be morethan or equal to '$expected' $detail"
+    }
+}
+
 proc assert_range {value min max {detail ""}} {
     if {!($value <= $max && $value >= $min)} {
         if {$detail ne ""} {
@@ -127,6 +160,20 @@ proc test {name code {okpattern undefined} {options undefined}} {
             }
         }
         if {$matched < 1} {
+            incr ::num_aborted
+            send_data_packet $::test_server_fd ignore $name
+            return
+        }
+    }
+
+    # abort if any denied tag is present (a test's own tags, the 4th arg, are not
+    # otherwise checked against denytags -- only start_server/tags{} blocks are)
+    set _test_tags $::tags
+    if {$options ne "undefined"} {
+        set _test_tags [concat $_test_tags $options]
+    }
+    foreach tag $::denytags {
+        if {[lsearch $_test_tags $tag] >= 0} {
             incr ::num_aborted
             send_data_packet $::test_server_fd ignore $name
             return

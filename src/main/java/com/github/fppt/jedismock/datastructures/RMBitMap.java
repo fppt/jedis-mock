@@ -36,7 +36,7 @@ public class RMBitMap extends StringCompatible {
 
     @Override
     public void raiseTypeCastException() {
-        throw new WrongValueTypeException("WRONGTYPE RMBitMap value is used in the wrong place");
+        throw new WrongValueTypeException("WRONGTYPE Operation against a key holding the wrong kind of value");
     }
 
     @Override

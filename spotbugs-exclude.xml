@@ -37,7 +37,18 @@
         </Or>
     </Match>
     <Match>
-        <Package name="com.github.fppt.jedismock.operations.scripting.cjson"/>
+        <!--The read-only tables and sandbox metamethod closures inherit
+            LuaValue's identity-based equals() without overriding hashCode().
+            That is consistent with Object's identity hashCode, and these objects
+            are only ever stored as map/table *values* (or singletons), never as
+            hash keys. The keys used when building these tables are LuaStrings
+            (LuaValue.valueOf("..."), LuaValue.INDEX/NEWINDEX), which do define
+            both equals() and hashCode(), so the missing hashCode here is moot.-->
+
+        <Or>
+            <Package name="com.github.fppt.jedismock.operations.scripting.cjson"/>
+            <Package name="com.github.fppt.jedismock.operations.scripting"/>
+        </Or>
         <Bug pattern="HE_INHERITS_EQUALS_USE_HASHCODE"/>
     </Match>
 </FindBugsFilter>
