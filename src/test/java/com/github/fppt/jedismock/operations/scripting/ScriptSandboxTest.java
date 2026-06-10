@@ -96,6 +96,13 @@ class ScriptSandboxTest {
     }
 
     @Test
+    void getmetatableOfTableWithoutMetatableReturnsNil() {
+        //Regression: guarded getmetatable must coalesce luaj's Java null (a table
+        //with no metatable) to Lua nil, not hand null back to the VM (NPE).
+        assertThat(jedis.eval("return getmetatable({}) == nil", 0)).isEqualTo(1L);
+    }
+
+    @Test
     void dangerousGlobalsAreRemoved() {
         for (String name : new String[]{"loadfile", "dofile", "print", "setfenv", "getfenv", "newproxy"}) {
             assertThatThrownBy(() -> jedis.eval(name + "('x')", 0))

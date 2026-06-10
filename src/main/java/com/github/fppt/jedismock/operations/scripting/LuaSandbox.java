@@ -165,7 +165,13 @@ final class LuaSandbox {
             public LuaValue call(LuaValue value) {
                 //Only tables expose their metatable; for basic types return nil so
                 //getmetatable(<basic>).__index = ... fails with "index a nil value".
-                return value.istable() ? value.getmetatable() : LuaValue.NIL;
+                if (!value.istable()) {
+                    return LuaValue.NIL;
+                }
+                //getmetatable() yields a Java null (not NIL) for a table without a
+                //metatable; never return that to the VM.
+                LuaValue metatable = value.getmetatable();
+                return metatable != null ? metatable : LuaValue.NIL;
             }
         };
     }

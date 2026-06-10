@@ -65,7 +65,8 @@ public class LuaRedisCallback {
             return call(args);
         } catch (final Exception e) {
             LuaTable errorTable = new LuaTable();
-            errorTable.set(LuaValue.valueOf("err"), LuaValue.valueOf(e.getMessage()));
+            //Some exceptions carry no message; String.valueOf avoids an NPE in valueOf.
+            errorTable.set(LuaValue.valueOf("err"), LuaValue.valueOf(String.valueOf(e.getMessage())));
             return errorTable;
         }
     }
@@ -201,7 +202,9 @@ public class LuaRedisCallback {
                 try {
                     ret.add(toLuaValue(is));
                 } catch (JedisDataException e) {
-                    System.err.println(e.getMessage());
+                    //An error reply nested inside a multi-bulk is dropped from the
+                    //resulting Lua array (matching how scripts see partial errors).
+                    LOG.warn("Skipping error element in multi-bulk reply: {}", e.getMessage());
                 }
             }
             return ret;

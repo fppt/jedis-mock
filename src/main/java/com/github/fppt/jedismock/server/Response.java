@@ -155,9 +155,8 @@ public class Response {
     }
 
     public static Slice clientResponse(String command, Slice response) {
-        String stringResponse = sanitize(response.toString());
-        if (!response.equals(SKIP)) {
-            LOG.debug("Received command [{}] sending reply [{}]", command, stringResponse);
+        if (LOG.isDebugEnabled() && !response.equals(SKIP)) {
+            LOG.debug("Received command [{}] sending reply [{}]", command, sanitize(response.toString()));
         }
         return response;
     }
@@ -167,7 +166,7 @@ public class Response {
      */
     private static String sanitize(String s) {
         /*
-        A relpy is a single line terminated by CRLF; an embedded
+        A reply is a single line terminated by CRLF; an embedded
         CR or LF (e.g. a Lua stack traceback) would break framing for strict
         clients, so collapse them to spaces.
          */
