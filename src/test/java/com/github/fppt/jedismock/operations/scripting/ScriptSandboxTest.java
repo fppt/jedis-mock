@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -157,8 +158,23 @@ class ScriptSandboxTest {
                 }
             });
             assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
-                Thread.sleep(500);
-                jedis.scriptKill();
+                //SCRIPT KILL replies NOTBUSY until the runaway script has actually
+                //started, so retry on NOTBUSY only (any other error is a real
+                //failure) rather than guessing a fixed startup delay. The mock's
+                //SCRIPT KILL blocks until the script has stopped, so once it
+                //succeeds PING is immediately PONG. The outer preemptive timeout
+                //is the deadlock guard: if SCRIPT KILL ever wedged, it fires.
+                while (true) {
+                    try {
+                        jedis.scriptKill();
+                        break;
+                    } catch (JedisDataException e) {
+                        if (e.getMessage() == null || !e.getMessage().contains("NOTBUSY")) {
+                            throw e;
+                        }
+                        Thread.sleep(50);
+                    }
+                }
                 assertThat(jedis.ping()).isEqualTo("PONG");
             });
         } finally {
