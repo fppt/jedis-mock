@@ -27,7 +27,7 @@ public class LuaRedisCallback {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LuaRedisCallback.class);
     private static final String NOSCRIPT_PREFIX = "NOSCRIPT ";
     private static final String WRONG_ARGS_FROM_SCRIPT =
-            "Wrong number of args calling Redis command from script";
+            "Wrong number of args calling command from script";
     //Commands real Redis flags as not-callable from a script and which jedis-mock
     //does not (fully) model. Kept lower-case for case-insensitive lookup.
     private static final Set<String> SCRIPT_DISALLOWED_COMMANDS = Collections.singleton("cluster");
@@ -54,7 +54,7 @@ public class LuaRedisCallback {
                 //Reject tables/booleans/nil before dispatch, as real Redis does,
                 //so the cached argv array is left intact for the next command.
                 throw new IllegalStateException(
-                        "Lua redis lib command arguments must be strings or integers");
+                        "Command arguments must be strings or integers");
             }
         }
         return execute(operationName, a);
@@ -85,10 +85,10 @@ public class LuaRedisCallback {
 
     private LuaValue execute(final String operationName, final List<Slice> args) {
         if (SCRIPT_DISALLOWED_COMMANDS.contains(operationName.toLowerCase())) {
-            //Commands that exist in real Redis but are flagged no-script. They are
-            //not (fully) modelled here, so reject them with Redis's own wording
-            //rather than the generic "Unknown Redis command".
-            throw new IllegalStateException("This Redis command is not allowed from script");
+            //Commands that exist in the server but are flagged no-script. They are
+            //not (fully) modelled here, so reject them with the server's own
+            //wording rather than the generic "Unknown command".
+            throw new IllegalStateException("This command is not allowed from script");
         }
 
         final RedisOperation operation =
@@ -97,7 +97,7 @@ public class LuaRedisCallback {
                 "select".equalsIgnoreCase(operationName) ? new Select(state, args) :
                         CommandFactory.buildOperation(operationName.toLowerCase(), true, state, args);
         if (operation == null) {
-            throw new IllegalStateException("Unknown Redis command called from script");
+            throw new IllegalStateException("Unknown command called from script");
         }
         throwOnUnsupported(operation);
         final Slice result;
@@ -131,7 +131,7 @@ public class LuaRedisCallback {
 
     private static void throwOnUnsupported(RedisOperation operation) {
         if (operation.getClass().equals(Eval.class)) {
-            throw new IllegalStateException("This Redis command is not allowed from scripts");
+            throw new IllegalStateException("This command is not allowed from scripts");
         }
     }
 

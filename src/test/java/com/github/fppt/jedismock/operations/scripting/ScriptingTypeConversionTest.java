@@ -88,15 +88,15 @@ class ScriptingTypeConversionTest {
     @Test
     void redisCallOnUnknownCommandIsAnError() {
         //"EVAL - redis.call variant raises a Lua error on Redis cmd error":
-        //nosuchcommand -> "Unknown Redis command called from script".
+        //nosuchcommand -> "Unknown command called from script" (Valkey wording).
         assertThatThrownBy(() -> jedis.eval("redis.call('nosuchcommand')", 0))
-                .hasMessageContaining("Unknown Redis");
+                .hasMessageContaining("Unknown command");
     }
 
     @Test
     void redisCallWithWrongArityIsAnError() {
         //GET takes exactly one key; extra args are an arity error, surfaced to
-        //the script as "Wrong number of args calling Redis command from script".
+        //the script as "Wrong number of args calling command from script".
         assertThatThrownBy(() -> jedis.eval("redis.call('get','a','b','c')", 0))
                 .hasMessageContaining("number of args");
     }
@@ -125,11 +125,11 @@ class ScriptingTypeConversionTest {
         //"Scripts can handle commands with incorrect arity": the reply is a
         //single Redis error, ERR-prefixed, without any Java/luaj wrapper.
         assertThatThrownBy(() -> jedis.eval("redis.call('set','invalid')", 0))
-                .hasMessageStartingWith("ERR Wrong number of args calling Redis command from script");
+                .hasMessageStartingWith("ERR Wrong number of args calling command from script");
         //INCR with no key signals the arity error by throwing rather than
         //returning an error reply; it must be normalised the same way.
         assertThatThrownBy(() -> jedis.eval("redis.call('incr')", 0))
-                .hasMessageStartingWith("ERR Wrong number of args calling Redis command from script");
+                .hasMessageStartingWith("ERR Wrong number of args calling command from script");
     }
 
     @Test
@@ -179,7 +179,7 @@ class ScriptingTypeConversionTest {
         //"LUA test pcall with non string/integer arg": a table argument to
         //redis.call is rejected before dispatch...
         assertThatThrownBy(() -> jedis.eval("local x={}\nreturn redis.call('ping', x)", 0))
-                .hasMessageStartingWith("ERR Lua redis lib command arguments must be strings or integers");
+                .hasMessageStartingWith("ERR Command arguments must be strings or integers");
         //...and the next command still works (cached argv survived).
         assertThat(jedis.eval("return redis.call('ping','asdf')", 0)).isEqualTo("asdf");
     }

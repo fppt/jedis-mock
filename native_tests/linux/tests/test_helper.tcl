@@ -174,6 +174,16 @@ proc redis_client {args} {
     return $client
 }
 
+# Valkey renamed these helpers (redis_* -> valkey_*); the ported Valkey test
+# suites use the new names. Alias them to our existing implementations.
+proc valkey_deferring_client {args} {
+    return [redis_deferring_client {*}$args]
+}
+
+proc valkey_client {args} {
+    return [redis_client {*}$args]
+}
+
 # Provide easy access to INFO properties. Same semantic as "proc r".
 proc s {args} {
     set level 0
