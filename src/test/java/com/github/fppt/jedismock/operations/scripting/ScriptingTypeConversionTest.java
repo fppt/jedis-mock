@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -72,7 +73,7 @@ class ScriptingTypeConversionTest {
     @Test
     void waitAofReturnsZeroAcks() {
         //WAITAOF numlocal numreplicas timeout -> [localAcks, replicaAcks].
-        Object result = jedis.sendCommand(() -> "WAITAOF".getBytes(),
+        Object result = jedis.sendCommand("WAITAOF"::getBytes,
                 "0".getBytes(), "0".getBytes(), "0".getBytes());
 
         assertThat(result).isEqualTo(Arrays.asList(0L, 0L));
@@ -115,7 +116,7 @@ class ScriptingTypeConversionTest {
         //"Verify negative arg count is error instead of crash (issue #1842)":
         //a negative numkeys must be rejected cleanly, not leak a Java exception.
         //Sent raw so the client doesn't reject the negative count first.
-        assertThatThrownBy(() -> jedis.sendCommand(() -> "EVAL".getBytes(),
+        assertThatThrownBy(() -> jedis.sendCommand("EVAL"::getBytes,
                 "return 'hello'", "-12"))
                 .hasMessage("ERR Number of keys can't be negative");
     }
@@ -136,10 +137,11 @@ class ScriptingTypeConversionTest {
     void statusReplyIsASimpleStringReply() {
         //"LUA redis.status_reply API": redis.status_reply(x) is a status (simple
         //string) reply, "+x", not a bulk string. Read raw to see the type byte.
-        Object raw = jedis.sendCommand(() -> "EVAL".getBytes(),
+        Object raw = jedis.sendCommand("EVAL"::getBytes,
                 "return redis.status_reply('MY_OK_CODE custom msg')", "0");
-        assertThat(new String((byte[]) raw, java.nio.charset.StandardCharsets.UTF_8))
+        assertThat(new String((byte[]) raw, UTF_8))
                 .isEqualTo("MY_OK_CODE custom msg");
+    }
 
     @Test
     void errorReplyTablePassedToErrorIsUnwrappedAndSanitized() {
