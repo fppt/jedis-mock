@@ -51,4 +51,22 @@
         </Or>
         <Bug pattern="HE_INHERITS_EQUALS_USE_HASHCODE"/>
     </Match>
+    <Match>
+        <!--New detector as of Spotbugs 4.10. The codebase intentionally widens
+            the visibility of inherited methods from protected to public (e.g.
+            ExpiringStorage.delete()/clear() overridden as public in the storage
+            and data-structure subclasses, the blocking-list poppers, the ZRange
+            bound parsers, Eval.response()). These overrides are deliberately
+            part of the public API of their subclasses and are called externally.-->
+        <Bug pattern="IAOM_DO_NOT_INCREASE_METHOD_ACCESSIBILITY"/>
+    </Match>
+    <Match>
+        <!--New detector as of Spotbugs 4.10. These constructors merely validate
+            their arguments (Objects.requireNonNull) and so may throw, which the
+            detector flags as a potential finalizer attack. None of these classes
+            define a finalizer, and the canonical remedy (making the class final)
+            is not possible here: ExpiringStorage and RedisBase are base classes,
+            and the remaining ones are simple value/data-structure types.-->
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
 </FindBugsFilter>
