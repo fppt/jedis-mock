@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.github.fppt.jedismock.Utils.convertToInteger;
 import static com.github.fppt.jedismock.operations.scripting.Script.getScriptSHA;
 
 @RedisCommand("eval")
@@ -58,7 +59,8 @@ public class Eval extends AbstractRedisOperation {
         final String sha = getScriptSHA(script);
 
         this.base().addCachedLuaScript(sha, script);
-        int keysNum = com.github.fppt.jedismock.Utils.convertToInteger(params().get(1).toString());
+        int keysNum = convertToInteger(params().get(1).toString());
+        final List<LuaValue> args = getLuaValues(params().subList(2, params().size()));
         if (keysNum < 0) {
             return Response.error("ERR Number of keys can't be negative");
         }
