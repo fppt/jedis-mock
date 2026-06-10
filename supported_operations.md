@@ -19,8 +19,8 @@
 
 |     |     |     |     |     |     |
 | --- | --- | --- | --- | --- | --- |
-| :x: [asking](https://valkey.io/commands/asking/) | :heavy_check_mark: [echo](https://valkey.io/commands/echo/) | :heavy_check_mark: [ping](https://valkey.io/commands/ping/) | :x: [readonly](https://valkey.io/commands/readonly/) | :x: [reset](https://valkey.io/commands/reset/) | :x: [wait](https://valkey.io/commands/wait/) |
-| :heavy_check_mark: [auth](https://valkey.io/commands/auth/) | :heavy_check_mark: [hello](https://valkey.io/commands/hello/) | :heavy_check_mark: [quit](https://valkey.io/commands/quit/) | :x: [readwrite](https://valkey.io/commands/readwrite/) | :heavy_check_mark: [select](https://valkey.io/commands/select/) | :x: [waitaof](https://valkey.io/commands/waitaof/) |
+| :x: [asking](https://valkey.io/commands/asking/) | :heavy_check_mark: [echo](https://valkey.io/commands/echo/) | :heavy_check_mark: [ping](https://valkey.io/commands/ping/) | :x: [readonly](https://valkey.io/commands/readonly/) | :x: [reset](https://valkey.io/commands/reset/) | :heavy_check_mark: [wait](https://valkey.io/commands/wait/) |
+| :heavy_check_mark: [auth](https://valkey.io/commands/auth/) | :heavy_check_mark: [hello](https://valkey.io/commands/hello/) | :heavy_check_mark: [quit](https://valkey.io/commands/quit/) | :x: [readwrite](https://valkey.io/commands/readwrite/) | :heavy_check_mark: [select](https://valkey.io/commands/select/) | :heavy_check_mark: [waitaof](https://valkey.io/commands/waitaof/) |
 | :x: [command](https://valkey.io/commands/command/) |  |  |  |  |  |
 
 ## Geo
