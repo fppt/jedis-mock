@@ -138,9 +138,8 @@ class ScriptingTypeConversionTest {
         //string) reply, "+x", not a bulk string. Read raw to see the type byte.
         Object raw = jedis.sendCommand(() -> "EVAL".getBytes(),
                 "return redis.status_reply('MY_OK_CODE custom msg')", "0");
-        //Jedis decodes a simple-string reply to the bare payload.
-        assertThat(new String((byte[]) raw)).isEqualTo("MY_OK_CODE custom msg");
-    }
+        assertThat(new String((byte[]) raw, java.nio.charset.StandardCharsets.UTF_8))
+                .isEqualTo("MY_OK_CODE custom msg");
 
     @Test
     void errorReplyTablePassedToErrorIsUnwrappedAndSanitized() {

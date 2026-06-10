@@ -58,9 +58,7 @@ public class Eval extends AbstractRedisOperation {
         final String sha = getScriptSHA(script);
 
         this.base().addCachedLuaScript(sha, script);
-
-        int keysNum = Integer.parseInt(params().get(1).toString());
-        final List<LuaValue> args = getLuaValues(params().subList(2, params().size()));
+        int keysNum = com.github.fppt.jedismock.Utils.convertToInteger(params().get(1).toString());
         if (keysNum < 0) {
             return Response.error("ERR Number of keys can't be negative");
         }
