@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.datastructures;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,7 @@ public class RMZSet implements RMDataStructure {
     private final Map<Slice, Double> scores = new HashMap<>();
     private final NavigableSet<ZSetEntry> entries = new TreeSet<>();
 
-    public Double put(Slice value, double score) {
+    public @Nullable Double put(Slice value, double score) {
         Double previous = scores.put(value, score);
         if (previous != null) {
             entries.remove(new ZSetEntry(previous, value));
@@ -24,7 +25,7 @@ public class RMZSet implements RMDataStructure {
         return previous;
     }
 
-    public Double getScore(Slice value) {
+    public @Nullable Double getScore(Slice value) {
         return scores.get(value);
     }
 

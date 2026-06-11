@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.server;
 
+import org.jspecify.annotations.Nullable;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisOperation;
@@ -8,6 +9,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.ScriptingManager;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.List;
 
 public class MockExecutor {
@@ -59,7 +61,8 @@ public class MockExecutor {
         //command queued in that transaction could never get the BUSY error that
         //must dirty it (so EXEC would not abort, as real Redis requires).
         if ("multi".equals(name)) {
-            return CommandFactory.buildOperation(name, false, state, commandParams).execute();
+            return Objects.requireNonNull(
+                    CommandFactory.buildOperation(name, false, state, commandParams)).execute();
         }
 
         //BUSY gate. While another connection runs a Lua script we must not block
@@ -120,7 +123,7 @@ public class MockExecutor {
      *
      * @return the BUSY reply Slice, or {@code null} to proceed normally.
      */
-    private static Slice awaitScriptOrBusy(OperationExecutorState state, String name) {
+    private static @Nullable Slice awaitScriptOrBusy(OperationExecutorState state, String name) {
         ScriptingManager scripting = state.scriptingManager();
         while (scripting.isRunning()) {
             if (scripting.isBusy()) {

@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.operations.scripting.cjson;
 
 import com.google.gson.Gson;
+import org.jspecify.annotations.Nullable;
 import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -37,7 +38,7 @@ class Decode extends OneArgFunction {
         return toDecode.substring(1, toDecode.length() - 1);
     }
 
-    private Object toJavaObject(String value) {
+    private @Nullable Object toJavaObject(String value) {
         if (isNull(value)) {
             return null;
         }
@@ -53,7 +54,7 @@ class Decode extends OneArgFunction {
         return gson.fromJson(value, Object.class);
     }
 
-    private static LuaValue coerceToLuaValue(Object object) {
+    private static LuaValue coerceToLuaValue(@Nullable Object object) {
         if (object instanceof List<?>) {
             List<?> list = (List<?>) object;
             LuaTable table = LuaValue.tableOf(list.size(), 0);

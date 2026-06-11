@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.storage.BlockingManager;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.storage.RedisConfiguration;
 import com.github.fppt.jedismock.storage.ScriptingManager;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -31,16 +32,16 @@ public class RedisServer {
     private static final String NOT_RUNNING = "JedisMock is not running";
 
     private final int bindPort;
-    private final InetAddress bindAddress;
+    private final @Nullable InetAddress bindAddress;
     private final Map<Integer, RedisBase> redisBases;
     private final BlockingManager blockingManager = new BlockingManager();
     private final ScriptingManager scriptingManager = new ScriptingManager();
     private final RedisConfiguration configuration = new RedisConfiguration();
-    private volatile ExecutorService singleThreadPool;
-    private volatile RedisServiceJob service;
+    private volatile @Nullable ExecutorService singleThreadPool;
+    private volatile @Nullable RedisServiceJob service;
     private volatile Clock clock = Clock.systemDefaultZone();
     private volatile ServiceOptions options = ServiceOptions.defaultOptions();
-    private volatile Future<Void> serviceFinalization;
+    private volatile @Nullable Future<Void> serviceFinalization;
 
     public RedisServer() {
         this(0);
@@ -51,7 +52,7 @@ public class RedisServer {
         this(port, null);
     }
 
-    public RedisServer(int port, InetAddress address) {
+    public RedisServer(int port, @Nullable InetAddress address) {
         this.bindPort = port;
         this.bindAddress = address;
         this.redisBases = new HashMap<>();
@@ -66,7 +67,7 @@ public class RedisServer {
         return new RedisServer(port);
     }
 
-    public static RedisServer newRedisServer(int port, InetAddress address) {
+    public static RedisServer newRedisServer(int port, @Nullable InetAddress address) {
         return new RedisServer(port, address);
     }
 
@@ -91,18 +92,23 @@ public class RedisServer {
     }
 
     public void stop() throws IOException {
-        Objects.requireNonNull(service, NOT_RUNNING);
-        service.stop();
+        RedisServiceJob runningService = service;
+        Future<Void> finalization = serviceFinalization;
+        ExecutorService pool = singleThreadPool;
+        if (runningService == null || finalization == null || pool == null) {
+            throw new NullPointerException(NOT_RUNNING);
+        }
+        runningService.stop();
         service = null;
         try {
-            serviceFinalization.get();
+            finalization.get();
         } catch (ExecutionException e) {
             //Do nothing: it's a normal behaviour when the service was stopped
         } catch (InterruptedException e) {
             System.err.println("Jedis-mock interrupted while stopping");
             Thread.currentThread().interrupt();
         } finally {
-            singleThreadPool.shutdownNow();
+            pool.shutdownNow();
         }
     }
 
@@ -111,13 +117,13 @@ public class RedisServer {
     }
 
     public String getHost() {
-        Objects.requireNonNull(service, NOT_RUNNING);
-        return service.getServer().getInetAddress().getHostAddress();
+        RedisServiceJob runningService = Objects.requireNonNull(service, NOT_RUNNING);
+        return runningService.getServer().getInetAddress().getHostAddress();
     }
 
     public int getBindPort() {
-        Objects.requireNonNull(service, NOT_RUNNING);
-        return service.getServer().getLocalPort();
+        RedisServiceJob runningService = Objects.requireNonNull(service, NOT_RUNNING);
+        return runningService.getServer().getLocalPort();
     }
 
     Map<Integer, RedisBase> getRedisBases() {

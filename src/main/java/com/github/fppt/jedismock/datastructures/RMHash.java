@@ -2,6 +2,7 @@ package com.github.fppt.jedismock.datastructures;
 
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.storage.ExpiringStorage;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Clock;
 import java.util.Collections;
@@ -51,7 +52,7 @@ public class RMHash extends ExpiringStorage implements RMDataStructure {
         return verifyKey(key);
     }
 
-    public Slice get(Slice key) {
+    public @Nullable Slice get(Slice key) {
         if (!verifyKey(key)) {
             return null;
         }

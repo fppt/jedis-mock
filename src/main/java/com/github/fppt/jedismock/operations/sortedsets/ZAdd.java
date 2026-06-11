@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
+import java.util.Objects;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -61,8 +62,8 @@ class ZAdd extends AbstractByScoreOperation {
         }
         String increment = params().get(1).toString();
         Slice member = params().get(2);
-        double score = (mapDBObj.getScore(member) == null) ? 0d :
-                mapDBObj.getScore(member);
+        Double oldScore = mapDBObj.getScore(member);
+        double score = oldScore == null ? 0d : oldScore;
 
         double newScore = getSum(score, increment);
 
@@ -124,7 +125,7 @@ class ZAdd extends AbstractByScoreOperation {
 
     @SuppressWarnings("UnnecessaryParentheses")
     private void updateValue(RMZSet mapDBObj, Slice value, double newScore) {
-        Double oldScore = mapDBObj.getScore(value);
+        double oldScore = Objects.requireNonNull(mapDBObj.getScore(value));
         if ((options.contains(LT) && oldScore > newScore)
                 || (options.contains(GT) && oldScore < newScore)
                 || (!options.contains(LT) && !options.contains(GT) && oldScore != newScore)) {

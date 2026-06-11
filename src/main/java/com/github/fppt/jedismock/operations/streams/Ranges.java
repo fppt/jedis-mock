@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.streams;
 
+import org.jspecify.annotations.Nullable;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.datastructures.streams.RMStream;
 import com.github.fppt.jedismock.datastructures.streams.SequencedMap;
@@ -10,6 +11,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,7 @@ public class Ranges extends AbstractRedisOperation {
         return key.decrement();
     }
 
-    protected StreamId preprocessKey(Slice key, RMStream stream, boolean isStart) throws WrongStreamKeyException {
+    protected @Nullable StreamId preprocessKey(Slice key, RMStream stream, boolean isStart) throws WrongStreamKeyException {
         String rawKey = key.toString();
 
         if ("-".equals(rawKey)) {
@@ -100,20 +102,25 @@ public class Ranges extends AbstractRedisOperation {
             return Response.EMPTY_ARRAY;
         }
 
+        //The map is not empty here, so its head and tail exist, and '-'/'+'
+        //borders (the only sources of null) have been resolved to them.
+        StreamId startId = Objects.requireNonNull(start);
+        StreamId endId = Objects.requireNonNull(end);
+
         /* Compare with the last item in map */
         if (multiplier == 1) {
-            if (start.compareTo(map.getTail()) > 0) {
+            if (startId.compareTo(Objects.requireNonNull(map.getTail())) > 0) {
                 return Response.EMPTY_ARRAY;
             }
         } else {
-            if (start.compareTo(map.getHead()) < 0) {
+            if (startId.compareTo(Objects.requireNonNull(map.getHead())) < 0) {
                 return Response.EMPTY_ARRAY;
             }
         }
 
         SequencedMapIterator<StreamId, SequencedMap<Slice, Slice>> it = multiplier == 1
-                ? map.iterator(start)
-                : map.reverseIterator(start);
+                ? map.iterator(startId)
+                : map.reverseIterator(startId);
 
         List<Slice> output = new ArrayList<>();
 
@@ -123,7 +130,7 @@ public class Ranges extends AbstractRedisOperation {
             List<Slice> entrySlice = new ArrayList<>();
             Map.Entry<StreamId, SequencedMap<Slice, Slice>> entry = it.next();
 
-            if (multiplier * entry.getKey().compareTo(end) > 0) {
+            if (multiplier * entry.getKey().compareTo(endId) > 0) {
                 break;
             }
 
@@ -143,6 +150,8 @@ public class Ranges extends AbstractRedisOperation {
 
     @Override
     protected Slice response() {
-        return null;
+        //Ranges is not a command itself ('xrange'/'xrevrange' subclasses
+        //override response()), so this must never be invoked.
+        throw new UnsupportedOperationException();
     }
 }

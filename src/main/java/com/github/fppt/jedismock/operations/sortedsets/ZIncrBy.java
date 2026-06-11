@@ -34,8 +34,8 @@ public class ZIncrBy extends AbstractByScoreOperation {
         String increment = params().get(1).toString();
         Slice member = params().get(2);
         final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
-        double score = (mapDBObj.getScore(member) == null) ? 0d :
-                mapDBObj.getScore(member);
+        Double oldScore = mapDBObj.getScore(member);
+        double score = oldScore == null ? 0d : oldScore;
 
         double newScore = getSum(score, increment);
 

@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.util.Objects;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,11 +38,12 @@ public class ZRank extends AbstractByScoreOperation {
                     : Response.NULL;
         }
 
+        double score = Objects.requireNonNull(mapDBObj.getScore(member));
         int rank = mapDBObj.entries(isRev)
-                .headSet(new ZSetEntry(mapDBObj.getScore(member), member)).size();
+                .headSet(new ZSetEntry(score, member)).size();
         return withScores
                 ? Response.array(Stream.of(Response.integer(rank),
-                            Response.integer(Math.round(mapDBObj.getScore(member))))
+                            Response.integer(Math.round(score)))
                             .collect(Collectors.toList()))
                 : Response.integer(rank);
     }

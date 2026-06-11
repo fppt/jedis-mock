@@ -9,6 +9,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,6 +23,8 @@ abstract class ZStore extends AbstractByScoreOperation {
     protected boolean isLimit = false;
     protected long limit = 0;
     protected int startKeysIndex = 0;
+    //Assigned in parseParams() before use
+    @SuppressWarnings("NullAway.Init")
     protected ArrayList<Double> weights;
 
     protected BiFunction<Double, Double, Double> aggregate = getSum();
@@ -61,13 +64,13 @@ abstract class ZStore extends AbstractByScoreOperation {
 
     private RMZSet getZSet(Slice setName) {
         if (base().exists(setName)) {
-            String typeName = base().getValue(setName).getTypeName();
+            String typeName = Objects.requireNonNull(base().getValue(setName)).getTypeName();
             if ("zset".equalsIgnoreCase(typeName)) {
-                return base().getZSet(setName);
+                return Objects.requireNonNull(base().getZSet(setName));
             }
             if ("set".equalsIgnoreCase(typeName)) {
                 RMZSet result = new RMZSet();
-                for (Slice value : base().getSet(setName).getStoredData()) {
+                for (Slice value : Objects.requireNonNull(base().getSet(setName)).getStoredData()) {
                     result.put(value, 1);
                 }
                 return result;

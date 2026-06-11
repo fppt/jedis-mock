@@ -12,6 +12,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +32,7 @@ public class Sort extends AbstractRedisOperation {
     private final Object lock;
 
     private boolean sortNumerically = true;
-    private Slice storeTo = null;
+    private @Nullable Slice storeTo = null;
     private int offset = 0;
     private int count = Integer.MAX_VALUE;
     private int compareMultiplier = 1;

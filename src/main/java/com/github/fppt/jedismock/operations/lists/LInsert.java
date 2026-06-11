@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @RedisCommand("linsert")
 public class LInsert extends AbstractRedisOperation {
@@ -34,7 +35,7 @@ public class LInsert extends AbstractRedisOperation {
             return Response.integer(0);
         }
 
-        List<Slice> storedElements = base().getList(key).getStoredData();
+        List<Slice> storedElements = Objects.requireNonNull(base().getList(key)).getStoredData();
         int i = storedElements.indexOf(pivot);
 
         if (i == -1) {

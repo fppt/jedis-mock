@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.datastructures.ZSetEntry;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
+import java.util.Objects;
 import java.util.List;
 
 abstract class AbstractZInter extends ZStore {
@@ -18,7 +19,8 @@ abstract class AbstractZInter extends ZStore {
         for (ZSetEntry entry :
                 zset1.entries(false)) {
             if (zset2.hasMember(entry.getValue())) {
-                result.put(entry.getValue(), aggregate.apply(entry.getScore(), getMultiple(zset2.getScore(entry.getValue()), weight)));
+                result.put(entry.getValue(), aggregate.apply(entry.getScore(),
+                        getMultiple(Objects.requireNonNull(zset2.getScore(entry.getValue())), weight)));
             }
         }
         return result;

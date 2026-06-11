@@ -115,7 +115,9 @@ class Set extends AbstractRedisOperation {
             return (k, v) -> {
                 Long deadline = base().getDeadline(k);
                 base().putValue(k, v);
-                base().setDeadline(k, deadline);
+                if (deadline != null) {
+                    base().setDeadline(k, deadline);
+                }
             };
         } else {
             return (k, v) -> base().putValue(k, v);
