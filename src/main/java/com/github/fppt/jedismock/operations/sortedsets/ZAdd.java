@@ -10,7 +10,6 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 
 import static com.github.fppt.jedismock.operations.sortedsets.ZAdd.Options.CH;
 import static com.github.fppt.jedismock.operations.sortedsets.ZAdd.Options.GT;
