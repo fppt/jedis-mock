@@ -4,11 +4,18 @@
 
 # Jedis-Mock
 
-Jedis-Mock is a simple in-memory mock of Redis/Valkey for Java testing, which can also work as test proxy. 
-Despite its name, it works on network protocol level and can be used with any Redis client 
-(be it [Jedis](https://github.com/redis/jedis), [Lettuce](https://github.com/lettuce-io/lettuce-core), [Redisson](https://github.com/redisson/redisson) or others).
+Jedis-Mock is an in-memory mock of Redis/Valkey for Java testing, which can also work as a test proxy.
+While being simple to use, it faithfully replicates Redis/Valkey behaviour, with rich and precise support
+for data types, streams, transactions, [Lua scripting](#luascripting) and [cluster mode](#cluster) — effectively making it
+a Redis/Valkey reimplementation in Java.
 
-When used as a mock, it allows you to test behaviour dependent on Redis without having to deploy an instance of Redis.
+Despite its name, it works at the network protocol level and can be used with any Redis client
+(be it [Jedis](https://github.com/redis/jedis), [Lettuce](https://github.com/lettuce-io/lettuce-core), [Redisson](https://github.com/redisson/redisson) or others).
+When used as a mock, it allows you to test behaviour dependent on Redis/Valkey without having to deploy an instance of Redis/Valkey.
+
+By no means is it intended for production use: e. g. the string value of a single key is modelled by `byte[]` and hence cannot
+exceed 2 GB, this project has never been tuned for performance or memory footprint, and it doesn't provide disk persistence. What it does provide instead
+are white-box testing capabilities, such as a [command interceptor](#interceptor) and [clock injection](#clockinjection).
 
 [List of currently supported Redis operations](supported_operations.md).
 
@@ -41,7 +48,7 @@ Add it as a test dependency in Maven as:
 <dependency>
   <groupId>com.github.fppt</groupId>
   <artifactId>jedis-mock</artifactId>
-  <version>1.1.13</version>
+  <version>1.1.14</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -149,7 +156,7 @@ try (Jedis jedis = new Jedis(server.getHost(),
 }
 ```
 
-## Lua scripting support
+## <a name="luascripting">Lua scripting support
 
 JedisMock supports Lua scripting (`EVAL`, `EVALSHA`, `SCRIPT LOAD/EXISTS/FLUSH/KILL` commands) via [luaj](https://github.com/luaj/luaj).  
 
