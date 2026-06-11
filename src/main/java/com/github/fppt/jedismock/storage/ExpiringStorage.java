@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.storage;
 
 import com.github.fppt.jedismock.datastructures.Slice;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Clock;
 import java.util.HashMap;
@@ -35,7 +36,7 @@ public abstract class ExpiringStorage {
         return deadline != null && deadline != -1 && deadline <= getMillis();
     }
 
-    public Long getTTL(Slice key) {
+    public @Nullable Long getTTL(Slice key) {
         Objects.requireNonNull(key);
         Long deadline = ttls.get(key);
         if (deadline == null) {
@@ -52,7 +53,7 @@ public abstract class ExpiringStorage {
         return null;
     }
 
-    public Long getDeadline(Slice key) {
+    public @Nullable Long getDeadline(Slice key) {
         return ttls.get(key);
     }
 
@@ -65,7 +66,7 @@ public abstract class ExpiringStorage {
         return clockSupplier.get().millis();
     }
 
-    protected void configureTTL(Slice key, Long ttl) {
+    protected void configureTTL(Slice key, @Nullable Long ttl) {
         if (ttl == null) {
             // If a TTL hasn't been provided, we don't want to override the TTL. However, if no TTL is set for this key,
             // we should still set it to -1L

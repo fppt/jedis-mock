@@ -1,8 +1,11 @@
 package com.github.fppt.jedismock.datastructures.streams;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Iterator for {@link SequencedMap SequencedMap}
@@ -14,14 +17,14 @@ public class SequencedMapForwardIterator<K extends Comparable<K>, V> implements 
     /**
      * Iterator takes place before this key. If is {@code null} then iterator takes place before the head of the map.
      */
-    private K curr;
+    private @Nullable K curr;
 
     /**
      * Map that iterator refers to
      */
     private final SequencedMap<K, V> map;
 
-    public SequencedMapForwardIterator(K curr, SequencedMap<K, V> map) {
+    public SequencedMapForwardIterator(@Nullable K curr, SequencedMap<K, V> map) {
         this.map = map;
         this.curr = curr == null ? null : map.getPreviousKey(curr); // null is possible when map.size == 0
     }
@@ -41,17 +44,15 @@ public class SequencedMapForwardIterator<K extends Comparable<K>, V> implements 
             throw new NoSuchElementException("There is no elements left");
         }
 
-        if (curr == null) {
-            curr = map.getHead();
-        } else {
-            curr = map.getNextKey(curr);
-        }
+        K nextKey = curr == null ? map.getHead() : map.getNextKey(curr);
+        nextKey = Objects.requireNonNull(nextKey);
+        curr = nextKey;
 
-        return new AbstractMap.SimpleEntry<>(curr, map.get(curr));
+        return new AbstractMap.SimpleEntry<>(nextKey, map.get(nextKey));
     }
 
     void stepBack() {
-        curr = map.getPreviousKey(curr);
+        curr = map.getPreviousKey(Objects.requireNonNull(curr));
     }
 
     /**

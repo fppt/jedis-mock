@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
@@ -39,7 +40,7 @@ class ZRangeStore extends AbstractZRangeByIndex {
             base().deleteValue(keyDest);
             return Response.integer(0);
         }
-        mapDBObj = base().getZSet(key);
+        mapDBObj = Objects.requireNonNull(base().getZSet(key));
 
         if (options.contains(BYSCORE) && !options.contains(REV)) {
             ZRangeByScore zRangeByScore = new ZRangeByScore(base(), new ArrayList<>());

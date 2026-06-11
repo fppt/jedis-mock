@@ -6,6 +6,6 @@ public interface RMDataStructure {
 
     default Slice getAsSlice() {
         raiseTypeCastException();
-        return null;
+        throw new IllegalStateException("raiseTypeCastException did not throw");
     }
 }

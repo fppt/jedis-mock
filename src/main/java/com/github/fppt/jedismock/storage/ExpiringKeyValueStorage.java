@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.storage;
 import com.github.fppt.jedismock.datastructures.RMDataStructure;
 import com.github.fppt.jedismock.datastructures.RMHash;
 import com.github.fppt.jedismock.datastructures.Slice;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Clock;
 import java.util.HashMap;
@@ -67,7 +68,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
         super.clear();
     }
 
-    public RMDataStructure getValue(Slice key) {
+    public @Nullable RMDataStructure getValue(Slice key) {
         if (!verifyKey(key)) {
             return null;
         }
@@ -94,14 +95,14 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
         return true;
     }
 
-    public void put(Slice key, RMDataStructure value, Long ttl) {
+    public void put(Slice key, RMDataStructure value, @Nullable Long ttl) {
         keyChangeNotifier.accept(key);
         values().put(key, value);
         configureTTL(key, ttl);
     }
 
     // Put inside
-    public void put(Slice key, Slice value, Long ttl) {
+    public void put(Slice key, Slice value, @Nullable Long ttl) {
         keyChangeNotifier.accept(key);
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
@@ -110,7 +111,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
     }
 
     // Put into inner RMHMap
-    public void put(Slice key1, Slice key2, Slice value, Long ttl) {
+    public void put(Slice key1, Slice key2, Slice value, @Nullable Long ttl) {
         keyChangeNotifier.accept(key1);
         Objects.requireNonNull(key1);
         Objects.requireNonNull(key2);
@@ -128,7 +129,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
     }
 
     private RMHash getRMHash(Slice key) {
-        RMDataStructure valueByKey = values.get(key);
+        RMDataStructure valueByKey = Objects.requireNonNull(values.get(key));
         if (!isHashValue(valueByKey)) {
             valueByKey.raiseTypeCastException();
         }

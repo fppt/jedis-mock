@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.datastructures.ZSetEntryBound;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
+import java.util.Objects;
 import java.util.List;
 
 abstract class AbstractZRangeByLex extends AbstractZRange {
@@ -38,7 +39,7 @@ abstract class AbstractZRangeByLex extends AbstractZRange {
             String valueString = value.toString().substring(1);
             Slice valueSlice = Slice.create(valueString);
             if (mapDBObj.hasMember(valueSlice)) {
-                return mapDBObj.getScore(valueSlice);
+                return Objects.requireNonNull(mapDBObj.getScore(valueSlice));
             } else {
                 return mapDBObj.entries(false).first().getScore();
             }

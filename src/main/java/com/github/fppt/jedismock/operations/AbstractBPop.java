@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.server.SliceParser;
 import com.github.fppt.jedismock.storage.BlockingManager;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +62,7 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
             throw new IllegalArgumentException("ERR timeout is negative");
         }
 
-        Slice source = getKey(keys, true);
+        @Nullable Slice source = getKey(keys, true);
 
         if (source != null || isInTransaction || isInScript) {
             //Element already available, or we must not block (inside MULTI, or
@@ -116,7 +117,7 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
         }
     }
 
-    private Slice getKey(List<Slice> list, boolean checkForType) {
+    private @Nullable Slice getKey(List<Slice> list, boolean checkForType) {
         for (Slice key : list) {
             if (!base().exists(key)) {
                 continue;

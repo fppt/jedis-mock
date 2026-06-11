@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock;
 
+import org.jspecify.annotations.Nullable;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 
 import java.io.Closeable;
@@ -9,7 +10,10 @@ import java.io.Closeable;
  */
 public class Utils {
 
-    public static void closeQuietly(Closeable closeable) {
+    public static void closeQuietly(@Nullable Closeable closeable) {
+        if (closeable == null) {
+            return;
+        }
         try {
             closeable.close();
         } catch (Exception e) {

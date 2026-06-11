@@ -67,6 +67,7 @@ public class SequencedMapTests {
 
         entry = map.remove(1);
 
+        assertThat(entry).isNotNull();
         assertThat(entry.getKey()).isEqualTo(1);
         assertThat(entry.getValue()).isEqualTo(2);
 
@@ -176,6 +177,7 @@ public class SequencedMapTests {
 
         Map.Entry<Integer, Integer> entry = map.remove(0);
 
+        assertThat(entry).isNotNull();
         assertThat(entry.getKey()).isEqualTo(0);
         assertThat(entry.getValue()).isEqualTo(0);
         assertThat(map.size()).isEqualTo(250_002);
@@ -185,6 +187,7 @@ public class SequencedMapTests {
             assertThat(map.getHead()).isEqualTo(el);
 
             Map.Entry<Integer, Integer> localEntry = map.remove(el);
+            assertThat(localEntry).isNotNull();
             assertThat(localEntry.getKey()).isEqualTo(el);
             assertThat(localEntry.getValue()).isEqualTo(el * 2);
 
@@ -247,6 +250,7 @@ public class SequencedMapTests {
     }
 
     @Test
+    @SuppressWarnings("NullAway") //deliberately passes null to assert NPE
     void forEachWithNullActionTest() {
         SequencedMap<Integer, Integer> map = new SequencedMap<>();
 
@@ -320,6 +324,7 @@ public class SequencedMapTests {
     }
 
     @Test
+    @SuppressWarnings("NullAway") //deliberately passes null to assert NPE
     void getForwardIteratorWithParamWithNullBorderTest() {
         SequencedMap<Integer, Integer> map = new SequencedMap<>();
 
@@ -438,6 +443,7 @@ public class SequencedMapTests {
     }
 
     @Test
+    @SuppressWarnings("NullAway") //deliberately passes null to assert NPE
     void getReverseIteratorWithParamWithNullBorderTest() {
         SequencedMap<Integer, Integer> map = new SequencedMap<>();
 

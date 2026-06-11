@@ -36,7 +36,10 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
     protected int endIndex;
     protected long offset = 0;
     protected long count = 0;
+    //Assigned at the start of every subclass's response() before use
+    @SuppressWarnings("NullAway.Init")
     protected Slice key;
+    @SuppressWarnings("NullAway.Init")
     protected RMZSet mapDBObj;
 
     AbstractZRange(RedisBase base, List<Slice> params) {

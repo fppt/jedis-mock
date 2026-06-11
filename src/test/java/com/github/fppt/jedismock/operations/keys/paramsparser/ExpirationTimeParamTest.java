@@ -9,14 +9,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ExpirationTimeParamTest {
     @Test
     void normalSeconds() throws ExpirationParamsException {
-        ExpirationTimeParam param = new ExpirationTimeParam(null,
+        ExpirationTimeParam param = new ExpirationTimeParam("expire",
                 Slice.create("42"), false, 0);
         assertThat(param.getMillis()).isEqualTo(42000);
     }
 
     @Test
     void normalMillis() throws ExpirationParamsException {
-        ExpirationTimeParam param = new ExpirationTimeParam(null,
+        ExpirationTimeParam param = new ExpirationTimeParam("pexpire",
                 Slice.create("42"), true, 0);
         assertThat(param.getMillis()).isEqualTo(42);
     }
@@ -24,7 +24,7 @@ class ExpirationTimeParamTest {
     @Test
     void notAnInteger() {
         assertThatThrownBy(() -> new ExpirationTimeParam
-                (null, Slice.create("foo"), false, 0))
+                ("expire", Slice.create("foo"), false, 0))
                 .isInstanceOf(ExpirationParamsException.class)
                 .hasMessageContaining("not an integer");
     }

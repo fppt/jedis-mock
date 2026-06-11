@@ -2,6 +2,7 @@ package com.github.fppt.jedismock.operations.keys.paramsparser;
 
 
 import com.github.fppt.jedismock.datastructures.Slice;
+import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -39,7 +40,7 @@ public final class ExpirationExtraParam {
         return index;
     }
 
-    public boolean checkTiming(Long oldTTL, long newTTL) {
+    public boolean checkTiming(@Nullable Long oldTTL, long newTTL) {
         //Treat empty or negative TTL as infinite
         if (oldTTL == null || oldTTL < 0) {
             oldTTL = Long.MAX_VALUE;

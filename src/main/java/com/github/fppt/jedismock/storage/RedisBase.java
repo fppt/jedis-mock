@@ -12,6 +12,7 @@ import com.github.fppt.jedismock.datastructures.RMString;
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.RedisClient;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Clock;
 import java.util.ArrayList;
@@ -73,11 +74,11 @@ public class RedisBase {
         return result;
     }
 
-    public RMDataStructure getValue(Slice key) {
+    public @Nullable RMDataStructure getValue(Slice key) {
         return keyValueStorage.getValue(key);
     }
 
-    private <T extends RMDataStructure> T getStructure(Slice key, Class<T> tClass) {
+    private <T extends RMDataStructure> @Nullable T getStructure(Slice key, Class<T> tClass) {
         RMDataStructure value = getValue(key);
         if (value == null) {
             return null;
@@ -89,35 +90,35 @@ public class RedisBase {
         return null;
     }
 
-    public RMStream getStream(Slice key) {
+    public @Nullable RMStream getStream(Slice key) {
         return getStructure(key, RMStream.class);
     }
 
-    public RMSet getSet(Slice key) {
+    public @Nullable RMSet getSet(Slice key) {
         return getStructure(key, RMSet.class);
     }
 
-    public RMZSet getZSet(Slice key) {
+    public @Nullable RMZSet getZSet(Slice key) {
         return getStructure(key, RMZSet.class);
     }
 
-    public RMList getList(Slice key) {
+    public @Nullable RMList getList(Slice key) {
         return getStructure(key, RMList.class);
     }
 
-    public RMHash getHash(Slice key) {
+    public @Nullable RMHash getHash(Slice key) {
         return getStructure(key, RMHash.class);
     }
 
-    public RMHyperLogLog getHLL(Slice key) {
+    public @Nullable RMHyperLogLog getHLL(Slice key) {
         return getStructure(key, RMHyperLogLog.class);
     }
 
-    public RMString getRMString(Slice key) {
+    public @Nullable RMString getRMString(Slice key) {
         return getStructure(key, RMString.class);
     }
 
-    public RMBitMap getBitMap(Slice key) {
+    public @Nullable RMBitMap getBitMap(Slice key) {
         RMDataStructure value = getValue(key);
         if (value == null) {
             return null;
@@ -132,7 +133,7 @@ public class RedisBase {
         return null;
     }
 
-    public Slice getSlice(Slice key) {
+    public @Nullable Slice getSlice(Slice key) {
         RMDataStructure value = getValue(key);
         if (value == null) {
             return null;
@@ -140,7 +141,7 @@ public class RedisBase {
         return value.getAsSlice();
     }
 
-    public Slice getSlice(Slice key1, Slice key2) {
+    public @Nullable Slice getSlice(Slice key1, Slice key2) {
         RMHash hashTable = getHash(key1);
         if (hashTable == null) {
             return null;
@@ -156,7 +157,7 @@ public class RedisBase {
         return hashTable.getStoredDataReadOnly();
     }
 
-    public Long getTTL(Slice key) {
+    public @Nullable Long getTTL(Slice key) {
         return keyValueStorage.getTTL(key);
     }
 
@@ -168,7 +169,7 @@ public class RedisBase {
         return keyValueStorage.setDeadline(key, deadline);
     }
 
-    public Long getDeadline(Slice key) {
+    public @Nullable Long getDeadline(Slice key) {
         return keyValueStorage.getDeadline(key);
     }
 
@@ -177,11 +178,11 @@ public class RedisBase {
         subscribers.clear();
     }
 
-    public void putSlice(Slice key, Slice value, Long ttl) {
+    public void putSlice(Slice key, Slice value, @Nullable Long ttl) {
         keyValueStorage.put(key, value, ttl);
     }
 
-    public void putSlice(Slice key1, Slice key2, Slice value, Long ttl) {
+    public void putSlice(Slice key1, Slice key2, Slice value, @Nullable Long ttl) {
         keyValueStorage.put(key1, key2, value, ttl);
     }
 
@@ -189,7 +190,7 @@ public class RedisBase {
         putValue(key, value, null);
     }
 
-    public void putValue(Slice key, RMDataStructure value, Long ttl) {
+    public void putValue(Slice key, RMDataStructure value, @Nullable Long ttl) {
         keyValueStorage.put(key, value, ttl);
     }
 
@@ -335,7 +336,7 @@ public class RedisBase {
         return configuration.getProtoMaxBulkLen();
     }
 
-    public String getCachedLuaScript(String sha1) {
+    public @Nullable String getCachedLuaScript(String sha1) {
         return cachedLuaScripts.get(sha1.toLowerCase());
     }
 
@@ -347,7 +348,7 @@ public class RedisBase {
         cachedLuaScripts.clear();
     }
 
-    public String addCachedLuaScript(String sha1, String script) {
+    public @Nullable String addCachedLuaScript(String sha1, String script) {
         return cachedLuaScripts.put(sha1, script);
     }
 }

@@ -2,6 +2,7 @@ package com.github.fppt.jedismock.operations.scripting.cjson;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.jspecify.annotations.Nullable;
 import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -26,7 +27,7 @@ class Encode extends OneArgFunction {
         return LuaString.valueOf(gson.toJson(convert(arg)));
     }
 
-    private static Object convert(LuaValue value) {
+    private static @Nullable Object convert(LuaValue value) {
         if (value.isnil()) {
             return null;
         }

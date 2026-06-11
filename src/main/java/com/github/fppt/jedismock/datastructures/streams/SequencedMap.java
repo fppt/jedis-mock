@@ -1,8 +1,11 @@
 package com.github.fppt.jedismock.datastructures.streams;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
@@ -18,27 +21,27 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
      */
     protected class LinkedMapNode {
         protected final V value;
-        protected K next;
-        protected K prev;
+        protected @Nullable K next;
+        protected @Nullable K prev;
 
         LinkedMapNode(V value) {
             this.value = value;
         }
 
-        public LinkedMapNode setNext(K next) {
+        public LinkedMapNode setNext(@Nullable K next) {
             this.next = next;
             return this;
         }
 
-        public LinkedMapNode setPrev(K prev) {
+        public LinkedMapNode setPrev(@Nullable K prev) {
             this.prev = prev;
             return this;
         }
     }
 
     private final Map<K, LinkedMapNode> map;
-    private K tail;
-    private K head;
+    private @Nullable K tail;
+    private @Nullable K head;
     private int size;
 
     public SequencedMap() {
@@ -56,7 +59,7 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
         if (size == 0) {
             head = key; // the map is empty, so the first appended element becomes the head
         } else {
-            map.get(tail).setNext(key); // the map is not empty, so we have to update the reference
+            Objects.requireNonNull(map.get(tail)).setNext(key); // the map is not empty, so we have to update the reference
         }
 
         map.put(key, new LinkedMapNode(value).setPrev(tail));
@@ -72,7 +75,7 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
      * @param key the key of mapping to be removed
      * @return deleted entry if a mapping for the key exists otherwise {@code null}
      */
-    public Map.Entry<K, V> remove(K key) {
+    public Map.@Nullable Entry<K, V> remove(K key) {
         if (!map.containsKey(key)) {
             return null;
         }
@@ -86,14 +89,18 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
         }
 
         if (key.equals(tail)) {
-            tail = getPreviousKey(key);
-            map.get(tail).next = null;
+            K newTail = Objects.requireNonNull(getPreviousKey(key));
+            Objects.requireNonNull(map.get(newTail)).next = null;
+            tail = newTail;
         } else if (key.equals(head)) {
-            head = getNextKey(key);
-            map.get(head).prev = null;
+            K newHead = Objects.requireNonNull(getNextKey(key));
+            Objects.requireNonNull(map.get(newHead)).prev = null;
+            head = newHead;
         } else {
-            setNextKey(getPreviousKey(key), getNextKey(key));
-            setPreviousKey(getNextKey(key), getPreviousKey(key));
+            K prevKey = Objects.requireNonNull(getPreviousKey(key));
+            K nextKey = Objects.requireNonNull(getNextKey(key));
+            setNextKey(prevKey, nextKey);
+            setPreviousKey(nextKey, prevKey);
         }
 
         --size;
@@ -110,7 +117,7 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
         }
 
         --size;
-        head = getNextKey(head);
+        head = getNextKey(Objects.requireNonNull(head));
     }
 
     /**
@@ -119,7 +126,7 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
      * @param key the key whose associated value is to be returned
      * @return the value to which the given key is mapped or {@code null} if map does not contain it
      */
-    public V get(K key) {
+    public @Nullable V get(K key) {
         LinkedMapNode node = map.get(key);
 
         if (node == null) {
@@ -144,8 +151,8 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
      * @param key the key of the node whose following key is being searched for
      * @return the key of the node that follows the given one
      */
-    K getNextKey(K key) {
-        return map.get(key).next;
+    @Nullable K getNextKey(K key) {
+        return Objects.requireNonNull(map.get(key)).next;
     }
 
     /**
@@ -170,8 +177,8 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
      * @param key the key of the node whose previous key is being searched for
      * @return the key of the node that precedes the given one
      */
-    public K getPreviousKey(K key) {
-        return map.get(key).prev;
+    public @Nullable K getPreviousKey(K key) {
+        return Objects.requireNonNull(map.get(key)).prev;
     }
 
     /**
@@ -203,7 +210,7 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
      *
      * @return the first node key in the sequence
      */
-    public K getHead() {
+    public @Nullable K getHead() {
         return head;
     }
 
@@ -212,7 +219,7 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
      *
      * @return the last node key in the sequence
      */
-    public K getTail() {
+    public @Nullable K getTail() {
         return tail;
     }
 
@@ -336,9 +343,10 @@ public class SequencedMap<K extends Comparable<K>, V> implements Iterable<Map.En
 
         K currKey = head;
 
-        do {
-            action.accept(currKey, map.get(currKey).value);
-            currKey = map.get(currKey).next;
-        } while (currKey != null);
+        while (currKey != null) {
+            LinkedMapNode node = Objects.requireNonNull(map.get(currKey));
+            action.accept(currKey, node.value);
+            currKey = node.next;
+        }
     }
 }

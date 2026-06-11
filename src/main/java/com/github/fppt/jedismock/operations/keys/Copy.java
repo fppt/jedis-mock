@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +26,7 @@ public class Copy implements RedisOperation {
                 .stream().skip(2).map(Slice::toString).collect(Collectors.toList());
     }
 
-    private Integer destinationDb() {
+    private @Nullable Integer destinationDb() {
         String previous = null;
         for (String param : additionalParams) {
             if ("db".equalsIgnoreCase(previous)) {

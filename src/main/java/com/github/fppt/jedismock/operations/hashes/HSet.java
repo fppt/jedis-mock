@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ class HSet extends AbstractRedisOperation {
         super(base, params);
     }
 
-    Slice hsetValue(Slice key1, Slice key2, Slice value) {
+    @Nullable Slice hsetValue(Slice key1, Slice key2, Slice value) {
         Slice foundValue = base().getSlice(key1, key2);
         base().putSlice(key1, key2, value, null);
         return foundValue;

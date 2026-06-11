@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock;
 
+import org.jspecify.annotations.Nullable;
 import com.github.fppt.jedismock.commands.RedisCommandParser;
 import com.github.fppt.jedismock.exception.ParseErrorException;
 import com.github.fppt.jedismock.server.RedisOperationExecutor;
@@ -37,7 +38,7 @@ public class TestRedisOperationExecutor {
         return "$" + param.length() + CRLF + param + CRLF;
     }
 
-    private static String array(CharSequence... params) {
+    private static String array(@Nullable CharSequence... params) {
         StringBuilder builder = new StringBuilder();
         builder.append('*').append(params.length).append(CRLF);
         for (CharSequence param : params) {

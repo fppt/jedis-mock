@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.scripting;
 
+import org.jspecify.annotations.Nullable;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
@@ -115,7 +116,7 @@ public class Eval extends AbstractRedisOperation {
         }
     }
 
-    private static String stripTraceback(String message) {
+    private static String stripTraceback(@Nullable String message) {
         if (message == null) {
             return "";
         }

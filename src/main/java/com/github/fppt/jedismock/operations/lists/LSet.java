@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
+import java.util.Objects;
 
 @RedisCommand("lset")
 public class LSet extends AbstractRedisOperation {
@@ -25,7 +26,7 @@ public class LSet extends AbstractRedisOperation {
             throw new IllegalArgumentException("ERR no such key");
         }
 
-        List<Slice> storedData = base().getList(key).getStoredData();
+        List<Slice> storedData = Objects.requireNonNull(base().getList(key)).getStoredData();
 
         if (index < 0) {
             index = storedData.size() + index;

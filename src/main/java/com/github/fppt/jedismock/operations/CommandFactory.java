@@ -3,9 +3,11 @@ package com.github.fppt.jedismock.operations;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
+import org.jspecify.annotations.Nullable;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Constructor;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,9 +30,10 @@ public class CommandFactory {
                                 toMap(c -> c.getAnnotation(RedisCommand.class).value(), identity())));
     }
 
-    public static RedisOperation buildOperation(String name, boolean transactional,
+    public static @Nullable RedisOperation buildOperation(String name, boolean transactional,
                                                           OperationExecutorState state, List<Slice> params) {
-        Class<? extends RedisOperation> commandClass = commands.get(transactional).get(name);
+        Class<? extends RedisOperation> commandClass = commands
+                .getOrDefault(transactional, Collections.emptyMap()).get(name);
         if (commandClass != null) {
             try {
                 Constructor<?> declaredConstructor = commandClass.getDeclaredConstructors()[0];

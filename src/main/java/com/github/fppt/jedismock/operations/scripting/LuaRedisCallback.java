@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.scripting;
 
+import org.jspecify.annotations.Nullable;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisOperation;
@@ -126,7 +127,7 @@ public class LuaRedisCallback {
         }
     }
 
-    private static boolean isArityError(String message) {
+    private static boolean isArityError(@Nullable String message) {
         return message != null && message.contains("wrong number of arguments");
     }
 

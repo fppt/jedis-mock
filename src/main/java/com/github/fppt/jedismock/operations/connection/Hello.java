@@ -4,13 +4,14 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 
 @RedisCommand(value = "hello", transactional = false)
 public class Hello implements RedisOperation {
-    private final Slice protover;
+    private final @Nullable Slice protover;
 
     Hello(List<Slice> params) {
         super();

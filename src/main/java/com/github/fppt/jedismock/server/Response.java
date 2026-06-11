@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.server;
 
 import com.github.fppt.jedismock.datastructures.Slice;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
@@ -26,7 +27,7 @@ public class Response {
     private Response() {
     }
 
-    public static Slice bulkString(Slice slice) {
+    public static Slice bulkString(@Nullable Slice slice) {
         if (slice == null) {
             return NULL;
         }
@@ -43,7 +44,7 @@ public class Response {
         return Slice.create(bo.toByteArray());
     }
 
-    public static Slice error(String s) {
+    public static Slice error(@Nullable String s) {
         return Slice.create(String.format("-%s%s", sanitize(s), LINE_SEPARATOR));
     }
 
@@ -164,7 +165,7 @@ public class Response {
     /**
      * Null-safe string sanitizer.
      */
-    private static String sanitize(String s) {
+    private static String sanitize(@Nullable String s) {
         /*
         A reply is a single line terminated by CRLF; an embedded
         CR or LF (e.g. a Lua stack traceback) would break framing for strict

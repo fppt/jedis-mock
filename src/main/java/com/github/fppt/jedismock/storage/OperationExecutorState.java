@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.storage;
 
+import org.jspecify.annotations.Nullable;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.RedisClient;
@@ -24,7 +25,7 @@ public class OperationExecutorState {
     private final Set<Slice> watchedKeys = new HashSet<>();
     private boolean watchedKeysAffected = false;
     private int selectedRedisBase = 0;
-    private String clientName;
+    private @Nullable String clientName;
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases) {
         this(owner, redisBases, new BlockingManager(), new ScriptingManager(), new RedisConfiguration());
@@ -174,7 +175,7 @@ public class OperationExecutorState {
         this.clientName = clientName;
     }
 
-    public String getClientName() {
+    public @Nullable String getClientName() {
         return clientName;
     }
 }
