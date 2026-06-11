@@ -229,7 +229,7 @@ public class XReadTests {
         Future<?> blockingReadJob = scheduledThreadPool.submit(() -> {
             List<Map.Entry<String, List<StreamEntry>>> answer = blockedClient.xread(
                     XReadParams.xReadParams().block(0).count(1),
-                    Collections.singletonMap("test:jedis", StreamEntryID.LAST_ENTRY)
+                    Collections.singletonMap("test:jedis", StreamEntryID.XGROUP_LAST_ENTRY)
             );
 
             assertThat(answer)
@@ -257,6 +257,75 @@ public class XReadTests {
             );
         }, 2, TimeUnit.SECONDS);
 
+
+        ScheduledFuture<?> cancellationJob = scheduledThreadPool.schedule(() -> {
+            blockingReadJob.cancel(true);
+        }, 15, TimeUnit.SECONDS);
+
+        addJob.get();
+        cancellationJob.get();
+        blockingReadJob.get();
+
+        assertThat(blockingReadJob.isCancelled()).isFalse();
+    }
+
+    /**
+     * '$' must also work on a stream that exists but holds no entries (all
+     * deleted): there is no "last entry" in it, so a timed blocking read that
+     * nothing interrupts simply expires with an empty reply.
+     */
+    @TestTemplate
+    void blockingXreadWithLastEntryOnStreamThatRanDryTimesOut(Jedis jedis) {
+        jedis.xadd("dry", XAddParams.xAddParams().id(1, 1), Collections.singletonMap("a", "b"));
+        jedis.xdel("dry", new StreamEntryID(1, 1));
+
+        List<Map.Entry<String, List<StreamEntry>>> answer = jedis.xread(
+                XReadParams.xReadParams().block(10),
+                Collections.singletonMap("dry", StreamEntryID.XGROUP_LAST_ENTRY)
+        );
+
+        assertThat(answer).isNullOrEmpty();
+    }
+
+    /**
+     * Same ran-dry stream, but with an infinite block: the reader must survive
+     * until XADD delivers a new entry and then receive exactly that entry.
+     */
+    @TestTemplate
+    void blockingXreadWithLastEntryOnStreamThatRanDryIsAwokenByXadd(Jedis jedis)
+            throws ExecutionException, InterruptedException {
+        jedis.xadd("dry", XAddParams.xAddParams().id(1, 1), Collections.singletonMap("a", "b"));
+        jedis.xdel("dry", new StreamEntryID(1, 1));
+
+        Future<?> blockingReadJob = scheduledThreadPool.submit(() -> {
+            List<Map.Entry<String, List<StreamEntry>>> answer = blockedClient.xread(
+                    XReadParams.xReadParams().block(0).count(1),
+                    Collections.singletonMap("dry", StreamEntryID.XGROUP_LAST_ENTRY)
+            );
+
+            assertThat(answer)
+                    .hasSize(1)
+                    .first()
+                    .extracting(Map.Entry::getValue)
+                    .asInstanceOf(LIST)
+                    .hasSize(1)
+                    .first()
+                    .usingRecursiveComparison()
+                    .isEqualTo(
+                            new StreamEntry(
+                                    new StreamEntryID(5, 5),
+                                    Collections.singletonMap("a", "b")
+                            )
+                    );
+        });
+
+        ScheduledFuture<?> addJob = scheduledThreadPool.schedule(() -> {
+            jedis.xadd(
+                    "dry",
+                    XAddParams.xAddParams().id(5, 5),
+                    Collections.singletonMap("a", "b")
+            );
+        }, 2, TimeUnit.SECONDS);
 
         ScheduledFuture<?> cancellationJob = scheduledThreadPool.schedule(() -> {
             blockingReadJob.cancel(true);

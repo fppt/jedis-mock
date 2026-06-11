@@ -61,8 +61,8 @@ class ZAdd extends AbstractByScoreOperation {
         }
         String increment = params().get(1).toString();
         Slice member = params().get(2);
-        double score = (mapDBObj.getScore(member) == null) ? 0d :
-                mapDBObj.getScore(member);
+        Double rawScore = mapDBObj.getScore(member);
+        double score = rawScore == null ? 0d : rawScore;
 
         double newScore = getSum(score, increment);
 
