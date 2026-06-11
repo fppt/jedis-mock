@@ -10,6 +10,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import static com.github.fppt.jedismock.operations.sortedsets.ZAdd.Options.CH;
 import static com.github.fppt.jedismock.operations.sortedsets.ZAdd.Options.GT;
@@ -61,8 +62,8 @@ class ZAdd extends AbstractByScoreOperation {
         }
         String increment = params().get(1).toString();
         Slice member = params().get(2);
-        double score = (mapDBObj.getScore(member) == null) ? 0d :
-                mapDBObj.getScore(member);
+        Double rawScore = mapDBObj.getScore(member);
+        double score = rawScore == null ? 0d : rawScore;
 
         double newScore = getSum(score, increment);
 

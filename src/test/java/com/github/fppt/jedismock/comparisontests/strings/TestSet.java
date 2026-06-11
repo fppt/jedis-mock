@@ -130,6 +130,14 @@ public class TestSet {
     }
 
     @TestTemplate
+    public void keepTTLNonExistent(Jedis jedis) {
+        String NON_EXISTENT = "whatchamacallit";
+        assertThat(jedis.exists(NON_EXISTENT)).isFalse();
+        jedis.set(NON_EXISTENT, SET_VALUE, SetParams.setParams().keepTtl());
+        assertThat(jedis.get(NON_EXISTENT)).isEqualTo(SET_VALUE);
+    }
+
+    @TestTemplate
     public void testSetNonUTF8binary(Jedis jedis) {
         byte[] msg = new byte[]{(byte) 0xbe};
         jedis.set("foo".getBytes(), msg);
