@@ -99,11 +99,12 @@ public class XRead extends AbstractRedisOperation {
                                     : new StreamId(id)
                     );
                 } else {
+                    StreamId lastId = getStreamFromBaseOrCreateEmpty(key).getStoredData().getTail();
                     mapKeyToBeginEntryId.append(
                             key,
                             "$".equalsIgnoreCase(id.toString())
-                                    /* last id added to stream */
-                                    ? getStreamFromBaseOrCreateEmpty(key).getStoredData().getTail()
+                                    /* last id added to stream; a ran-dry stream has none yet */
+                                    ? (lastId == null ? new StreamId(0, 0) : lastId)
                                     : new StreamId(id)
                     );
                 }
@@ -138,11 +139,12 @@ public class XRead extends AbstractRedisOperation {
                     while (!updated && (connected = state.isClientConnected())
                             && (waitTimeNanos = waitEnd - System.nanoTime()) >= 0) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
-                            if (base().exists(entry.getKey())
-                                    && entry.getValue()
-                                    .compareTo(getStreamFromBaseOrCreateEmpty(entry.getKey())
+                            StreamId tail = getStreamFromBaseOrCreateEmpty(entry.getKey())
                                     .getStoredData()
-                                    .getTail()) < 0) {
+                                    .getTail();
+                            if (base().exists(entry.getKey())
+                                    && tail != null
+                                    && entry.getValue().compareTo(tail) < 0) {
                                 updated = true;
                                 break;
                             }
@@ -157,11 +159,12 @@ public class XRead extends AbstractRedisOperation {
                 } else {
                     while (!updated && (connected = state.isClientConnected())) {
                         for (Map.Entry<Slice, StreamId> entry : mapKeyToBeginEntryId) {
-                            if (base().exists(entry.getKey())
-                                    && getStreamFromBaseOrCreateEmpty(entry.getKey())
+                            StreamId tail = getStreamFromBaseOrCreateEmpty(entry.getKey())
                                         .getStoredData()
-                                        .getTail()
-                                        .compareTo(entry.getValue()) > 0) {
+                                        .getTail();
+                            if (base().exists(entry.getKey())
+                                    && tail != null
+                                    && tail.compareTo(entry.getValue()) > 0) {
                                 updated = true;
                                 break;
                             }
