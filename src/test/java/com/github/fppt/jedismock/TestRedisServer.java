@@ -1,11 +1,14 @@
 package com.github.fppt.jedismock;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 
 import static com.github.fppt.jedismock.RedisServer.newRedisServer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -93,6 +96,48 @@ public class TestRedisServer {
                 assertThatThrownBy(jedis::ping)
                         .isInstanceOf(JedisConnectionException.class);
             }
+        }
+    }
+
+    @Test
+    void getHostIsLoopbackForIpv4Wildcard() throws IOException {
+        RedisServer server = RedisServer.newRedisServer(0, InetAddress.getByName("0.0.0.0"))
+            .start();
+
+        try {
+            assertThat(server.getHost()).isEqualTo("127.0.0.1");
+            pingServerOk(server);
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    void getHostIsLoopbackForIpv6Wildcard() throws IOException {
+        Assumptions.assumeTrue(TestRedisServer::isIPv6Available, "IPv6 wildcard bind is not available");
+
+        RedisServer server = RedisServer.newRedisServer(0, InetAddress.getByName("::"))
+            .start();
+
+        try {
+            assertThat(server.getHost()).isEqualTo("::1");
+            pingServerOk(server);
+        } finally {
+            server.stop();
+        }
+    }
+
+    private static void pingServerOk(RedisServer server) {
+        try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort())) {
+            assertThat(jedis.ping()).isEqualTo("PONG");
+        }
+    }
+
+    private static boolean isIPv6Available() {
+        try (ServerSocket ignored = new ServerSocket(0, 0, InetAddress.getByName("::"))) {
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 }
