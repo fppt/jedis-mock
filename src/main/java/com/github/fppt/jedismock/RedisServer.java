@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.storage.RedisConfiguration;
 import com.github.fppt.jedismock.storage.ScriptingManager;
 
 import java.io.IOException;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -112,7 +113,14 @@ public class RedisServer {
 
     public String getHost() {
         Objects.requireNonNull(service, NOT_RUNNING);
-        return service.getServer().getInetAddress().getHostAddress();
+
+        InetAddress addr = service.getServer().getInetAddress();
+
+        if (addr.isAnyLocalAddress()) {
+            return addr instanceof Inet6Address ? "::1" : "127.0.0.1";
+        }
+
+        return addr.getHostAddress();
     }
 
     public int getBindPort() {
