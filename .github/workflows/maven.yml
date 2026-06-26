@@ -27,6 +27,6 @@ jobs:
 
       - name: Update list of supported operations
         if: success() && github.ref == 'refs/heads/master'
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: Update list of supported operations
