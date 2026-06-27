@@ -19,7 +19,7 @@ jobs:
           cp ./wait4x-linux-amd64/wait4x /usr/local/bin/wait4x
 
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
