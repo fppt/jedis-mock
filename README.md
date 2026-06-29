@@ -1,6 +1,5 @@
 [![GitHub release](https://img.shields.io/github/release/fppt/jedis-mock.svg)](https://github.com/fppt/jedis-mock/releases/latest)
-![Maven Central](https://img.shields.io/maven-central/v/com.github.fppt/jedis-mock)
-[![Actions Status: build](https://github.com/fppt/jedis-mock/workflows/build/badge.svg)](https://github.com/fppt/jedis-mock/actions?query=workflow%3A"build") 
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.fppt/jedis-mock)](https://central.sonatype.com/artifact/com.github.fppt/jedis-mock)
 
 # Jedis-Mock
 
