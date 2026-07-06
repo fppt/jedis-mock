@@ -187,7 +187,7 @@
                                     <version>[3.8.6,)</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
-                                    <version>[17,)</version>
+                                    <version>[21,)</version>
                                 </requireJavaVersion>
                                 <enforceBytecodeVersion>
                                     <maxJdkVersion>8</maxJdkVersion>
@@ -196,6 +196,10 @@
                                         <ignoredScope>test</ignoredScope>
                                     </ignoredScopes>
                                 </enforceBytecodeVersion>
+                                <!-- Released library must not depend on SNAPSHOT artifacts -->
+                                <requireReleaseDeps/>
+                                <!-- No duplicate <dependency> entries in this POM -->
+                                <banDuplicatePomDependencyVersions/>
                             </rules>
                             <fail>true</fail>
                         </configuration>
