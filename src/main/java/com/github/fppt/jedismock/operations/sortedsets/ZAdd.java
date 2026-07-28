@@ -81,7 +81,7 @@ class ZAdd extends AbstractByScoreOperation {
     private Slice adding() {
         Slice key = params().get(0);
         final RMZSet mapDBObj = getZSetFromBaseOrCreateEmpty(key);
-        if (((params().size()) & 1) == 0) {
+        if ((params().size() & 1) == 0) {
             throw new ArgumentException("ERR syntax error");
         }
         if (options.contains(XX) && params().isEmpty()) {
