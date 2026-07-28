@@ -2,19 +2,23 @@ package com.github.fppt.jedismock.operations.pubsub;
 
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.RedisClient;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.storage.OperationExecutorState;
+import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 
 import java.util.List;
 
 @RedisCommand(value = "subscribe", transactional = false)
 public class Subscribe extends AbstractRedisOperation {
-    private final OperationExecutorState state;
+    private final SubscriptionRegistry registry;
+    private final RedisClient client;
 
-    public Subscribe(OperationExecutorState state, List<Slice> params) {
-        super(state.base(), params);
-        this.state = state;
+    public Subscribe(RedisBase base, SubscriptionRegistry registry, RedisClient client, List<Slice> params) {
+        super(base, params);
+        this.registry = registry;
+        this.client = client;
     }
 
     @Override
@@ -27,9 +31,9 @@ public class Subscribe extends AbstractRedisOperation {
         // before the acks are written -- preserving Redis's ordering guarantee.
         // See issue #768.
         for (Slice channel : params()) {
-            state.subscriptionRegistry().addSubscriber(channel, state.owner());
-            int subscriptionsCount = state.subscriptionRegistry().getSubscriptionsCount(state.owner());
-            state.owner().sendResponse(Response.subscribedToChannel(channel, subscriptionsCount), "subscribe");
+            registry.addSubscriber(channel, client);
+            int subscriptionsCount = registry.getSubscriptionsCount(client);
+            client.sendResponse(Response.subscribedToChannel(channel, subscriptionsCount), "subscribe");
         }
 
         //Skip is sent because we have already responded

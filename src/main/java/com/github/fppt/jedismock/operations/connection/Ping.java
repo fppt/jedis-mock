@@ -2,19 +2,23 @@ package com.github.fppt.jedismock.operations.connection;
 
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.RedisClient;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.storage.OperationExecutorState;
+import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 
 import java.util.List;
 
 @RedisCommand("ping")
 class Ping extends AbstractRedisOperation {
-    private final OperationExecutorState state;
+    private final SubscriptionRegistry registry;
+    private final RedisClient client;
 
-    Ping(OperationExecutorState state, List<Slice> params) {
-        super(state.base(), params);
-        this.state = state;
+    Ping(RedisBase base, SubscriptionRegistry registry, RedisClient client, List<Slice> params) {
+        super(base, params);
+        this.registry = registry;
+        this.client = client;
     }
 
     protected Slice response() {
@@ -22,7 +26,7 @@ class Ping extends AbstractRedisOperation {
 
         // A client in subscribe mode gets the RESP2 array reply
         // [pong, message-or-empty] instead of the usual +PONG / echo.
-        if (state.subscriptionRegistry().getSubscriptionsCount(state.owner()) > 0) {
+        if (registry.getSubscriptionsCount(client) > 0) {
             return Response.pongInSubscribeMode(message);
         }
 
