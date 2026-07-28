@@ -108,28 +108,28 @@ public class Response {
         return array(slices);
     }
 
-    public static Slice subscribedToChannel(List<Slice> channels) {
-        Slice operation = SliceParser.consumeParameter("$9\r\nsubscribe\r\n".getBytes());
-        List<Slice> slices = new ArrayList<>();
-        int i = 0;
-        for (Slice channel : channels) {
-            slices.add(Response.bulkString(operation));
-            slices.add(bulkString(channel));
-            slices.add(Response.integer(++i));
-        }
-        return array(slices);
+    public static Slice subscribedToChannel(Slice channel, int subscriptionsCount) {
+        return array(
+                bulkString(Slice.create("subscribe")),
+                bulkString(channel),
+                integer(subscriptionsCount));
     }
 
-    public static Slice psubscribedToChannel(List<Slice> patterns) {
-        Slice operation = SliceParser.consumeParameter("$10\r\npsubscribe\r\n".getBytes());
-        List<Slice> slices = new ArrayList<>();
-        int i = 0;
-        for (Slice pattern : patterns) {
-            slices.add(Response.bulkString(operation));
-            slices.add(bulkString(pattern));
-            slices.add(Response.integer(++i));
-        }
-        return array(slices);
+    public static Slice psubscribedToPattern(Slice pattern, int subscriptionsCount) {
+        return array(
+                bulkString(Slice.create("psubscribe")),
+                bulkString(pattern),
+                integer(subscriptionsCount));
+    }
+
+    /**
+     * The reply to PING issued by a client in subscribe mode (RESP2): a
+     * two-element array of "pong" and the PING argument or an empty string.
+     */
+    public static Slice pongInSubscribeMode(Slice message) {
+        return array(
+                bulkString(Slice.create("pong")),
+                bulkString(message == null ? Slice.create("") : message));
     }
 
     public static Slice unsubscribe(Slice channel, int remainingSubscriptions) {

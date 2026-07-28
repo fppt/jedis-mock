@@ -125,6 +125,7 @@ public final class RedisClient implements Runnable {
      */
     public void close() {
         running.set(false);
+        executor.cleanup();
         Utils.closeQuietly(socket);
         Utils.closeQuietly(in);
         Utils.closeQuietly(out);

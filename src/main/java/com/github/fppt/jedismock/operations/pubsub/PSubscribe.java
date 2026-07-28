@@ -18,14 +18,18 @@ public class PSubscribe extends AbstractRedisOperation {
 
     @Override
     protected Slice response() {
-        params().forEach(pattern -> state.subscriptionRegistry().subscribeByPattern(pattern, state.owner()));
-        List<Slice> numSubscriptions = state.subscriptionRegistry().getPSubscriptions(state.owner());
-
-        // Send the psubscribe acknowledgement while still holding the global lock (this
-        // runs inside MockExecutor's synchronized block). A concurrent PUBLISH needs the
-        // same lock, so it cannot deliver a pmessage to this subscriber before the ack is
-        // written -- preserving Redis's ordering guarantee. See issue #768.
-        state.owner().sendResponse(Response.psubscribedToChannel(numSubscriptions), "psubscribe");
+        // Every argument is acknowledged separately (even a duplicate of an already
+        // subscribed pattern), with the client's total channel+pattern subscription
+        // count. The acknowledgements are sent while still holding the global lock
+        // (this runs inside MockExecutor's synchronized block). A concurrent PUBLISH
+        // needs the same lock, so it cannot deliver a pmessage to this subscriber
+        // before the acks are written -- preserving Redis's ordering guarantee.
+        // See issue #768.
+        for (Slice pattern : params()) {
+            state.subscriptionRegistry().subscribeByPattern(pattern, state.owner());
+            int subscriptionsCount = state.subscriptionRegistry().getSubscriptionsCount(state.owner());
+            state.owner().sendResponse(Response.psubscribedToPattern(pattern, subscriptionsCount), "psubscribe");
+        }
 
         //Skip is sent because we have already responded
         return Response.SKIP;

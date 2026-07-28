@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +30,13 @@ public class PubSub extends AbstractRedisOperation {
             return Response.array(state.subscriptionRegistry().getChannels().stream().filter(
                     s -> s.toString().matches(pattern)
             ).map(Response::bulkString).collect(Collectors.toList()));
+        } else if ("numsub".equalsIgnoreCase(subcommand.toString())) {
+            List<Slice> channelsAndCounts = new ArrayList<>();
+            for (Slice channel : params().subList(1, params().size())) {
+                channelsAndCounts.add(Response.bulkString(channel));
+                channelsAndCounts.add(Response.integer(state.subscriptionRegistry().getSubscribersCount(channel)));
+            }
+            return Response.array(channelsAndCounts);
         } else if ("numpat".equalsIgnoreCase(subcommand.toString())) {
             return Response.integer(state.subscriptionRegistry().getNumpat());
         } else {

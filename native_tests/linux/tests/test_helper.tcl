@@ -37,11 +37,12 @@ set ::valgrind 0
 set ::durable 0
 set ::log_req_res 0; # request/response logging mode (not supported here)
 set ::force_resp3 0; # force RESP3 mode (not supported here)
+set ::singledb 0; # tests run against db 9 as usual
 set ::tls 0
 set ::stack_logging 0
 set ::verbose 0
 set ::quiet 0
-set ::denytags {large-memory needs:debug needs:repl repl}; # jedis-mock can't run multi-GB values, DEBUG, or replication
+set ::denytags {large-memory needs:debug needs:repl repl resp3}; # jedis-mock can't run multi-GB values, DEBUG, replication, or RESP3
 set ::skiptests {}
 set ::skipunits {}
 set ::no_latency 0

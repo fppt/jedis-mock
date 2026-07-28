@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +62,19 @@ public class SubscriptionRegistry {
         return subs;
     }
 
+    public int getSubscribersCount(Slice channel) {
+        return subscribers.getOrDefault(channel, Collections.emptySet()).size();
+    }
+
+    /**
+     * @return the total number of channel and pattern subscriptions held by
+     * the client — the count Redis reports in every (p)subscribe and
+     * (p)unsubscribe acknowledgement.
+     */
+    public int getSubscriptionsCount(RedisClient client) {
+        return getSubscriptions(client).size() + getPSubscriptions(client).size();
+    }
+
     public Map<Slice, Set<RedisClient>> getPsubscribers(Slice channel) {
         Map<Slice, Set<RedisClient>> matchingPatterns = new HashMap<>();
         String channelStr = channel.toString();
@@ -97,6 +111,21 @@ public class SubscriptionRegistry {
 
     public List<Slice> getPSubscriptions(RedisClient client) {
         return getSubscriptions(client, psubscribers);
+    }
+
+    /**
+     * Drops all channel and pattern subscriptions of a client. Called when
+     * the client disconnects: like in real Redis, a dead connection must not
+     * linger in the pub/sub registries.
+     */
+    public void removeClient(RedisClient client) {
+        removeClient(client, subscribers);
+        removeClient(client, psubscribers);
+    }
+
+    private static void removeClient(RedisClient client, Map<Slice, Set<RedisClient>> subscribers) {
+        subscribers.values().forEach(clients -> clients.remove(client));
+        subscribers.values().removeIf(Set::isEmpty);
     }
 
     private static List<Slice> getSubscriptions(RedisClient client, Map<Slice, Set<RedisClient>> subscribers) {

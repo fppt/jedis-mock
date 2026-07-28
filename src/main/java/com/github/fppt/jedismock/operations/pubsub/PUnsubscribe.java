@@ -29,13 +29,21 @@ public class PUnsubscribe extends AbstractRedisOperation {
             channelsToUbsubscribeFrom = params();
         }
 
+        if (channelsToUbsubscribeFrom.isEmpty()) {
+            // PUNSUBSCRIBE always replies: with no arguments and no subscriptions,
+            // Redis sends a single acknowledgement with a nil pattern.
+            int numSubscriptions = state.subscriptionRegistry().getSubscriptionsCount(state.owner());
+            Slice response = Response.punsubscribe(null, numSubscriptions);
+            state.owner().sendResponse(Response.clientResponse("punsubscribe", response), "punsubscribe");
+        }
+
         for (Slice channel : channelsToUbsubscribeFrom) {
             LOG.debug("PUnsubscribing from channel [{}]", channel);
-            if(state.subscriptionRegistry().removePSubscriber(channel, state.owner())) {
-                int numSubscriptions = state.subscriptionRegistry().getPSubscriptions(state.owner()).size();
-                Slice response = Response.punsubscribe(channel, numSubscriptions);
-                state.owner().sendResponse(Response.clientResponse("punsubscribe", response), "punsubscribe");
-            }
+            // Acknowledged whether or not the client was subscribed to the pattern.
+            state.subscriptionRegistry().removePSubscriber(channel, state.owner());
+            int numSubscriptions = state.subscriptionRegistry().getSubscriptionsCount(state.owner());
+            Slice response = Response.punsubscribe(channel, numSubscriptions);
+            state.owner().sendResponse(Response.clientResponse("punsubscribe", response), "punsubscribe");
         }
 
         //Skip is sent because we have already responded

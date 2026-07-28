@@ -19,14 +19,18 @@ public class Subscribe extends AbstractRedisOperation {
 
     @Override
     protected Slice response() {
-        params().forEach(channel -> state.subscriptionRegistry().addSubscriber(channel, state.owner()));
-        List<Slice> numSubscriptions = state.subscriptionRegistry().getSubscriptions(state.owner());
-
-        // Send the subscribe acknowledgement while still holding the global lock (this
-        // runs inside MockExecutor's synchronized block). A concurrent PUBLISH needs the
-        // same lock, so it cannot deliver a message to this subscriber before the ack is
-        // written -- preserving Redis's ordering guarantee. See issue #768.
-        state.owner().sendResponse(Response.subscribedToChannel(numSubscriptions), "subscribe");
+        // Every argument is acknowledged separately (even a duplicate of an already
+        // subscribed channel), with the client's total channel+pattern subscription
+        // count. The acknowledgements are sent while still holding the global lock
+        // (this runs inside MockExecutor's synchronized block). A concurrent PUBLISH
+        // needs the same lock, so it cannot deliver a message to this subscriber
+        // before the acks are written -- preserving Redis's ordering guarantee.
+        // See issue #768.
+        for (Slice channel : params()) {
+            state.subscriptionRegistry().addSubscriber(channel, state.owner());
+            int subscriptionsCount = state.subscriptionRegistry().getSubscriptionsCount(state.owner());
+            state.owner().sendResponse(Response.subscribedToChannel(channel, subscriptionsCount), "subscribe");
+        }
 
         //Skip is sent because we have already responded
         return Response.SKIP;
