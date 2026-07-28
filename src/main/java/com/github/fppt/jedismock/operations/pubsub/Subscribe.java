@@ -30,9 +30,11 @@ public class Subscribe extends AbstractRedisOperation {
         // needs the same lock, so it cannot deliver a message to this subscriber
         // before the acks are written -- preserving Redis's ordering guarantee.
         // See issue #768.
+        int subscriptionsCount = registry.getSubscriptionsCount(client);
         for (Slice channel : params()) {
-            registry.addSubscriber(channel, client);
-            int subscriptionsCount = registry.getSubscriptionsCount(client);
+            if (registry.addSubscriber(channel, client)) {
+                subscriptionsCount++;
+            }
             client.sendResponse(Response.subscribedToChannel(channel, subscriptionsCount), "subscribe");
         }
 

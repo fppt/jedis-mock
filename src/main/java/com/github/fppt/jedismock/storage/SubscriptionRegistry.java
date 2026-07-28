@@ -26,32 +26,48 @@ public class SubscriptionRegistry {
     private final Map<Slice, Set<RedisClient>> subscribers = new HashMap<>();
     private final Map<Slice, Set<RedisClient>> psubscribers = new HashMap<>();
 
-    public void addSubscriber(Slice channel, RedisClient client) {
-        subscribers.computeIfAbsent(channel, c -> new HashSet<>()).add(client);
+    /**
+     * @return whether this added a new subscription (false for a duplicate),
+     * so that callers can maintain the running count for the per-argument
+     * acknowledgements without rescanning the registry.
+     */
+    public boolean addSubscriber(Slice channel, RedisClient client) {
+        return subscribers.computeIfAbsent(channel, c -> new HashSet<>()).add(client);
     }
 
-    public void subscribeByPattern(Slice pattern, RedisClient client) {
-        psubscribers.computeIfAbsent(pattern, p -> new HashSet<>()).add(client);
+    /**
+     * @return whether this added a new subscription (false for a duplicate),
+     * so that callers can maintain the running count for the per-argument
+     * acknowledgements without rescanning the registry.
+     */
+    public boolean subscribeByPattern(Slice pattern, RedisClient client) {
+        return psubscribers.computeIfAbsent(pattern, p -> new HashSet<>()).add(client);
     }
 
+    /**
+     * @return whether the client was actually subscribed to the channel.
+     */
     public boolean removeSubscriber(Slice channel, RedisClient client) {
         return removeSubscriber(channel, client, subscribers);
     }
 
+    /**
+     * @return whether the client was actually subscribed to the pattern.
+     */
     public boolean removePSubscriber(Slice channel, RedisClient client) {
         return removeSubscriber(channel, client, psubscribers);
     }
 
     private static boolean removeSubscriber(Slice channel, RedisClient client, Map<Slice, Set<RedisClient>> subscribers) {
-        if (subscribers.containsKey(channel)) {
-            Set<RedisClient> redisClients = subscribers.get(channel);
-            redisClients.remove(client);
-            if (redisClients.isEmpty()) {
-                subscribers.remove(channel);
-            }
-            return true;
+        Set<RedisClient> redisClients = subscribers.get(channel);
+        if (redisClients == null) {
+            return false;
         }
-        return false;
+        boolean removed = redisClients.remove(client);
+        if (redisClients.isEmpty()) {
+            subscribers.remove(channel);
+        }
+        return removed;
     }
 
     public Set<RedisClient> getSubscribers(Slice channel) {
@@ -84,7 +100,8 @@ public class SubscriptionRegistry {
             if (!channelStr.matches(regexpPattern)) {
                 continue;
             }
-            matchingPatterns.put(jedisPattern, patternSubscribedClients.getValue());
+            //Defensive copy: never leak the internal, mutable subscriber sets
+            matchingPatterns.put(jedisPattern, new HashSet<>(patternSubscribedClients.getValue()));
         }
         return matchingPatterns;
     }
@@ -102,7 +119,8 @@ public class SubscriptionRegistry {
     }
 
     public Set<Slice> getChannels() {
-        return subscribers.keySet();
+        //Defensive copy: keySet() is a live view backed by the internal map
+        return new HashSet<>(subscribers.keySet());
     }
 
     public List<Slice> getSubscriptions(RedisClient client) {

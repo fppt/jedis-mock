@@ -25,27 +25,29 @@ public class Unsubscribe extends AbstractRedisOperation {
 
     @Override
     protected Slice response() {
-        List<Slice> channelsToUbsubscribeFrom;
+        List<Slice> channelsToUnsubscribeFrom;
         if(params().isEmpty()){
             LOG.debug("No channels specified therefore unsubscribing from all channels");
-            channelsToUbsubscribeFrom = registry.getSubscriptions(client);
+            channelsToUnsubscribeFrom = registry.getSubscriptions(client);
         } else {
-            channelsToUbsubscribeFrom = params();
+            channelsToUnsubscribeFrom = params();
         }
 
-        if (channelsToUbsubscribeFrom.isEmpty()) {
+        int numSubscriptions = registry.getSubscriptionsCount(client);
+
+        if (channelsToUnsubscribeFrom.isEmpty()) {
             // UNSUBSCRIBE always replies: with no arguments and no subscriptions,
             // Redis sends a single acknowledgement with a nil channel.
-            int numSubscriptions = registry.getSubscriptionsCount(client);
             Slice response = Response.unsubscribe(null, numSubscriptions);
             client.sendResponse(Response.clientResponse("unsubscribe", response), "unsubscribe");
         }
 
-        for (Slice channel : channelsToUbsubscribeFrom) {
+        for (Slice channel : channelsToUnsubscribeFrom) {
             LOG.debug("Unsubscribing from channel [{}]", channel);
             // Acknowledged whether or not the client was subscribed to the channel.
-            registry.removeSubscriber(channel, client);
-            int numSubscriptions = registry.getSubscriptionsCount(client);
+            if (registry.removeSubscriber(channel, client)) {
+                numSubscriptions--;
+            }
             Slice response = Response.unsubscribe(channel, numSubscriptions);
             client.sendResponse(Response.clientResponse("unsubscribe", response), "unsubscribe");
         }

@@ -30,9 +30,11 @@ public class PSubscribe extends AbstractRedisOperation {
         // needs the same lock, so it cannot deliver a pmessage to this subscriber
         // before the acks are written -- preserving Redis's ordering guarantee.
         // See issue #768.
+        int subscriptionsCount = registry.getSubscriptionsCount(client);
         for (Slice pattern : params()) {
-            registry.subscribeByPattern(pattern, client);
-            int subscriptionsCount = registry.getSubscriptionsCount(client);
+            if (registry.subscribeByPattern(pattern, client)) {
+                subscriptionsCount++;
+            }
             client.sendResponse(Response.psubscribedToPattern(pattern, subscriptionsCount), "psubscribe");
         }
 
