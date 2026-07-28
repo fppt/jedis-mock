@@ -24,15 +24,15 @@ public class PUnsubscribe extends AbstractRedisOperation {
         List<Slice> channelsToUbsubscribeFrom;
         if(params().isEmpty()){
             LOG.debug("No channels specified therefore unsubscribing from all channels");
-            channelsToUbsubscribeFrom = base().getPSubscriptions(state.owner());
+            channelsToUbsubscribeFrom = state.subscriptionRegistry().getPSubscriptions(state.owner());
         } else {
             channelsToUbsubscribeFrom = params();
         }
 
         for (Slice channel : channelsToUbsubscribeFrom) {
             LOG.debug("PUnsubscribing from channel [{}]", channel);
-            if(base().removePSubscriber(channel, state.owner())) {
-                int numSubscriptions = base().getPSubscriptions(state.owner()).size();
+            if(state.subscriptionRegistry().removePSubscriber(channel, state.owner())) {
+                int numSubscriptions = state.subscriptionRegistry().getPSubscriptions(state.owner()).size();
                 Slice response = Response.punsubscribe(channel, numSubscriptions);
                 state.owner().sendResponse(Response.clientResponse("punsubscribe", response), "punsubscribe");
             }

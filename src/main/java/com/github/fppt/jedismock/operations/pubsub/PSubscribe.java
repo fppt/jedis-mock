@@ -18,8 +18,8 @@ public class PSubscribe extends AbstractRedisOperation {
 
     @Override
     protected Slice response() {
-        params().forEach(pattern -> base().subscribeByPattern(pattern, state.owner()));
-        List<Slice> numSubscriptions = base().getPSubscriptions(state.owner());
+        params().forEach(pattern -> state.subscriptionRegistry().subscribeByPattern(pattern, state.owner()));
+        List<Slice> numSubscriptions = state.subscriptionRegistry().getPSubscriptions(state.owner());
 
         // Send the psubscribe acknowledgement while still holding the global lock (this
         // runs inside MockExecutor's synchronized block). A concurrent PUBLISH needs the

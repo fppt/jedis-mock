@@ -19,8 +19,8 @@ public class Subscribe extends AbstractRedisOperation {
 
     @Override
     protected Slice response() {
-        params().forEach(channel -> base().addSubscriber(channel, state.owner()));
-        List<Slice> numSubscriptions = base().getSubscriptions(state.owner());
+        params().forEach(channel -> state.subscriptionRegistry().addSubscriber(channel, state.owner()));
+        List<Slice> numSubscriptions = state.subscriptionRegistry().getSubscriptions(state.owner());
 
         // Send the subscribe acknowledgement while still holding the global lock (this
         // runs inside MockExecutor's synchronized block). A concurrent PUBLISH needs the

@@ -24,15 +24,15 @@ public class Unsubscribe extends AbstractRedisOperation {
         List<Slice> channelsToUbsubscribeFrom;
         if(params().isEmpty()){
             LOG.debug("No channels specified therefore unsubscribing from all channels");
-            channelsToUbsubscribeFrom = base().getSubscriptions(state.owner());
+            channelsToUbsubscribeFrom = state.subscriptionRegistry().getSubscriptions(state.owner());
         } else {
             channelsToUbsubscribeFrom = params();
         }
 
         for (Slice channel : channelsToUbsubscribeFrom) {
             LOG.debug("Unsubscribing from channel [{}]", channel);
-            if(base().removeSubscriber(channel, state.owner())) {
-                int numSubscriptions = base().getSubscriptions(state.owner()).size();
+            if(state.subscriptionRegistry().removeSubscriber(channel, state.owner())) {
+                int numSubscriptions = state.subscriptionRegistry().getSubscriptions(state.owner()).size();
                 Slice response = Response.unsubscribe(channel, numSubscriptions);
                 state.owner().sendResponse(Response.clientResponse("unsubscribe", response), "unsubscribe");
             }

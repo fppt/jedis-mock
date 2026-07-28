@@ -19,6 +19,7 @@ public class OperationExecutorState {
     private final BlockingManager blockingManager;
     private final ScriptingManager scriptingManager;
     private final RedisConfiguration configuration;
+    private final SubscriptionRegistry subscriptionRegistry;
     private TransactionState transactionState = TransactionState.NORMAL;
     private final List<RedisOperation> tx = new ArrayList<>();
     private final Set<Slice> watchedKeys = new HashSet<>();
@@ -27,18 +28,21 @@ public class OperationExecutorState {
     private String clientName;
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases) {
-        this(owner, redisBases, new BlockingManager(), new ScriptingManager(), new RedisConfiguration());
+        this(owner, redisBases, new BlockingManager(), new ScriptingManager(), new RedisConfiguration(),
+                new SubscriptionRegistry());
     }
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases,
                                   BlockingManager blockingManager,
                                   ScriptingManager scriptingManager,
-                                  RedisConfiguration configuration) {
+                                  RedisConfiguration configuration,
+                                  SubscriptionRegistry subscriptionRegistry) {
         this.owner = owner;
         this.redisBases = redisBases;
         this.blockingManager = blockingManager;
         this.scriptingManager = scriptingManager;
         this.configuration = configuration;
+        this.subscriptionRegistry = subscriptionRegistry;
     }
 
     public RedisBase base() {
@@ -113,6 +117,16 @@ public class OperationExecutorState {
      */
     public RedisConfiguration configuration() {
         return configuration;
+    }
+
+    /**
+     * @return the server-wide registry of channel and pattern subscriptions.
+     * Pub/Sub is independent of the key space, so the registry is shared by
+     * every client and every database of the same server; only mutate it
+     * while holding {@link #lock()}.
+     */
+    public SubscriptionRegistry subscriptionRegistry() {
+        return subscriptionRegistry;
     }
 
     /**

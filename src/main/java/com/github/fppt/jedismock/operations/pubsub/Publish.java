@@ -5,7 +5,7 @@ import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.RedisClient;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 import java.util.Map;
@@ -13,23 +13,25 @@ import java.util.Set;
 
 @RedisCommand("publish")
 class Publish extends AbstractRedisOperation {
+    private final OperationExecutorState state;
 
-    Publish(RedisBase base, List<Slice> params) {
-        super(base, params);
+    Publish(OperationExecutorState state, List<Slice> params) {
+        super(state.base(), params);
+        this.state = state;
     }
 
     protected Slice response(){
         Slice channel = params().get(0);
         Slice message = params().get(1);
 
-        Set<RedisClient> subscribers = base().getSubscribers(channel);
+        Set<RedisClient> subscribers = state.subscriptionRegistry().getSubscribers(channel);
 
         subscribers.forEach(subscriber -> {
             Slice response = Response.publishedMessage(channel, message);
             subscriber.sendResponse(response, "contacting subscriber");
         });
 
-        Map<Slice, Set<RedisClient>> patternsPsubscribers = base().getPsubscribers(channel);
+        Map<Slice, Set<RedisClient>> patternsPsubscribers = state.subscriptionRegistry().getPsubscribers(channel);
         int totalClientsPsubscribed = patternsPsubscribers.entrySet().stream().map(mapEntry -> {
             Slice pattern = mapEntry.getKey();
             Set<RedisClient> psubscribedClients = mapEntry.getValue();
