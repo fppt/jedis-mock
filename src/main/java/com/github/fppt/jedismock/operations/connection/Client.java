@@ -30,6 +30,22 @@ public class Client implements RedisOperation {
         } else if ("getname".equalsIgnoreCase(subcommand)) {
             String name = state.getClientName();
             return name == null ? Response.NULL : Response.bulkString(Slice.create(name));
+        } else if ("reply".equalsIgnoreCase(subcommand)) {
+            if (params.size() != 2) {
+                return Response.error("ERR wrong number of arguments for 'client|reply' command");
+            }
+            // The +OK returned below is itself subject to the mode just set:
+            // OperationExecutorState.applyReplyMode suppresses it for OFF/SKIP.
+            final String mode = params.get(1).toString();
+            if ("on".equalsIgnoreCase(mode)) {
+                state.replyOn();
+            } else if ("off".equalsIgnoreCase(mode)) {
+                state.replyOff();
+            } else if ("skip".equalsIgnoreCase(mode)) {
+                state.replySkip();
+            } else {
+                return Response.error("ERR syntax error");
+            }
         }
         return Response.clientResponse("client", Response.OK);
     }

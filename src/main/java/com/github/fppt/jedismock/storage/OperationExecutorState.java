@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.storage;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.RedisClient;
+import com.github.fppt.jedismock.server.Response;
 
 import java.time.Clock;
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ public class OperationExecutorState {
     private boolean watchedKeysAffected = false;
     private int selectedRedisBase = 0;
     private String clientName;
+    private boolean repliesDisabled = false;
+    private int repliesToSkip = 0;
 
     public OperationExecutorState(RedisClient owner, Map<Integer, RedisBase> redisBases) {
         this(owner, redisBases, new BlockingManager(), new ScriptingManager(), new RedisConfiguration(),
@@ -50,7 +53,8 @@ public class OperationExecutorState {
     }
 
     public RedisBase base(int baseIndex) {
-        return redisBases.computeIfAbsent(baseIndex, key -> new RedisBase(this::getClock, configuration));
+        return redisBases.computeIfAbsent(baseIndex,
+                key -> new RedisBase(this::getClock, configuration, subscriptionRegistry, key));
     }
 
     public RedisClient owner() {
@@ -190,5 +194,43 @@ public class OperationExecutorState {
 
     public String getClientName() {
         return clientName;
+    }
+
+    /** {@code CLIENT REPLY ON}: resume replying (and always reply +OK itself). */
+    public void replyOn() {
+        repliesDisabled = false;
+        repliesToSkip = 0;
+    }
+
+    /** {@code CLIENT REPLY OFF}: suppress all command replies until ON. */
+    public void replyOff() {
+        repliesDisabled = true;
+    }
+
+    /**
+     * {@code CLIENT REPLY SKIP}: suppress the reply to this command and to
+     * the next one. A no-op while replies are OFF, matching real Redis.
+     */
+    public void replySkip() {
+        if (!repliesDisabled) {
+            repliesToSkip = 2;
+        }
+    }
+
+    /**
+     * Applies the {@code CLIENT REPLY} mode to a command reply. Called only on
+     * the socket command-reply path — never for pub/sub pushes (subscribe
+     * acknowledgements, published messages), which real Redis delivers even
+     * while replies are silenced.
+     */
+    public Slice applyReplyMode(Slice response) {
+        if (repliesToSkip > 0) {
+            repliesToSkip--;
+            return Response.SKIP;
+        }
+        if (repliesDisabled) {
+            return Response.SKIP;
+        }
+        return response;
     }
 }

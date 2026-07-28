@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.storage;
 import com.github.fppt.jedismock.RedisClient;
 import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.server.Response;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -129,6 +130,32 @@ public class SubscriptionRegistry {
 
     public List<Slice> getPSubscriptions(RedisClient client) {
         return getSubscriptions(client, psubscribers);
+    }
+
+    /**
+     * Delivers a message to every channel subscriber and every client whose
+     * pattern matches the channel — the delivery logic of {@code PUBLISH},
+     * shared with server-initiated messages such as keyspace notifications.
+     * Only call while holding {@link OperationExecutorState#lock()}: delivery
+     * under the lock is what preserves Redis's ordering guarantee between a
+     * subscribe acknowledgement and the first message (see issue #768).
+     *
+     * @return the number of clients the message was delivered to
+     */
+    public int publish(Slice channel, Slice message) {
+        Set<RedisClient> channelSubscribers = getSubscribers(channel);
+        for (RedisClient subscriber : channelSubscribers) {
+            subscriber.sendResponse(Response.publishedMessage(channel, message), "contacting subscriber");
+        }
+        int deliveries = channelSubscribers.size();
+        for (Map.Entry<Slice, Set<RedisClient>> patternSubscribers : getPsubscribers(channel).entrySet()) {
+            Slice pattern = patternSubscribers.getKey();
+            for (RedisClient psubscriber : patternSubscribers.getValue()) {
+                psubscriber.sendResponse(Response.publishedPMessage(pattern, channel, message), "contacting subscriber");
+            }
+            deliveries += patternSubscribers.getValue().size();
+        }
+        return deliveries;
     }
 
     /**

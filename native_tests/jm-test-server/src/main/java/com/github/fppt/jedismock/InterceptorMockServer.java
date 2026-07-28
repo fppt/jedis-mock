@@ -29,10 +29,7 @@ public final class InterceptorMockServer {
         RedisServer
                 .newRedisServer(PORT)
                 .setOptions(ServiceOptions.withInterceptor((state, roName, params) -> {
-                    if ("config".equalsIgnoreCase(roName)) {
-                        //Just a junk response instead of an error
-                        return Response.bulkString(Slice.create("1"));
-                    } else if ("debug".equalsIgnoreCase(roName)
+                    if ("debug".equalsIgnoreCase(roName)
                             && "object".equalsIgnoreCase(params.get(0).toString())
                     ) {
                         // Handling unsopported DEBUG OBJECT command

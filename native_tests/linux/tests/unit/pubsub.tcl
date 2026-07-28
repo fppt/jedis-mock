@@ -453,6 +453,7 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
         r config set maxmemory-policy noeviction
     } {OK} {needs:config-maxmemory}
+    }
 
     test "Keyspace notifications: test CONFIG GET/SET of event flags" {
         r config set notify-keyspace-events gKE
@@ -465,6 +466,9 @@ start_server {tags {"pubsub network"}} {
         assert_equal {AE} [lindex [r config get notify-keyspace-events] 1]
     }
 
+    # Notification emission is not implemented in jedis-mock yet
+    # (issues #406/#809); re-enable when it is.
+    if 0 {
     test "Keyspace notifications: new key test" {
         r config set notify-keyspace-events En
         set rd1 [redis_deferring_client]
