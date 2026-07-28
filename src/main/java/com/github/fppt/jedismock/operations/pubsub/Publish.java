@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.RedisClient;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.RedisBase;
+import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 
 import java.util.List;
 import java.util.Map;
@@ -13,23 +14,25 @@ import java.util.Set;
 
 @RedisCommand("publish")
 class Publish extends AbstractRedisOperation {
+    private final SubscriptionRegistry registry;
 
-    Publish(RedisBase base, List<Slice> params) {
+    Publish(RedisBase base, SubscriptionRegistry registry, List<Slice> params) {
         super(base, params);
+        this.registry = registry;
     }
 
     protected Slice response(){
         Slice channel = params().get(0);
         Slice message = params().get(1);
 
-        Set<RedisClient> subscribers = base().getSubscribers(channel);
+        Set<RedisClient> subscribers = registry.getSubscribers(channel);
 
         subscribers.forEach(subscriber -> {
             Slice response = Response.publishedMessage(channel, message);
             subscriber.sendResponse(response, "contacting subscriber");
         });
 
-        Map<Slice, Set<RedisClient>> patternsPsubscribers = base().getPsubscribers(channel);
+        Map<Slice, Set<RedisClient>> patternsPsubscribers = registry.getPsubscribers(channel);
         int totalClientsPsubscribed = patternsPsubscribers.entrySet().stream().map(mapEntry -> {
             Slice pattern = mapEntry.getKey();
             Set<RedisClient> psubscribedClients = mapEntry.getValue();

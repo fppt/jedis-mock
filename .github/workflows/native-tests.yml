@@ -103,3 +103,8 @@ jobs:
         if: always()
         run: ./testnative unit/scripting
         working-directory: native_tests
+
+      - name: pubsub
+        if: always()
+        run: ./testnative unit/pubsub
+        working-directory: native_tests

@@ -27,4 +27,13 @@ public class RedisOperationExecutor {
                 .execCommand(state, name, commandParams);
     }
 
+    /**
+     * Releases the server-side state of a disconnected client
+     * (its pub/sub subscriptions).
+     */
+    public void cleanup() {
+        synchronized (state.lock()) {
+            state.subscriptionRegistry().removeClient(state.owner());
+        }
+    }
 }
