@@ -21,7 +21,7 @@ class MGet extends AbstractRedisOperation {
         RedisBase base = base();
         return Response.array(params().stream()
                 .map(base::getValue)
-                .map(s -> s instanceof RMString ? (s.getAsSlice()) : null)
+                .map(s -> s instanceof RMString ? s.getAsSlice() : null)
                 .map(Response::bulkString)
                 .collect(toList()));
     }
