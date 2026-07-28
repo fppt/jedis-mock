@@ -81,23 +81,22 @@ start_server {tags {"pubsub network"}} {
         $rd2 close
     }
 
-    # jedis-mock serves every connection in its own thread and does not
-    # guarantee cross-connection command ordering, so the PUBLISH sent on a
-    # second connection may be executed before the (never awaited)
-    # UNSUBSCRIBE. Unsubscribe-all semantics are covered deterministically
-    # by the Java comparison tests instead.
-    if 0 {
     test "PUBLISH/SUBSCRIBE after UNSUBSCRIBE without arguments" {
         set rd1 [redis_deferring_client]
         assert_equal {1 2 3} [subscribe $rd1 {chan1 chan2 chan3}]
         unsubscribe $rd1
+        # wait for the unsubscribe to take effect
+        wait_for_condition 50 100 {
+            [r publish chan1 hello] eq 0
+        } else {
+            fail "unsubscribe did not take effect"
+        }
         assert_equal 0 [r publish chan1 hello]
         assert_equal 0 [r publish chan2 hello]
         assert_equal 0 [r publish chan3 hello]
 
         # clean up clients
         $rd1 close
-    }
     }
 
     test "SUBSCRIBE to one channel more than once" {
@@ -161,13 +160,16 @@ start_server {tags {"pubsub network"}} {
         $rd2 close
     }
 
-    # Disabled for the same cross-connection ordering reason as
-    # "PUBLISH/SUBSCRIBE after UNSUBSCRIBE without arguments" above.
-    if 0 {
     test "PUBLISH/PSUBSCRIBE after PUNSUBSCRIBE without arguments" {
         set rd1 [redis_deferring_client]
         assert_equal {1 2 3} [psubscribe $rd1 {chan1.* chan2.* chan3.*}]
         punsubscribe $rd1
+        # wait for the unsubscribe to take effect
+        wait_for_condition 50 100 {
+            [r publish chan1.hi hello] eq 0
+        } else {
+            fail "unsubscribe did not take effect"
+        }
         assert_equal 0 [r publish chan1.hi hello]
         assert_equal 0 [r publish chan2.hi hello]
         assert_equal 0 [r publish chan3.hi hello]
@@ -175,10 +177,7 @@ start_server {tags {"pubsub network"}} {
         # clean up clients
         $rd1 close
     }
-    }
 
-    # jedis-mock does not support RESP3 (HELLO 3) or CLIENT REPLY OFF yet.
-    if 0 {
     test "PubSub messages with CLIENT REPLY OFF" {
         set rd [redis_deferring_client]
         $rd hello 3
@@ -201,8 +200,7 @@ start_server {tags {"pubsub network"}} {
         assert_equal {0} [punsubscribe $rd ch*]
 
         $rd close
-    }
-    }
+    } {0} {resp3}
 
     test "PUNSUBSCRIBE from non-subscribed channels" {
         set rd1 [redis_deferring_client]
@@ -431,6 +429,17 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    test "Keyspace notification: expired event (Expiration time is already expired)" {
+        r config set notify-keyspace-events Ex
+        r del foo
+        set rd1 [redis_deferring_client]
+        assert_equal {1} [psubscribe $rd1 *]
+        r set foo 1
+        r expire foo -1
+        assert_equal "pmessage * __keyevent@${db}__:expired foo" [$rd1 read]
+        $rd1 close
+    }
+
     test "Keyspace notifications: evicted events" {
         r config set notify-keyspace-events Ee
         r config set maxmemory-policy allkeys-lru
@@ -469,4 +478,55 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
     }
+
+    test "publish to self inside multi" {
+        r hello 3
+        r subscribe foo
+        r multi
+        r ping abc
+        r publish foo bar
+        r publish foo vaz
+        r ping def
+        assert_equal [r exec] {abc 1 1 def}
+        assert_equal [r read] {message foo bar}
+        assert_equal [r read] {message foo vaz}
+    } {} {resp3}
+
+    test "publish to self inside script" {
+        r hello 3
+        r subscribe foo
+        set res [r eval {
+                redis.call("ping","abc")
+                redis.call("publish","foo","bar")
+                redis.call("publish","foo","vaz")
+                redis.call("ping","def")
+                return "bla"} 0]
+        assert_equal $res {bla}
+        assert_equal [r read] {message foo bar}
+        assert_equal [r read] {message foo vaz}
+    } {} {resp3}
+
+    test "unsubscribe inside multi, and publish to self" {
+        r hello 3
+
+        # Note: SUBSCRIBE and UNSUBSCRIBE with multiple channels in the same command,
+        # breaks the multi response, see Redis OSS issue: https://github.com/redis/redis/issues/12207
+        # this is just a temporary sanity test to detect unintended breakage.
+
+        # subscribe for 3 channels actually emits 3 "responses"
+        assert_equal "subscribe foo 1" [r subscribe foo bar baz]
+        assert_equal "subscribe bar 2" [r read]
+        assert_equal "subscribe baz 3" [r read]
+
+        r multi
+        r ping abc
+        r unsubscribe bar
+        r unsubscribe baz
+        r ping def
+        assert_equal [r exec] {abc {unsubscribe bar 2} {unsubscribe baz 1} def}
+
+        # published message comes after the publish command's response.
+        assert_equal [r publish foo vaz] {1}
+        assert_equal [r read] {message foo vaz}
+    } {} {resp3}
 }
