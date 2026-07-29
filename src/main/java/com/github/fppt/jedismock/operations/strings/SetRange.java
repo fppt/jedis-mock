@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -48,6 +49,7 @@ public class SetRange extends AbstractRedisOperation {
         }
         if (!oldValue.equals(newValue)) {
             base().putValue(key, Slice.create(newValue).extract(), null);
+            base().notifyKeyspaceEvent(KeyspaceEvent.SETRANGE, key);
         }
         return Response.integer(newValue.length());
     }

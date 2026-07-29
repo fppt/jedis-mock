@@ -259,9 +259,6 @@ start_server {tags {"pubsub network"}} {
 
     ### Keyspace events notification tests
 
-    # These need string-class ('$') events, which are not implemented yet
-    # (issue #406); the generic and expired classes below do work.
-    if 0 {
     test "Keyspace notifications: we receive keyspace notifications" {
         r config set notify-keyspace-events KA
         set rd1 [redis_deferring_client]
@@ -294,6 +291,8 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    # Needs list-class ('l') events, which are not implemented yet (issue #406).
+    if 0 {
     test "Keyspace notifications: we are able to mask events" {
         r config set notify-keyspace-events KEl
         r del mylist

@@ -13,6 +13,8 @@ import com.github.fppt.jedismock.storage.KeyspaceNotificationOptions.EventClass;
  * {@code xgroup-create}, which is not a valid identifier).
  */
 public enum KeyspaceEvent {
+    //Generic (g): not tied to one value type. Note that a container emptied by
+    //its own type's command is reported with this class, not the type's.
     DEL("del", EventClass.GENERIC),
     EXPIRE("expire", EventClass.GENERIC),
     PERSIST("persist", EventClass.GENERIC),
@@ -21,7 +23,17 @@ public enum KeyspaceEvent {
     MOVE_FROM("move_from", EventClass.GENERIC),
     MOVE_TO("move_to", EventClass.GENERIC),
     COPY_TO("copy_to", EventClass.GENERIC),
-    EXPIRED("expired", EventClass.EXPIRED);
+
+    //Expired (x)
+    EXPIRED("expired", EventClass.EXPIRED),
+
+    //String ($). Every flavour of assignment reports "set", and the
+    //decrementing variants report "incrby" just like the incrementing ones.
+    SET("set", EventClass.STRING),
+    APPEND("append", EventClass.STRING),
+    SETRANGE("setrange", EventClass.STRING),
+    INCRBY("incrby", EventClass.STRING),
+    INCRBYFLOAT("incrbyfloat", EventClass.STRING);
 
     private final String eventName;
     private final EventClass eventClass;
