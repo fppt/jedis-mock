@@ -45,7 +45,8 @@ public class RedisBase {
         this.dbIndex = dbIndex;
         this.keyValueStorage = new ExpiringKeyValueStorage(clockSupplier, key -> watchedKeys
                 .getOrDefault(key, Collections.emptySet())
-                .forEach(OperationExecutorState::watchedKeyIsAffected));
+                .forEach(OperationExecutorState::watchedKeyIsAffected),
+                key -> notifyKeyspaceEvent(KeyspaceEvent.EXPIRED, key));
     }
 
     /**
@@ -57,19 +58,19 @@ public class RedisBase {
      * {@code __keyevent@<db>__:<event> -> <key>}. Only call while holding
      * {@link OperationExecutorState#lock()} (all operations do).
      */
-    public void notifyKeyspaceEvent(KeyspaceNotificationOptions.EventClass eventClass, String event, Slice key) {
+    public void notifyKeyspaceEvent(KeyspaceEvent event, Slice key) {
         KeyspaceNotificationOptions options = configuration.getKeyspaceNotificationOptions();
-        if (!options.isEnabled(eventClass)) {
+        if (!options.isEnabled(event)) {
             return;
         }
         if (options.isEnabled(KeyspaceNotificationOptions.EventClass.KEYSPACE)) {
             subscriptionRegistry.publish(
                     channel("__keyspace@" + dbIndex + "__:", key.data()),
-                    Slice.create(event));
+                    Slice.create(event.eventName()));
         }
         if (options.isEnabled(KeyspaceNotificationOptions.EventClass.KEYEVENT)) {
             subscriptionRegistry.publish(
-                    channel("__keyevent@" + dbIndex + "__:", event.getBytes(StandardCharsets.UTF_8)),
+                    channel("__keyevent@" + dbIndex + "__:", event.eventName().getBytes(StandardCharsets.UTF_8)),
                     key);
         }
     }
@@ -103,7 +104,7 @@ public class RedisBase {
         //Otherwise a DBSIZE/KEYS sweep would drop the key silently and a later
         //EXEC could no longer detect that the watched key had expired.
         for (Slice key : outdated) {
-            keyValueStorage.delete(key);
+            keyValueStorage.deleteExpired(key);
         }
         return result;
     }

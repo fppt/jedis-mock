@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 
@@ -48,6 +49,9 @@ public class Move implements RedisOperation {
             destinationBase.setDeadline(key, deadline);
         }
         state.base().deleteValue(key);
+        state.base().notifyKeyspaceEvent(KeyspaceEvent.MOVE_FROM, key);
+        //move_to belongs to the destination database, so it is published on its channels
+        destinationBase.notifyKeyspaceEvent(KeyspaceEvent.MOVE_TO, key);
         return Response.integer(1);
     }
 }

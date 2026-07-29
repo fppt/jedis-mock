@@ -90,6 +90,10 @@ public final class KeyspaceNotificationOptions {
         return classes.contains(eventClass);
     }
 
+    public boolean isEnabled(KeyspaceEvent event) {
+        return isEnabled(event.eventClass());
+    }
+
     /**
      * The canonical form reported by {@code CONFIG GET}: the {@code A} alias
      * collapses the classes it covers, followed by the remaining flags in

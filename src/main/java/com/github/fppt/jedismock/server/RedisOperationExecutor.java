@@ -32,12 +32,13 @@ public class RedisOperationExecutor {
     }
 
     /**
-     * Releases the server-side state of a disconnected client
-     * (its pub/sub subscriptions).
+     * Releases the server-side state of a disconnected client (its pub/sub
+     * subscriptions). Deliberately does not take the shared data lock: a client
+     * may disconnect while another connection runs a long Lua script that holds
+     * it, and the disconnect must not wait for that script to finish. The
+     * registry guards itself instead.
      */
     public void cleanup() {
-        synchronized (state.lock()) {
-            state.subscriptionRegistry().removeClient(state.owner());
-        }
+        state.subscriptionRegistry().removeClient(state.owner());
     }
 }

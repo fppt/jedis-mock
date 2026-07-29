@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
@@ -28,6 +29,8 @@ class Rename extends AbstractRedisOperation {
         base().deleteValue(newKey);
         base().putValue(newKey, value, ttl);
         base().deleteValue(key);
+        base().notifyKeyspaceEvent(KeyspaceEvent.RENAME_FROM, key);
+        base().notifyKeyspaceEvent(KeyspaceEvent.RENAME_TO, newKey);
         lock.notifyAll();
 
         return true;

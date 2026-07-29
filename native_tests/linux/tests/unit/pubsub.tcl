@@ -259,8 +259,8 @@ start_server {tags {"pubsub network"}} {
 
     ### Keyspace events notification tests
 
-    # Keyspace notifications are not implemented in jedis-mock yet
-    # (issues #406/#809); re-enable these tests when they are.
+    # These need string-class ('$') events, which are not implemented yet
+    # (issue #406); the generic and expired classes below do work.
     if 0 {
     test "Keyspace notifications: we receive keyspace notifications" {
         r config set notify-keyspace-events KA
@@ -307,6 +307,8 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    }
+
     test "Keyspace notifications: general events test" {
         r config set notify-keyspace-events KEg
         set rd1 [redis_deferring_client]
@@ -321,6 +323,8 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    # Type-specific event classes are not implemented yet (issue #406).
+    if 0 {
     test "Keyspace notifications: list events test" {
         r config set notify-keyspace-events KEl
         r del mylist
@@ -404,6 +408,8 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    }
+
     test "Keyspace notifications: expired events (triggered expire)" {
         r config set notify-keyspace-events Ex
         r del foo
@@ -419,6 +425,16 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    # Disabled: jedis-mock expires keys lazily (on access) and has no active
+    # expiry cycle, so a key nobody touches never produces an 'expired' event.
+    #
+    # The next test is disabled for a different reason: an expiration set in the
+    # past deletes the key immediately, which Redis reports as a generic 'del'
+    # (verified against redis 7.4) while Valkey reports 'expired'. jedis-mock
+    # follows Redis here, so this Valkey-only expectation cannot hold.
+    #
+    # The evicted-events test needs maxmemory, which jedis-mock does not model.
+    if 0 {
     test "Keyspace notifications: expired events (background expire)" {
         r config set notify-keyspace-events Ex
         r del foo
@@ -466,8 +482,7 @@ start_server {tags {"pubsub network"}} {
         assert_equal {AE} [lindex [r config get notify-keyspace-events] 1]
     }
 
-    # Notification emission is not implemented in jedis-mock yet
-    # (issues #406/#809); re-enable when it is.
+    # The 'n' (new key) event class is not implemented yet (issue #406).
     if 0 {
     test "Keyspace notifications: new key test" {
         r config set notify-keyspace-events En

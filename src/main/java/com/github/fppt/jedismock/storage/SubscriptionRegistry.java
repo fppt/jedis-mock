@@ -22,6 +22,19 @@ import java.util.Set;
  * server (like {@link RedisConfiguration}) rather than by a per-database
  * {@link RedisBase}. Shared by every client of the same server; only
  * mutate it while holding {@link OperationExecutorState#lock()}.
+ * <p>
+ * Guarded by its own monitor rather than by the shared data lock, because a
+ * disconnecting client has to deregister itself and must never wait behind a
+ * long-running Lua script that holds that lock.
+ * <p>
+ * <b>Lock ordering.</b> Commands acquire the data lock first and this monitor
+ * second (a pub/sub command runs inside {@code MockExecutor}'s synchronized
+ * block and calls the methods below); nothing acquires them the other way
+ * round, so the two cannot deadlock. To keep that true, the synchronized
+ * methods here must never call out to anything that can take the data lock,
+ * {@code wait()} on it, or write to a socket — which is why {@link #publish}
+ * is not synchronized: it snapshots through the copying accessors and only
+ * then performs I/O.
  */
 public class SubscriptionRegistry {
     private final Map<Slice, Set<RedisClient>> subscribers = new HashMap<>();
@@ -32,7 +45,7 @@ public class SubscriptionRegistry {
      * so that callers can maintain the running count for the per-argument
      * acknowledgements without rescanning the registry.
      */
-    public boolean addSubscriber(Slice channel, RedisClient client) {
+    public synchronized boolean addSubscriber(Slice channel, RedisClient client) {
         return subscribers.computeIfAbsent(channel, c -> new HashSet<>()).add(client);
     }
 
@@ -41,21 +54,21 @@ public class SubscriptionRegistry {
      * so that callers can maintain the running count for the per-argument
      * acknowledgements without rescanning the registry.
      */
-    public boolean subscribeByPattern(Slice pattern, RedisClient client) {
+    public synchronized boolean subscribeByPattern(Slice pattern, RedisClient client) {
         return psubscribers.computeIfAbsent(pattern, p -> new HashSet<>()).add(client);
     }
 
     /**
      * @return whether the client was actually subscribed to the channel.
      */
-    public boolean removeSubscriber(Slice channel, RedisClient client) {
+    public synchronized boolean removeSubscriber(Slice channel, RedisClient client) {
         return removeSubscriber(channel, client, subscribers);
     }
 
     /**
      * @return whether the client was actually subscribed to the pattern.
      */
-    public boolean removePSubscriber(Slice channel, RedisClient client) {
+    public synchronized boolean removePSubscriber(Slice channel, RedisClient client) {
         return removeSubscriber(channel, client, psubscribers);
     }
 
@@ -71,7 +84,7 @@ public class SubscriptionRegistry {
         return removed;
     }
 
-    public Set<RedisClient> getSubscribers(Slice channel) {
+    public synchronized Set<RedisClient> getSubscribers(Slice channel) {
         Set<RedisClient> subs = new HashSet<>();
         if (subscribers.containsKey(channel)) {
             subs.addAll(subscribers.get(channel));
@@ -79,7 +92,7 @@ public class SubscriptionRegistry {
         return subs;
     }
 
-    public int getSubscribersCount(Slice channel) {
+    public synchronized int getSubscribersCount(Slice channel) {
         return subscribers.getOrDefault(channel, Collections.emptySet()).size();
     }
 
@@ -88,11 +101,11 @@ public class SubscriptionRegistry {
      * the client — the count Redis reports in every (p)subscribe and
      * (p)unsubscribe acknowledgement.
      */
-    public int getSubscriptionsCount(RedisClient client) {
+    public synchronized int getSubscriptionsCount(RedisClient client) {
         return getSubscriptions(client).size() + getPSubscriptions(client).size();
     }
 
-    public Map<Slice, Set<RedisClient>> getPsubscribers(Slice channel) {
+    public synchronized Map<Slice, Set<RedisClient>> getPsubscribers(Slice channel) {
         Map<Slice, Set<RedisClient>> matchingPatterns = new HashMap<>();
         String channelStr = channel.toString();
         for (Map.Entry<Slice, Set<RedisClient>> patternSubscribedClients : psubscribers.entrySet()) {
@@ -115,20 +128,20 @@ public class SubscriptionRegistry {
         return Utils.createRegexFromGlob(patternStr);
     }
 
-    public int getNumpat() {
+    public synchronized int getNumpat() {
         return psubscribers.size();
     }
 
-    public Set<Slice> getChannels() {
+    public synchronized Set<Slice> getChannels() {
         //Defensive copy: keySet() is a live view backed by the internal map
         return new HashSet<>(subscribers.keySet());
     }
 
-    public List<Slice> getSubscriptions(RedisClient client) {
+    public synchronized List<Slice> getSubscriptions(RedisClient client) {
         return getSubscriptions(client, subscribers);
     }
 
-    public List<Slice> getPSubscriptions(RedisClient client) {
+    public synchronized List<Slice> getPSubscriptions(RedisClient client) {
         return getSubscriptions(client, psubscribers);
     }
 
@@ -139,6 +152,10 @@ public class SubscriptionRegistry {
      * Only call while holding {@link OperationExecutorState#lock()}: delivery
      * under the lock is what preserves Redis's ordering guarantee between a
      * subscribe acknowledgement and the first message (see issue #768).
+     * <p>
+     * Deliberately not synchronized on this registry: it reads the subscriber
+     * sets through the accessors above (which copy them) and then writes to
+     * sockets, so a slow client cannot block another client's disconnect.
      *
      * @return the number of clients the message was delivered to
      */
@@ -163,7 +180,7 @@ public class SubscriptionRegistry {
      * the client disconnects: like in real Redis, a dead connection must not
      * linger in the pub/sub registries.
      */
-    public void removeClient(RedisClient client) {
+    public synchronized void removeClient(RedisClient client) {
         removeClient(client, subscribers);
         removeClient(client, psubscribers);
     }

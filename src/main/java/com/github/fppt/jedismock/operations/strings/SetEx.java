@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.operations.strings;
 
 import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
@@ -31,6 +32,8 @@ class SetEx extends Set {
             return Response.error(String.format("ERR invalid expire time in '%s' command", self().value()));
         }
         base().putValue(params().get(0), params().get(2).extract(), timeout);
+        //As with SET ... EX, the expiration is reported as a generic 'expire'
+        base().notifyKeyspaceEvent(KeyspaceEvent.EXPIRE, params().get(0));
         return Response.OK;
     }
 }
