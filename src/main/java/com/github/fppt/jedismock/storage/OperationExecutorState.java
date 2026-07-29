@@ -126,8 +126,9 @@ public class OperationExecutorState {
     /**
      * @return the server-wide registry of channel and pattern subscriptions.
      * Pub/Sub is independent of the key space, so the registry is shared by
-     * every client and every database of the same server; only mutate it
-     * while holding {@link #lock()}.
+     * every client and every database of the same server. It synchronizes
+     * itself and is deliberately not covered by {@link #lock()}, so that a
+     * disconnecting client never waits behind a running script.
      */
     public SubscriptionRegistry subscriptionRegistry() {
         return subscriptionRegistry;

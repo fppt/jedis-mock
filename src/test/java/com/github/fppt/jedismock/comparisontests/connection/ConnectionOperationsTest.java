@@ -5,9 +5,12 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Protocol;
+import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.util.SafeEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
 @ExtendWith(ComparisonBase.class)
@@ -39,5 +42,23 @@ public class ConnectionOperationsTest {
         assertThat(jedis.clientGetname()).isNull();
         assertThat(jedis.clientSetname("P.Myo")).isEqualTo("OK");
         assertThat(jedis.clientGetname()).isEqualTo("P.Myo");
+    }
+
+    @TestTemplate
+    public void clientSubcommandsRejectAWrongNumberOfArguments(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.CLIENT, "SETNAME"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR wrong number of arguments for 'client|setname' command");
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.CLIENT, "SETNAME", "a", "b"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR wrong number of arguments for 'client|setname' command");
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.CLIENT, "GETNAME", "extra"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR wrong number of arguments for 'client|getname' command");
+        //A rejected SETNAME leaves the previous name untouched
+        jedis.clientSetname("kept");
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.CLIENT, "SETNAME"))
+                .isInstanceOf(JedisDataException.class);
+        assertThat(jedis.clientGetname()).isEqualTo("kept");
     }
 }

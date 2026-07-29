@@ -20,12 +20,14 @@ import java.util.Set;
  * cross database boundaries, and clearing a database (FLUSHDB/FLUSHALL)
  * does not affect subscriptions. This registry is therefore owned by the
  * server (like {@link RedisConfiguration}) rather than by a per-database
- * {@link RedisBase}. Shared by every client of the same server; only
- * mutate it while holding {@link OperationExecutorState#lock()}.
+ * {@link RedisBase}, and shared by every client of that server.
  * <p>
- * Guarded by its own monitor rather than by the shared data lock, because a
- * disconnecting client has to deregister itself and must never wait behind a
- * long-running Lua script that holds that lock.
+ * Thread safety is provided by this class itself: every method below is
+ * synchronized on the registry, so callers need no external lock. In
+ * particular it is deliberately <em>not</em> guarded by the shared data lock
+ * ({@link OperationExecutorState#lock()}), because a disconnecting client has
+ * to deregister itself and must never wait behind a long-running Lua script
+ * that holds that lock.
  * <p>
  * <b>Lock ordering.</b> Commands acquire the data lock first and this monitor
  * second (a pub/sub command runs inside {@code MockExecutor}'s synchronized
