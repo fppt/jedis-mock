@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -37,6 +38,7 @@ class LTrim extends AbstractRedisOperation {
         final RMList listDBObj = getListFromBaseOrCreateEmpty(key);
         final List<Slice> list = listDBObj.getStoredData();
 
+        final int sizeBefore = list.size();
         int size = list.size();
 
         // start and end can also be negative numbers indicating offsets from the end of the list,
@@ -54,6 +56,16 @@ class LTrim extends AbstractRedisOperation {
             end = (end >= size) ? size : end + 1;
             list.subList(end, list.size()).clear();
             list.subList(0, start).clear();
+        }
+
+        //Only an actual trim is reported, and an emptied list also reports 'del'
+        if (list.size() != sizeBefore) {
+            base().markKeyModified(key);
+            base().notifyKeyspaceEvent(KeyspaceEvent.LTRIM, key);
+            if (list.isEmpty()) {
+                base().deleteValue(key);
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+            }
         }
 
         return Response.OK;

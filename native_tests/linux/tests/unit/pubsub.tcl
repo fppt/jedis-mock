@@ -291,8 +291,6 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
-    # Needs list-class ('l') events, which are not implemented yet (issue #406).
-    if 0 {
     test "Keyspace notifications: we are able to mask events" {
         r config set notify-keyspace-events KEl
         r del mylist
@@ -304,8 +302,6 @@ start_server {tags {"pubsub network"}} {
         assert_equal "pmessage * __keyspace@${db}__:mylist lpush" [$rd1 read]
         assert_equal "pmessage * __keyevent@${db}__:lpush mylist" [$rd1 read]
         $rd1 close
-    }
-
     }
 
     test "Keyspace notifications: general events test" {
@@ -322,8 +318,6 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
-    # Type-specific event classes are not implemented yet (issue #406).
-    if 0 {
     test "Keyspace notifications: list events test" {
         r config set notify-keyspace-events KEl
         r del mylist
@@ -341,6 +335,8 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    # Set, zset, hash and stream classes are not implemented yet (issue #406).
+    if 0 {
     test "Keyspace notifications: set events test" {
         r config set notify-keyspace-events Ks
         r del myset

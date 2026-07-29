@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.operations.lists;
 
 import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.datastructures.Slice;
 
@@ -15,5 +16,10 @@ class LPush extends Add {
     @Override
     void addSliceToList(List<Slice> list, Slice slice) {
         list.add(0, slice);
+    }
+
+    @Override
+    KeyspaceEvent pushEvent() {
+        return KeyspaceEvent.LPUSH;
     }
 }

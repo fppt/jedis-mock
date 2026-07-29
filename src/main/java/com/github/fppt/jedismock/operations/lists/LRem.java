@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -49,6 +50,14 @@ class LRem extends AbstractRedisOperation {
             if (isDeletingElement(element, numRemoved)) {
                 iterator.remove();
                 numRemoved++;
+            }
+        }
+        if (numRemoved > 0) {
+            base().markKeyModified(key);
+            base().notifyKeyspaceEvent(KeyspaceEvent.LREM, key);
+            if (list.isEmpty()) {
+                base().deleteValue(key);
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
             }
         }
         return Response.integer(numRemoved);

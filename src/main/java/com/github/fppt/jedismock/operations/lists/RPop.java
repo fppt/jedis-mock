@@ -2,6 +2,7 @@ package com.github.fppt.jedismock.operations.lists;
 
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -14,5 +15,10 @@ class RPop extends ListPopper {
 
     Slice popper(List<Slice> list) {
         return list.remove(list.size() - 1);
+    }
+
+    @Override
+    KeyspaceEvent popEvent() {
+        return KeyspaceEvent.RPOP;
     }
 }

@@ -11,6 +11,7 @@ import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.Arrays;
@@ -61,6 +62,7 @@ public class Sort extends AbstractRedisOperation {
 
         if (storeTo != null) {
             base().putValue(storeTo, new RMList(sorted));
+            base().notifyKeyspaceEvent(KeyspaceEvent.SORTSTORE, storeTo);
             lock.notifyAll();
             return Response.integer(sorted.size());
         }

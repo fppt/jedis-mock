@@ -33,7 +33,19 @@ public enum KeyspaceEvent {
     APPEND("append", EventClass.STRING),
     SETRANGE("setrange", EventClass.STRING),
     INCRBY("incrby", EventClass.STRING),
-    INCRBYFLOAT("incrbyfloat", EventClass.STRING);
+    INCRBYFLOAT("incrbyfloat", EventClass.STRING),
+
+    //List (l). A multi-element push reports one event, and the conditional
+    //(X) variants report the same event as their unconditional forms.
+    LPUSH("lpush", EventClass.LIST),
+    RPUSH("rpush", EventClass.LIST),
+    LPOP("lpop", EventClass.LIST),
+    RPOP("rpop", EventClass.LIST),
+    LINSERT("linsert", EventClass.LIST),
+    LSET("lset", EventClass.LIST),
+    LREM("lrem", EventClass.LIST),
+    LTRIM("ltrim", EventClass.LIST),
+    SORTSTORE("sortstore", EventClass.LIST);
 
     private final String eventName;
     private final EventClass eventClass;
