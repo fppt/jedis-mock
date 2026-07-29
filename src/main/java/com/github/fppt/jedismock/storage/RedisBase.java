@@ -11,6 +11,7 @@ import com.github.fppt.jedismock.datastructures.RMString;
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,20 +27,61 @@ import java.util.function.Supplier;
 public class RedisBase {
     private final Supplier<Clock> clockSupplier;
     private final RedisConfiguration configuration;
+    private final SubscriptionRegistry subscriptionRegistry;
+    private final int dbIndex;
     private final Map<Slice, Set<OperationExecutorState>> watchedKeys = new HashMap<>();
     private final Map<String, String> cachedLuaScripts = new HashMap<>();
     private final ExpiringKeyValueStorage keyValueStorage;
 
     public RedisBase(Supplier<Clock> clockSupplier) {
-        this(clockSupplier, new RedisConfiguration());
+        this(clockSupplier, new RedisConfiguration(), new SubscriptionRegistry(), 0);
     }
 
-    public RedisBase(Supplier<Clock> clockSupplier, RedisConfiguration configuration) {
+    public RedisBase(Supplier<Clock> clockSupplier, RedisConfiguration configuration,
+                     SubscriptionRegistry subscriptionRegistry, int dbIndex) {
         this.clockSupplier = Objects.requireNonNull(clockSupplier);
         this.configuration = Objects.requireNonNull(configuration);
+        this.subscriptionRegistry = Objects.requireNonNull(subscriptionRegistry);
+        this.dbIndex = dbIndex;
         this.keyValueStorage = new ExpiringKeyValueStorage(clockSupplier, key -> watchedKeys
                 .getOrDefault(key, Collections.emptySet())
-                .forEach(OperationExecutorState::watchedKeyIsAffected));
+                .forEach(OperationExecutorState::watchedKeyIsAffected),
+                key -> notifyKeyspaceEvent(KeyspaceEvent.EXPIRED, key));
+    }
+
+    /**
+     * Publishes a keyspace notification for an event on a key of this
+     * database, exactly like real Redis's {@code notifyKeyspaceEvent()}:
+     * nothing is sent unless the event's class is enabled by
+     * {@code notify-keyspace-events}, and the enabled channel families each
+     * get their message — {@code __keyspace@<db>__:<key> -> <event>} and/or
+     * {@code __keyevent@<db>__:<event> -> <key>}. Only call while holding
+     * {@link OperationExecutorState#lock()} (all operations do).
+     */
+    public void notifyKeyspaceEvent(KeyspaceEvent event, Slice key) {
+        KeyspaceNotificationOptions options = configuration.getKeyspaceNotificationOptions();
+        if (!options.isEnabled(event)) {
+            return;
+        }
+        if (options.isEnabled(KeyspaceNotificationOptions.EventClass.KEYSPACE)) {
+            subscriptionRegistry.publish(
+                    channel("__keyspace@" + dbIndex + "__:", key.data()),
+                    Slice.create(event.eventName()));
+        }
+        if (options.isEnabled(KeyspaceNotificationOptions.EventClass.KEYEVENT)) {
+            subscriptionRegistry.publish(
+                    channel("__keyevent@" + dbIndex + "__:", event.eventName().getBytes(StandardCharsets.UTF_8)),
+                    key);
+        }
+    }
+
+    /** Keys are binary-safe, so the channel name is built from bytes, not strings. */
+    private static Slice channel(String prefix, byte[] suffix) {
+        byte[] prefixBytes = prefix.getBytes(StandardCharsets.UTF_8);
+        byte[] channel = new byte[prefixBytes.length + suffix.length];
+        System.arraycopy(prefixBytes, 0, channel, 0, prefixBytes.length);
+        System.arraycopy(suffix, 0, channel, prefixBytes.length, suffix.length);
+        return Slice.create(channel);
     }
 
     public Clock getClock() {
@@ -62,7 +104,7 @@ public class RedisBase {
         //Otherwise a DBSIZE/KEYS sweep would drop the key silently and a later
         //EXEC could no longer detect that the watched key had expired.
         for (Slice key : outdated) {
-            keyValueStorage.delete(key);
+            keyValueStorage.deleteExpired(key);
         }
         return result;
     }

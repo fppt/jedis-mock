@@ -23,17 +23,22 @@ public class RedisOperationExecutor {
         List<Slice> params = command.parameters();
         List<Slice> commandParams = params.subList(1, params.size());
         String name = new String(params.get(0).data()).toLowerCase();
-        return state.owner().options().getCommandInterceptor()
+        Slice response = state.owner().options().getCommandInterceptor()
                 .execCommand(state, name, commandParams);
+        // CLIENT REPLY applies to the socket reply path only: replies produced
+        // inside Lua or MULTI go through MockExecutor.proceed directly and are
+        // part of a larger reply, which is never suppressed piecemeal.
+        return state.applyReplyMode(response);
     }
 
     /**
-     * Releases the server-side state of a disconnected client
-     * (its pub/sub subscriptions).
+     * Releases the server-side state of a disconnected client (its pub/sub
+     * subscriptions). Deliberately does not take the shared data lock: a client
+     * may disconnect while another connection runs a long Lua script that holds
+     * it, and the disconnect must not wait for that script to finish. The
+     * registry guards itself instead.
      */
     public void cleanup() {
-        synchronized (state.lock()) {
-            state.subscriptionRegistry().removeClient(state.owner());
-        }
+        state.subscriptionRegistry().removeClient(state.owner());
     }
 }

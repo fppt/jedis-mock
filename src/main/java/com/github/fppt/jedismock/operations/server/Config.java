@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceNotificationOptions;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ class Config extends AbstractRedisOperation {
     private static final String LUA_TIME_LIMIT = "lua-time-limit";
     private static final String BUSY_REPLY_THRESHOLD = "busy-reply-threshold";
     private static final String PROTO_MAX_BULK_LEN = "proto-max-bulk-len";
+    private static final String NOTIFY_KEYSPACE_EVENTS = "notify-keyspace-events";
 
     private final OperationExecutorState state;
 
@@ -66,6 +68,15 @@ class Config extends AbstractRedisOperation {
                 state.scriptingManager().setLuaTimeLimitMillis(Long.parseLong(value));
             } else if (PROTO_MAX_BULK_LEN.equalsIgnoreCase(name)) {
                 state.configuration().setProtoMaxBulkLen(Long.parseLong(value));
+            } else if (NOTIFY_KEYSPACE_EVENTS.equalsIgnoreCase(name)) {
+                try {
+                    state.configuration().setKeyspaceNotificationOptions(
+                            KeyspaceNotificationOptions.parse(value));
+                } catch (IllegalArgumentException e) {
+                    return Response.error(String.format(
+                            "ERR CONFIG SET failed (possibly related to argument '%s') - %s",
+                            NOTIFY_KEYSPACE_EVENTS, e.getMessage()));
+                }
             } else {
                 //Everything else just round-trips through the thin namespace.
                 state.configuration().set(name, value);
@@ -90,6 +101,10 @@ class Config extends AbstractRedisOperation {
         }
         if (PROTO_MAX_BULK_LEN.equalsIgnoreCase(name)) {
             return Long.toString(state.configuration().getProtoMaxBulkLen());
+        }
+        if (NOTIFY_KEYSPACE_EVENTS.equalsIgnoreCase(name)) {
+            //Reported in canonical form, not as originally written.
+            return state.configuration().getKeyspaceNotificationOptions().format();
         }
         return state.configuration().get(name);
     }

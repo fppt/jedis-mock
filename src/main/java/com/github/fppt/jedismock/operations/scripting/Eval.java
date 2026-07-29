@@ -68,26 +68,32 @@ public class Eval extends AbstractRedisOperation {
             return Response.error("ERR Number of keys can't be greater than number of args");
         }
 
-        /*
-        An alias for 'unpack' function: unpack() was moved to table.unpack() in Lua 5.2,
-        but Redis uses Lua 5.1.
-         */
-        globals.set("unpack", globals.load("return table.unpack(...)").checkfunction());
-        globals.set("redis", globals.load(REDIS_LUA).call().checktable());
-        globals.set("KEYS", embedLuaListToValue(args.subList(0, keysNum)));
-        globals.set("ARGV", embedLuaListToValue(args.subList(keysNum, args.size())));
-        globals.set("_mock", CoerceJavaToLua.coerce(new LuaRedisCallback(state)));
-        globals.set("cjson", globals.load(new LuaCjsonLib()));
-        //Install a per-instruction hook so a concurrent SCRIPT KILL can abort
-        //this script, even a tight infinite loop.
         final ScriptingManager scripting = state.scriptingManager();
-        globals.load(new InterruptibleDebugLib(scripting));
-        //Lock down the environment (read-only globals, no host access) and run the
-        //user script inside it, exactly as real Redis sandboxes Lua.
-        final LuaTable sandbox = LuaSandbox.install(globals, state);
         int selected = state.getSelected();
+        //Mark the script as running *before* building the Lua environment, which
+        //is slow the first time (luaj compiles REDIS_LUA, cjson and the sandbox).
+        //We already hold the data lock, so a command arriving on another
+        //connection meanwhile must not observe "no script running": it would then
+        //block on that lock and could never be answered. Seeing a running script
+        //instead makes it wait for lua-time-limit and reply -BUSY.
         scripting.start();
         try {
+            /*
+            An alias for 'unpack' function: unpack() was moved to table.unpack() in Lua 5.2,
+            but Redis uses Lua 5.1.
+             */
+            globals.set("unpack", globals.load("return table.unpack(...)").checkfunction());
+            globals.set("redis", globals.load(REDIS_LUA).call().checktable());
+            globals.set("KEYS", embedLuaListToValue(args.subList(0, keysNum)));
+            globals.set("ARGV", embedLuaListToValue(args.subList(keysNum, args.size())));
+            globals.set("_mock", CoerceJavaToLua.coerce(new LuaRedisCallback(state)));
+            globals.set("cjson", globals.load(new LuaCjsonLib()));
+            //Install a per-instruction hook so a concurrent SCRIPT KILL can abort
+            //this script, even a tight infinite loop.
+            globals.load(new InterruptibleDebugLib(scripting));
+            //Lock down the environment (read-only globals, no host access) and run the
+            //user script inside it, exactly as real Redis sandboxes Lua.
+            final LuaTable sandbox = LuaSandbox.install(globals, state);
             //Load under a fixed chunk name so error locations read "user_script:N"
             //(as in real Redis) instead of echoing the whole script body.
             final LuaValue chunk = globals.load(script, "@user_script");

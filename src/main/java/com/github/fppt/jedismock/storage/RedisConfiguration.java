@@ -30,6 +30,7 @@ public final class RedisConfiguration {
 
     private final Map<String, String> values = new HashMap<>();
     private long protoMaxBulkLen = DEFAULT_PROTO_MAX_BULK_LEN;
+    private KeyspaceNotificationOptions keyspaceNotificationOptions = KeyspaceNotificationOptions.DISABLED;
 
     public void set(String key, String value) {
         values.put(key.toLowerCase(Locale.ROOT), value);
@@ -60,5 +61,17 @@ public final class RedisConfiguration {
      */
     public void setProtoMaxBulkLen(long protoMaxBulkLen) {
         this.protoMaxBulkLen = Math.min(protoMaxBulkLen, Integer.MAX_VALUE);
+    }
+
+    /**
+     * @return the parsed {@code notify-keyspace-events} value; disabled by
+     * default, matching real Redis.
+     */
+    public KeyspaceNotificationOptions getKeyspaceNotificationOptions() {
+        return keyspaceNotificationOptions;
+    }
+
+    public void setKeyspaceNotificationOptions(KeyspaceNotificationOptions keyspaceNotificationOptions) {
+        this.keyspaceNotificationOptions = keyspaceNotificationOptions;
     }
 }

@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class GetDel extends AbstractRedisOperation {
         Slice slice = base().getSlice(params().get(0));
         if (slice != null) {
             base().deleteValue(params().get(0));
+            base().notifyKeyspaceEvent(KeyspaceEvent.DEL, params().get(0));
         }
         return Response.bulkString(slice);
     }

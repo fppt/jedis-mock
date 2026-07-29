@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -87,26 +88,43 @@ class Set extends AbstractRedisOperation {
         return value;
     }
 
+    /**
+     * Setting an expiration alongside the value publishes a generic
+     * {@code expire} notification (in addition to the string-class {@code set}
+     * one), exactly as a separate {@code EXPIRE} would.
+     */
+    private void notifyExpirationSet(Slice key) {
+        base().notifyKeyspaceEvent(KeyspaceEvent.EXPIRE, key);
+    }
+
     private BiConsumer<Slice, RMDataStructure> valueSetter() {
         String previous = null;
         for (String param : additionalParams) {
             if ("ex".equalsIgnoreCase(previous)) {
                 long ex = parseAndValidate(param, 1000);
-                return (k, v) -> base().putValue(k, v, ex);
+                return (k, v) -> {
+                    base().putValue(k, v, ex);
+                    notifyExpirationSet(k);
+                };
             } else if ("px".equalsIgnoreCase(previous)) {
                 long px = parseAndValidate(param, 1);
-                return (k, v) -> base().putValue(k, v, px);
+                return (k, v) -> {
+                    base().putValue(k, v, px);
+                    notifyExpirationSet(k);
+                };
             } else if ("exat".equalsIgnoreCase(previous)) {
                 long exat = parseAndValidate(param, 1000);
                 return (k, v) -> {
                     base().putValue(k, v);
                     base().setDeadline(k, exat);
+                    notifyExpirationSet(k);
                 };
             } else if ("pxat".equalsIgnoreCase(previous)) {
                 long pxat = parseAndValidate(param, 1);
                 return (k, v) -> {
                     base().putValue(k, v);
                     base().setDeadline(k, pxat);
+                    notifyExpirationSet(k);
                 };
             }
             previous = param;

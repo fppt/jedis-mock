@@ -13,9 +13,22 @@ import java.util.function.Supplier;
 
 public class ExpiringKeyValueStorage extends ExpiringStorage {
     private final Map<Slice, RMDataStructure> values = new HashMap<>();
+    private final Consumer<Slice> expiredKeyNotifier;
 
-    public ExpiringKeyValueStorage(Supplier<Clock> clockSupplier, Consumer<Slice> keyChangeNotifier) {
+    public ExpiringKeyValueStorage(Supplier<Clock> clockSupplier, Consumer<Slice> keyChangeNotifier,
+                                   Consumer<Slice> expiredKeyNotifier) {
         super(clockSupplier, keyChangeNotifier);
+        this.expiredKeyNotifier = Objects.requireNonNull(expiredKeyNotifier);
+    }
+
+    /**
+     * Removes a key that has outlived its TTL. Separate from {@link #delete}
+     * so that a passive expiry can be reported as an {@code expired} keyspace
+     * notification rather than a {@code del}.
+     */
+    public void deleteExpired(Slice key) {
+        delete(key);
+        expiredKeyNotifier.accept(key);
     }
 
     public Map<Slice, RMDataStructure> values() {
@@ -81,7 +94,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
         }
 
         if (isKeyOutdated(key)) {
-            delete(key);
+            deleteExpired(key);
             return false;
         }
 

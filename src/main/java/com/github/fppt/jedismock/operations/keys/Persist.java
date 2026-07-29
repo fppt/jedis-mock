@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -15,6 +16,12 @@ class Persist extends AbstractRedisOperation {
     }
 
     protected Slice response() {
-        return Response.integer(base().setDeadline(params().get(0), -1));
+        Slice key = params().get(0);
+        long result = base().setDeadline(key, -1);
+        if (result == 1) {
+            //Only an actually removed TTL is reported
+            base().notifyKeyspaceEvent(KeyspaceEvent.PERSIST, key);
+        }
+        return Response.integer(result);
     }
 }

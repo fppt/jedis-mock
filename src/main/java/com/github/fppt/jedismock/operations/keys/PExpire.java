@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.operations.keys.paramsparser.ExpirationExtraPar
 import com.github.fppt.jedismock.operations.keys.paramsparser.ExpirationParamsException;
 import com.github.fppt.jedismock.operations.keys.paramsparser.ExpirationTimeParam;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -38,7 +39,16 @@ class PExpire extends AbstractRedisOperation {
             long newTTL = expirationTime.getMillis();
             if (base().exists(key) && extraParam.checkTiming(
                     base().getTTL(key), newTTL)) {
-                return Response.integer(base().setTTL(key, newTTL));
+                if (newTTL <= 0) {
+                    //An expiration in the past deletes the key immediately, and is
+                    //reported as a 'del' rather than an 'expired'
+                    base().deleteValue(key);
+                    base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+                    return Response.integer(1);
+                }
+                long result = base().setTTL(key, newTTL);
+                base().notifyKeyspaceEvent(KeyspaceEvent.EXPIRE, key);
+                return Response.integer(result);
             } else return Response.integer(0);
         } catch (ExpirationParamsException e) {
             return Response.error(e.getMessage());
