@@ -46,6 +46,33 @@ public class CollectionKeyspaceNotificationsTest {
     }
 
     @TestTemplate
+    public void popWithAZeroCountPublishesNothing(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        //A pop of zero elements modifies nothing, so it is not reported
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "Eszg")) {
+            jedis.sadd("s", "a", "b");
+            jedis.zadd("z", 1, "a");
+            assertThat(events.next(2)).containsExactly(
+                    "__keyevent@0__:sadd -> s",
+                    "__keyevent@0__:zadd -> z");
+            jedis.spop("s", 0);
+            jedis.zpopmin("z", 0);
+            jedis.zpopmax("z", 0);
+            events.assertNoFurtherNotifications();
+        }
+    }
+
+    @TestTemplate
+    public void popOfAMissingKeyPublishesNothing(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "Eszg")) {
+            jedis.spop("nosuchset");
+            jedis.spop("nosuchset", 2);
+            jedis.zpopmin("nosuchzset");
+            jedis.zpopmax("nosuchzset", 2);
+            events.assertNoFurtherNotifications();
+        }
+    }
+
+    @TestTemplate
     public void setStoreCommandsPublishForTheDestination(Jedis jedis, HostAndPort hostAndPort) throws Exception {
         try (NotificationCollector events = collectorFor(jedis, hostAndPort, "Es")) {
             jedis.sadd("s1", "a", "b");

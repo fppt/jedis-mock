@@ -46,11 +46,14 @@ class SPop extends AbstractRedisOperation {
 
         List<Slice> removedElements = popper(set, numberOfElementsToBeRemoved);
 
-        //One event per command, then the generic del if the set is now gone
-        base().notifyKeyspaceEvent(KeyspaceEvent.SPOP, key);
-        if (set.isEmpty()) {
-            base().deleteValue(key);
-            base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+        //One event per command, and only when something was actually removed:
+        //SPOP key 0 modifies nothing and so is not reported
+        if (!removedElements.isEmpty()) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.SPOP, key);
+            if (set.isEmpty()) {
+                base().deleteValue(key);
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+            }
         }
 
         if (params().size() > 1) {

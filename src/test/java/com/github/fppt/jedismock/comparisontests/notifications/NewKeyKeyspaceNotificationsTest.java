@@ -72,6 +72,44 @@ public class NewKeyKeyspaceNotificationsTest {
     }
 
     @TestTemplate
+    public void overwritingAnExpiredKeyPublishesExpiredThenNew(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        //A write that finds the key already expired must first report the
+        //expiry, and then treat the write as a creation
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "E$nx")) {
+            jedis.psetex("k", 50, "v");
+            assertThat(events.next(2)).containsExactly(
+                    "__keyevent@0__:new -> k",
+                    "__keyevent@0__:set -> k");
+            //Deliberately do not read the key while it expires
+            Thread.sleep(300);
+            jedis.set("k", "again");
+            assertThat(events.next(3)).containsExactly(
+                    "__keyevent@0__:expired -> k",
+                    "__keyevent@0__:new -> k",
+                    "__keyevent@0__:set -> k");
+            events.assertNoFurtherNotifications();
+        }
+    }
+
+    @TestTemplate
+    public void writingAFieldOfAnExpiredHashPublishesExpiredThenNew(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "Ehnx")) {
+            jedis.hset("h", "f", "v");
+            jedis.pexpire("h", 50);
+            assertThat(events.next(2)).containsExactly(
+                    "__keyevent@0__:new -> h",
+                    "__keyevent@0__:hset -> h");
+            Thread.sleep(300);
+            jedis.hset("h", "f", "again");
+            assertThat(events.next(3)).containsExactly(
+                    "__keyevent@0__:expired -> h",
+                    "__keyevent@0__:new -> h",
+                    "__keyevent@0__:hset -> h");
+            events.assertNoFurtherNotifications();
+        }
+    }
+
+    @TestTemplate
     public void newKeyClassIsNotPartOfTheAllAlias(Jedis jedis, HostAndPort hostAndPort) throws Exception {
         //'A' covers every class except K, E, n and m, so 'new' stays silent
         try (NotificationCollector events = collectorFor(jedis, hostAndPort, "EA")) {

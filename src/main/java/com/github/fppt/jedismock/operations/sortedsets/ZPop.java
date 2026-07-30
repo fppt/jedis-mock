@@ -51,11 +51,14 @@ class ZPop extends AbstractByScoreOperation {
                     .collect(Collectors.toList()));
             mapDBObj.remove(entry.getValue());
         }
-        //One event per command, then the generic del if the set is now gone
-        base().notifyKeyspaceEvent(isRev ? KeyspaceEvent.ZPOPMAX : KeyspaceEvent.ZPOPMIN, key);
-        if (mapDBObj.isEmpty()) {
-            base().deleteValue(key);
-            base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+        //One event per command, and only when something was actually removed:
+        //a count of 0 modifies nothing and so is not reported
+        if (!result.isEmpty()) {
+            base().notifyKeyspaceEvent(isRev ? KeyspaceEvent.ZPOPMAX : KeyspaceEvent.ZPOPMIN, key);
+            if (mapDBObj.isEmpty()) {
+                base().deleteValue(key);
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+            }
         }
         return result;
     }
