@@ -163,12 +163,17 @@ abstract class ZStore extends AbstractByScoreOperation {
         return score * weight;
     }
 
-    /** The event this store reports, e.g. {@code zunionstore}. */
-    protected KeyspaceEvent storeEvent() {
-        return null;
-    }
-
-    protected long getResultSize() {
+    /**
+     * Computes the result into the destination key, reporting it as
+     * {@code storeEvent} (or as a generic {@code del} when the result is empty
+     * and the destination therefore disappears).
+     * <p>
+     * The event is a parameter rather than an overridable hook because this
+     * class is also the base of the non-storing {@code ZDIFF}/{@code ZINTER}/
+     * {@code ZINTERCARD}/{@code ZUNION}, which never reach this method and
+     * would otherwise be forced to declare an event they do not have.
+     */
+    protected long getResultSize(KeyspaceEvent storeEvent) {
         Slice keyDest = params().get(0);
         boolean destinationExisted = base().exists(keyDest);
         if (destinationExisted) {
@@ -178,12 +183,9 @@ abstract class ZStore extends AbstractByScoreOperation {
         RMZSet mapDBObj = getFinishedZSet();
         if (!mapDBObj.isEmpty()) {
             base().putValue(keyDest, mapDBObj);
-            if (storeEvent() != null) {
-                base().notifyKeyspaceEvent(storeEvent(), keyDest);
-            }
+            base().notifyKeyspaceEvent(storeEvent, keyDest);
             lock.notifyAll();
         } else if (destinationExisted) {
-            //An empty result removes the destination, reported as a generic del
             base().notifyKeyspaceEvent(KeyspaceEvent.DEL, keyDest);
         }
         return mapDBObj.size();

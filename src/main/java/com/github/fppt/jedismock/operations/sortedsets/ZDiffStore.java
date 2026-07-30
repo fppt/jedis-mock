@@ -16,13 +16,8 @@ class ZDiffStore extends AbstractZDiff {
     }
 
     @Override
-    protected KeyspaceEvent storeEvent() {
-        return KeyspaceEvent.ZDIFFSTORE;
-    }
-
-    @Override
     protected Slice response() {
-        return Response.integer(getResultSize());
+        return Response.integer(getResultSize(KeyspaceEvent.ZDIFFSTORE));
     }
 
 }

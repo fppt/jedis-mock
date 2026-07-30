@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.exception.WrongStreamKeyException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -119,12 +120,14 @@ public class XAdd extends AbstractRedisOperation {
         stream.updateLastId(nodeId);
 
         base().putValue(key, stream);
+        base().notifyKeyspaceEvent(KeyspaceEvent.XADD, key);
 
+        int trimmed = 0;
         switch (criterion.toUpperCase()) {
             case "MAXLEN":
                 try {
                     int threshold = Integer.parseInt(params().get(thresholdPosition).toString());
-                    trimLen(map, threshold, limit);
+                    trimmed = trimLen(map, threshold, limit);
                 } catch (NumberFormatException e) {
                     return Response.error(SYNTAX_ERROR);
                 }
@@ -133,13 +136,17 @@ public class XAdd extends AbstractRedisOperation {
             case "MINID":
                 try {
                     StreamId threshold = new StreamId(params().get(thresholdPosition));
-                    trimID(map, threshold, limit);
+                    trimmed = trimID(map, threshold, limit);
                 } catch (WrongStreamKeyException e) {
                     return Response.error(e.getMessage());
                 }
                 break;
             default:
                 // ignored
+        }
+        //An XADD that also trims reports 'xadd' and then 'xtrim'
+        if (trimmed > 0) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.XTRIM, key);
         }
 
         return Response.bulkString(nodeId.toSlice());

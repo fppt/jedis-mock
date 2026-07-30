@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.exception.WrongStreamKeyException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
@@ -45,6 +46,11 @@ public class XDel extends AbstractRedisOperation {
             if (map.remove(id) != null) {
                 removedCount++;
             }
+        }
+        if (removedCount > 0) {
+            base().markKeyModified(key);
+            //Note an emptied stream is *not* deleted, so there is no 'del' here
+            base().notifyKeyspaceEvent(KeyspaceEvent.XDEL, key);
         }
         return Response.integer(removedCount);
     }

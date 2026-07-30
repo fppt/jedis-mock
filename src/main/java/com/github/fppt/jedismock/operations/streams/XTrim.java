@@ -8,6 +8,7 @@ import com.github.fppt.jedismock.exception.WrongStreamKeyException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -59,6 +60,15 @@ public class XTrim extends AbstractRedisOperation {
         return 3;
     }
 
+    /** Reports {@code xtrim} only if entries were actually removed. */
+    private int publishTrim(Slice key, int removed) {
+        if (removed > 0) {
+            base().markKeyModified(key);
+            base().notifyKeyspaceEvent(KeyspaceEvent.XTRIM, key);
+        }
+        return removed;
+    }
+
     @Override
     protected Slice response() {
         /* Begin parsing arguments */
@@ -103,14 +113,14 @@ public class XTrim extends AbstractRedisOperation {
             case "MAXLEN":
                 try {
                     int threshold = Integer.parseInt(params().get(thresholdPosition).toString());
-                    return Response.integer(trimLen(map, threshold, limit));
+                    return Response.integer(publishTrim(key, trimLen(map, threshold, limit)));
                 } catch (NumberFormatException e) {
                     return Response.error(SYNTAX_ERROR);
                 }
             case "MINID":
                 try {
                     StreamId threshold = new StreamId(params().get(thresholdPosition));
-                    return Response.integer(trimID(map, threshold, limit));
+                    return Response.integer(publishTrim(key, trimID(map, threshold, limit)));
                 } catch (WrongStreamKeyException e) {
                     return Response.error(e.getMessage());
                 }

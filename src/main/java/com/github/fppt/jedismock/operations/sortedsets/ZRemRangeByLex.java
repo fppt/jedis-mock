@@ -15,11 +15,6 @@ class ZRemRangeByLex extends AbstractZRangeByLex {
     }
 
     @Override
-    protected KeyspaceEvent removalEvent() {
-        return KeyspaceEvent.ZREMRANGEBYLEX;
-    }
-
-    @Override
     protected Slice response() {
         expectNoOptions();
         key = params().get(0);
@@ -27,6 +22,6 @@ class ZRemRangeByLex extends AbstractZRangeByLex {
 
         final Slice start = params().get(1);
         final Slice end = params().get(2);
-        return remRangeFromKey(getRange(getStartBound(start), getEndBound(end)));
+        return remRangeFromKey(getRange(getStartBound(start), getEndBound(end)), KeyspaceEvent.ZREMRANGEBYLEX);
     }
 }

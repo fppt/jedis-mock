@@ -16,11 +16,6 @@ public class ZRemRangeByRank extends AbstractZRangeByIndex {
     }
 
     @Override
-    protected KeyspaceEvent removalEvent() {
-        return KeyspaceEvent.ZREMRANGEBYRANK;
-    }
-
-    @Override
     protected Slice response() {
         expectNoOptions();
         key = params().get(0);
@@ -30,7 +25,7 @@ public class ZRemRangeByRank extends AbstractZRangeByIndex {
             return Response.integer(0);
         }
 
-        return remRangeFromKey(getRange(getStartBound(Slice.create(String.valueOf(startIndex))), getStartBound(Slice.create(String.valueOf(endIndex)))));
+        return remRangeFromKey(getRange(getStartBound(Slice.create(String.valueOf(startIndex))), getStartBound(Slice.create(String.valueOf(endIndex)))), KeyspaceEvent.ZREMRANGEBYRANK);
     }
 
 }

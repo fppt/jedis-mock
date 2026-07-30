@@ -143,14 +143,14 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
     }
 
     /**
-     * The event a range removal reports, e.g. {@code zremrangebyscore}. Only
-     * the {@code ZREMRANGEBY*} subclasses remove, so the default is unused.
+     * Removes the given range, reporting it as {@code removalEvent} plus the
+     * generic {@code del} if the sorted set is now gone.
+     * <p>
+     * The event is a parameter rather than an overridable hook because most
+     * subclasses of this class only read (ZRANGE, ZCOUNT, ZLEXCOUNT, …) and
+     * never reach this method; only the {@code ZREMRANGEBY*} commands do.
      */
-    protected KeyspaceEvent removalEvent() {
-        return null;
-    }
-
-    protected Slice remRangeFromKey(NavigableSet<ZSetEntry> entries) {
+    protected Slice remRangeFromKey(NavigableSet<ZSetEntry> entries, KeyspaceEvent removalEvent) {
         int count = 0;
         for (ZSetEntry entry : new ArrayList<>(entries)) {
             mapDBObj.remove(entry.getValue());
@@ -162,8 +162,8 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
         } else {
             base().putValue(key, mapDBObj);
         }
-        if (count > 0 && removalEvent() != null) {
-            base().notifyKeyspaceEvent(removalEvent(), key);
+        if (count > 0) {
+            base().notifyKeyspaceEvent(removalEvent, key);
             if (emptied) {
                 base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
             }

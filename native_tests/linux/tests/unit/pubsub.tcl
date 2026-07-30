@@ -377,7 +377,11 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
-    # The stream class is not implemented yet (issue #406).
+    # Disabled because jedis-mock does not implement the consumer-group
+    # commands this test drives (XGROUP, XREADGROUP, XCLAIM, XAUTOCLAIM), so
+    # their xgroup-* events cannot exist. The stream events for the commands
+    # that *are* implemented (xadd, xtrim, xdel) are covered by
+    # StreamKeyspaceNotificationsTest.
     if 0 {
     test "Keyspace notifications: stream events test" {
         r config set notify-keyspace-events Kt

@@ -16,12 +16,7 @@ class ZInterStore extends AbstractZInter {
     }
 
     @Override
-    protected KeyspaceEvent storeEvent() {
-        return KeyspaceEvent.ZINTERSTORE;
-    }
-
-    @Override
     protected Slice response() {
-        return Response.integer(getResultSize());
+        return Response.integer(getResultSize(KeyspaceEvent.ZINTERSTORE));
     }
 }

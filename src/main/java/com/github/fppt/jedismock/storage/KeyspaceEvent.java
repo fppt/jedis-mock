@@ -73,7 +73,14 @@ public enum KeyspaceEvent {
     HSET("hset", EventClass.HASH),
     HDEL("hdel", EventClass.HASH),
     HINCRBY("hincrby", EventClass.HASH),
-    HINCRBYFLOAT("hincrbyfloat", EventClass.HASH);
+    HINCRBYFLOAT("hincrbyfloat", EventClass.HASH),
+
+    //Stream (t). The consumer-group events (xgroup-create and friends, whose
+    //names are hyphenated rather than being valid Java identifiers) are absent
+    //because the mock does not implement the consumer-group commands.
+    XADD("xadd", EventClass.STREAM),
+    XTRIM("xtrim", EventClass.STREAM),
+    XDEL("xdel", EventClass.STREAM);
 
     private final String eventName;
     private final EventClass eventClass;

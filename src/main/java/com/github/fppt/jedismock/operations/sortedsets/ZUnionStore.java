@@ -16,12 +16,7 @@ class ZUnionStore extends AbstractZUnion {
     }
 
     @Override
-    protected KeyspaceEvent storeEvent() {
-        return KeyspaceEvent.ZUNIONSTORE;
-    }
-
-    @Override
     protected Slice response() {
-        return Response.integer(getResultSize());
+        return Response.integer(getResultSize(KeyspaceEvent.ZUNIONSTORE));
     }
 }
