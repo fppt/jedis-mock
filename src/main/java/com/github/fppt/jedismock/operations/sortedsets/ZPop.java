@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.datastructures.ZSetEntry;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
@@ -50,8 +51,14 @@ class ZPop extends AbstractByScoreOperation {
                     .collect(Collectors.toList()));
             mapDBObj.remove(entry.getValue());
         }
-        if (mapDBObj.isEmpty()) {
-            base().deleteValue(key);
+        //One event per command, and only when something was actually removed:
+        //a count of 0 modifies nothing and so is not reported
+        if (!result.isEmpty()) {
+            base().notifyKeyspaceEvent(isRev ? KeyspaceEvent.ZPOPMAX : KeyspaceEvent.ZPOPMIN, key);
+            if (mapDBObj.isEmpty()) {
+                base().deleteValue(key);
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+            }
         }
         return result;
     }

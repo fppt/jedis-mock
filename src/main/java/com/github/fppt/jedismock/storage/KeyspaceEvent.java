@@ -13,6 +13,8 @@ import com.github.fppt.jedismock.storage.KeyspaceNotificationOptions.EventClass;
  * {@code xgroup-create}, which is not a valid identifier).
  */
 public enum KeyspaceEvent {
+    //Generic (g): not tied to one value type. Note that a container emptied by
+    //its own type's command is reported with this class, not the type's.
     DEL("del", EventClass.GENERIC),
     EXPIRE("expire", EventClass.GENERIC),
     PERSIST("persist", EventClass.GENERIC),
@@ -21,7 +23,68 @@ public enum KeyspaceEvent {
     MOVE_FROM("move_from", EventClass.GENERIC),
     MOVE_TO("move_to", EventClass.GENERIC),
     COPY_TO("copy_to", EventClass.GENERIC),
-    EXPIRED("expired", EventClass.EXPIRED);
+
+    //Expired (x)
+    EXPIRED("expired", EventClass.EXPIRED),
+
+    //String ($). Every flavour of assignment reports "set", and the
+    //decrementing variants report "incrby" just like the incrementing ones.
+    SET("set", EventClass.STRING),
+    APPEND("append", EventClass.STRING),
+    SETRANGE("setrange", EventClass.STRING),
+    INCRBY("incrby", EventClass.STRING),
+    INCRBYFLOAT("incrbyfloat", EventClass.STRING),
+
+    //List (l). A multi-element push reports one event, and the conditional
+    //(X) variants report the same event as their unconditional forms.
+    LPUSH("lpush", EventClass.LIST),
+    RPUSH("rpush", EventClass.LIST),
+    LPOP("lpop", EventClass.LIST),
+    RPOP("rpop", EventClass.LIST),
+    LINSERT("linsert", EventClass.LIST),
+    LSET("lset", EventClass.LIST),
+    LREM("lrem", EventClass.LIST),
+    LTRIM("ltrim", EventClass.LIST),
+    SORTSTORE("sortstore", EventClass.LIST),
+
+    //Set (s)
+    SADD("sadd", EventClass.SET),
+    SREM("srem", EventClass.SET),
+    SPOP("spop", EventClass.SET),
+    SINTERSTORE("sinterstore", EventClass.SET),
+    SUNIONSTORE("sunionstore", EventClass.SET),
+    SDIFFSTORE("sdiffstore", EventClass.SET),
+
+    //Sorted set (z). Note ZINCRBY reports "zincr".
+    ZADD("zadd", EventClass.ZSET),
+    ZINCR("zincr", EventClass.ZSET),
+    ZREM("zrem", EventClass.ZSET),
+    ZREMRANGEBYSCORE("zremrangebyscore", EventClass.ZSET),
+    ZREMRANGEBYRANK("zremrangebyrank", EventClass.ZSET),
+    ZREMRANGEBYLEX("zremrangebylex", EventClass.ZSET),
+    ZUNIONSTORE("zunionstore", EventClass.ZSET),
+    ZINTERSTORE("zinterstore", EventClass.ZSET),
+    ZDIFFSTORE("zdiffstore", EventClass.ZSET),
+    ZRANGESTORE("zrangestore", EventClass.ZSET),
+    ZPOPMIN("zpopmin", EventClass.ZSET),
+    ZPOPMAX("zpopmax", EventClass.ZSET),
+
+    //Hash (h). HSET, HMSET and HSETNX all report "hset".
+    HSET("hset", EventClass.HASH),
+    HDEL("hdel", EventClass.HASH),
+    HINCRBY("hincrby", EventClass.HASH),
+    HINCRBYFLOAT("hincrbyfloat", EventClass.HASH),
+
+    //Stream (t). The consumer-group events (xgroup-create and friends, whose
+    //names are hyphenated rather than being valid Java identifiers) are absent
+    //because the mock does not implement the consumer-group commands.
+    XADD("xadd", EventClass.STREAM),
+    XTRIM("xtrim", EventClass.STREAM),
+    XDEL("xdel", EventClass.STREAM),
+
+    //New key (n): published once, before the type's own event, when a key
+    //first comes into existence. Not covered by the 'A' alias.
+    NEW("new", EventClass.NEW);
 
     private final String eventName;
     private final EventClass eventClass;

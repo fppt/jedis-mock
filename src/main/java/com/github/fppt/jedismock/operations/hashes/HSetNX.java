@@ -19,4 +19,9 @@ class HSetNX extends HSet {
         }
         return foundValue;
     }
+
+    @Override
+    boolean writesUnconditionally() {
+        return false;
+    }
 }

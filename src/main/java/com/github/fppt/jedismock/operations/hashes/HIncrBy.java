@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -26,10 +27,17 @@ class HIncrBy extends AbstractRedisOperation {
         return Response.integer(numericValue);
     }
 
+    /** The event this increment reports; the float variant overrides it. */
+    KeyspaceEvent incrementEvent() {
+        return KeyspaceEvent.HINCRBY;
+    }
+
     protected Slice response() {
         Slice key1 = params().get(0);
         Slice key2 = params().get(1);
         Slice value = params().get(2);
-        return hsetValue(key1, key2, value);
+        Slice result = hsetValue(key1, key2, value);
+        base().notifyKeyspaceEvent(incrementEvent(), key1);
+        return result;
     }
 }

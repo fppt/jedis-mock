@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.operations.sortedsets;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
@@ -16,6 +17,6 @@ class ZUnionStore extends AbstractZUnion {
 
     @Override
     protected Slice response() {
-        return Response.integer(getResultSize());
+        return Response.integer(getResultSize(KeyspaceEvent.ZUNIONSTORE));
     }
 }

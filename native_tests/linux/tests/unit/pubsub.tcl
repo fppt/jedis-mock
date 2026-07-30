@@ -259,9 +259,6 @@ start_server {tags {"pubsub network"}} {
 
     ### Keyspace events notification tests
 
-    # These need string-class ('$') events, which are not implemented yet
-    # (issue #406); the generic and expired classes below do work.
-    if 0 {
     test "Keyspace notifications: we receive keyspace notifications" {
         r config set notify-keyspace-events KA
         set rd1 [redis_deferring_client]
@@ -307,8 +304,6 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
-    }
-
     test "Keyspace notifications: general events test" {
         r config set notify-keyspace-events KEg
         set rd1 [redis_deferring_client]
@@ -323,8 +318,6 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
-    # Type-specific event classes are not implemented yet (issue #406).
-    if 0 {
     test "Keyspace notifications: list events test" {
         r config set notify-keyspace-events KEl
         r del mylist
@@ -384,6 +377,12 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    # Disabled because jedis-mock does not implement the consumer-group
+    # commands this test drives (XGROUP, XREADGROUP, XCLAIM, XAUTOCLAIM), so
+    # their xgroup-* events cannot exist. The stream events for the commands
+    # that *are* implemented (xadd, xtrim, xdel) are covered by
+    # StreamKeyspaceNotificationsTest.
+    if 0 {
     test "Keyspace notifications: stream events test" {
         r config set notify-keyspace-events Kt
         r del mystream
@@ -482,8 +481,6 @@ start_server {tags {"pubsub network"}} {
         assert_equal {AE} [lindex [r config get notify-keyspace-events] 1]
     }
 
-    # The 'n' (new key) event class is not implemented yet (issue #406).
-    if 0 {
     test "Keyspace notifications: new key test" {
         r config set notify-keyspace-events En
         set rd1 [redis_deferring_client]
@@ -495,7 +492,6 @@ start_server {tags {"pubsub network"}} {
         assert_equal "pmessage * __keyevent@${db}__:new foo" [$rd1 read]
         assert_equal "pmessage * __keyevent@${db}__:new bar" [$rd1 read]
         $rd1 close
-    }
     }
 
     test "publish to self inside multi" {

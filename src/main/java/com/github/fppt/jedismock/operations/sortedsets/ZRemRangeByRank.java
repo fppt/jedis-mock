@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.operations.sortedsets;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public class ZRemRangeByRank extends AbstractZRangeByIndex {
             return Response.integer(0);
         }
 
-        return remRangeFromKey(getRange(getStartBound(Slice.create(String.valueOf(startIndex))), getStartBound(Slice.create(String.valueOf(endIndex)))));
+        return remRangeFromKey(getRange(getStartBound(Slice.create(String.valueOf(startIndex))), getStartBound(Slice.create(String.valueOf(endIndex)))), KeyspaceEvent.ZREMRANGEBYRANK);
     }
 
 }

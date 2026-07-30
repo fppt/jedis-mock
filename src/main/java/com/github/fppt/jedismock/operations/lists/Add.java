@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.RMList;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
@@ -17,6 +18,9 @@ abstract class Add extends AbstractRedisOperation {
 
     abstract void addSliceToList(List<Slice> list, Slice slice);
 
+    /** The event this push reports: {@code lpush} or {@code rpush}. */
+    abstract KeyspaceEvent pushEvent();
+
     protected Slice response() {
         Slice key = params().get(0);
         final RMList listDBObj = getListFromBaseOrCreateEmpty(key);
@@ -27,6 +31,8 @@ abstract class Add extends AbstractRedisOperation {
         }
 
         base().putValue(key, listDBObj);
+        //One event per command, however many elements were pushed
+        base().notifyKeyspaceEvent(pushEvent(), key);
 
         //Notify all waiting operations
         lock.notifyAll();

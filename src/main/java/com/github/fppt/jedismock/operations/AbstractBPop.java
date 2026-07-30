@@ -77,7 +77,7 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
         //Remember why the loop ended: we must not re-probe the connection at
         //delivery time. A transient liveness-probe failure right when data has
         //arrived would otherwise drop a legitimate reply and hang the client.
-        boolean connected = true;
+        boolean connected;
         //Register as a FIFO waiter on every key so that, among several clients
         //blocked on the same key, the oldest is served first (matching real
         //Redis). Without this, notifyAll() lets an arbitrary waiter steal the

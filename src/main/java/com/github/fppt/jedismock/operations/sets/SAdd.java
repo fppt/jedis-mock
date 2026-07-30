@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.datastructures.Slice;
 
@@ -30,6 +31,9 @@ class SAdd extends AbstractRedisOperation {
         }
 
         base().putValue(key, setDBObj);
+        if (count > 0) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.SADD, key);
+        }
 
         return Response.integer(count);
     }

@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -41,6 +42,8 @@ public class ZIncrBy extends AbstractByScoreOperation {
 
         mapDBObj.put(member, newScore);
         base().putValue(key, mapDBObj);
+        //ZINCRBY reports 'zincr'
+        base().notifyKeyspaceEvent(KeyspaceEvent.ZINCR, key);
         return newScore;
     }
 

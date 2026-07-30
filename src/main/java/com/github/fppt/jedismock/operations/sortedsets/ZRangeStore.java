@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.datastructures.ZSetEntry;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.ArrayList;
@@ -36,7 +37,12 @@ class ZRangeStore extends AbstractZRangeByIndex {
         params().remove(0);
         key = params().get(0);
         if (!base().exists(key)) {
+            //A missing source empties the destination, a generic del
+            boolean destinationExisted = base().exists(keyDest);
             base().deleteValue(keyDest);
+            if (destinationExisted) {
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, keyDest);
+            }
             return Response.integer(0);
         }
         mapDBObj = base().getZSet(key);
@@ -104,10 +110,14 @@ class ZRangeStore extends AbstractZRangeByIndex {
                 resultZSet.put(entry.getValue(), entry.getScore());
             }
         }
+        boolean destinationExisted = base().exists(keyDest);
         base().deleteValue(keyDest);
         if (!resultZSet.isEmpty()) {
             base().putValue(keyDest, resultZSet);
+            base().notifyKeyspaceEvent(KeyspaceEvent.ZRANGESTORE, keyDest);
             lock.notifyAll();
+        } else if (destinationExisted) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.DEL, keyDest);
         }
         return Response.integer(resultZSet.size());
     }

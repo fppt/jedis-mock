@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -29,8 +30,15 @@ class ZRem extends AbstractRedisOperation {
             }
         }
 
-        if (mapDBObj.isEmpty()) {
+        boolean emptied = mapDBObj.isEmpty();
+        if (emptied) {
             base().deleteValue(key);
+        }
+        if (count > 0) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.ZREM, key);
+            if (emptied) {
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+            }
         }
         return Response.integer(count);
     }

@@ -2,6 +2,7 @@ package com.github.fppt.jedismock.operations.sortedsets;
 
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -21,6 +22,6 @@ class ZRemRangeByLex extends AbstractZRangeByLex {
 
         final Slice start = params().get(1);
         final Slice end = params().get(2);
-        return remRangeFromKey(getRange(getStartBound(start), getEndBound(end)));
+        return remRangeFromKey(getRange(getStartBound(start), getEndBound(end)), KeyspaceEvent.ZREMRANGEBYLEX);
     }
 }

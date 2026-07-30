@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -27,11 +28,13 @@ class Append extends AbstractRedisOperation {
 
         if (s == null) {
             base().putValue(key, value.extract());
+            base().notifyKeyspaceEvent(KeyspaceEvent.APPEND, key);
             return Response.integer(value.length());
         }
 
         s.add(value.data());
         base().putValue(key, s);
+        base().notifyKeyspaceEvent(KeyspaceEvent.APPEND, key);
         return Response.integer(s.size());
     }
 }

@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -17,6 +18,7 @@ class SetNX extends AbstractRedisOperation {
     protected Slice response(){
         if (base().getValue(params().get(0)) == null) {
             base().putValue(params().get(0), params().get(1).extract());
+            base().notifyKeyspaceEvent(KeyspaceEvent.SET, params().get(0));
             return Response.integer(1);
         }
         return Response.integer(0);

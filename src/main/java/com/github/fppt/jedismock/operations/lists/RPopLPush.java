@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.SliceParser;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.Arrays;
@@ -30,14 +31,23 @@ class RPopLPush extends AbstractRedisOperation {
             throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
         }
 
-        //Pop last one
-        Slice result = new RPop(base(), Collections.singletonList(source)).execute();
+        //Pop last one. Its notifications are suppressed because Redis reports
+        //the push into the destination *before* the pop from the source.
+        RPop pop = new RPop(base(), Collections.singletonList(source));
+        pop.doNotPublishEvents();
+        Slice result = pop.execute();
         if(result.equals(NULL)) return NULL;
+        boolean sourceEmptied = !base().exists(source);
 
         Slice valueToPush = SliceParser.consumeParameter(result.data());
 
-        //Push it into the other list
+        //Push it into the other list (which reports its own lpush)
         new LPush(state, Arrays.asList(target, valueToPush)).execute();
+
+        base().notifyKeyspaceEvent(KeyspaceEvent.RPOP, source);
+        if (sourceEmptied) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.DEL, source);
+        }
 
         return result;
     }

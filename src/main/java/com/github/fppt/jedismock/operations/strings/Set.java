@@ -89,12 +89,14 @@ class Set extends AbstractRedisOperation {
     }
 
     /**
-     * Setting an expiration alongside the value publishes a generic
-     * {@code expire} notification (in addition to the string-class {@code set}
-     * one), exactly as a separate {@code EXPIRE} would.
+     * Reports the assignment, then — when the command also set an expiration —
+     * the generic {@code expire}, in that order, exactly as real Redis does.
      */
-    private void notifyExpirationSet(Slice key) {
-        base().notifyKeyspaceEvent(KeyspaceEvent.EXPIRE, key);
+    private void notifyStored(Slice key, boolean expirationSet) {
+        base().notifyKeyspaceEvent(KeyspaceEvent.SET, key);
+        if (expirationSet) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.EXPIRE, key);
+        }
     }
 
     private BiConsumer<Slice, RMDataStructure> valueSetter() {
@@ -104,27 +106,27 @@ class Set extends AbstractRedisOperation {
                 long ex = parseAndValidate(param, 1000);
                 return (k, v) -> {
                     base().putValue(k, v, ex);
-                    notifyExpirationSet(k);
+                    notifyStored(k, true);
                 };
             } else if ("px".equalsIgnoreCase(previous)) {
                 long px = parseAndValidate(param, 1);
                 return (k, v) -> {
                     base().putValue(k, v, px);
-                    notifyExpirationSet(k);
+                    notifyStored(k, true);
                 };
             } else if ("exat".equalsIgnoreCase(previous)) {
                 long exat = parseAndValidate(param, 1000);
                 return (k, v) -> {
                     base().putValue(k, v);
                     base().setDeadline(k, exat);
-                    notifyExpirationSet(k);
+                    notifyStored(k, true);
                 };
             } else if ("pxat".equalsIgnoreCase(previous)) {
                 long pxat = parseAndValidate(param, 1);
                 return (k, v) -> {
                     base().putValue(k, v);
                     base().setDeadline(k, pxat);
-                    notifyExpirationSet(k);
+                    notifyStored(k, true);
                 };
             }
             previous = param;
@@ -136,9 +138,13 @@ class Set extends AbstractRedisOperation {
                 if (deadline != null) {
                     base().setDeadline(k, deadline);
                 }
+                notifyStored(k, false);
             };
         } else {
-            return (k, v) -> base().putValue(k, v);
+            return (k, v) -> {
+                base().putValue(k, v);
+                notifyStored(k, false);
+            };
         }
     }
 }

@@ -6,6 +6,7 @@ import com.github.fppt.jedismock.datastructures.ZSetEntry;
 import com.github.fppt.jedismock.datastructures.ZSetEntryBound;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
@@ -141,16 +142,31 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
         }
     }
 
-    protected Slice remRangeFromKey(NavigableSet<ZSetEntry> entries) {
+    /**
+     * Removes the given range, reporting it as {@code removalEvent} plus the
+     * generic {@code del} if the sorted set is now gone.
+     * <p>
+     * The event is a parameter rather than an overridable hook because most
+     * subclasses of this class only read (ZRANGE, ZCOUNT, ZLEXCOUNT, …) and
+     * never reach this method; only the {@code ZREMRANGEBY*} commands do.
+     */
+    protected Slice remRangeFromKey(NavigableSet<ZSetEntry> entries, KeyspaceEvent removalEvent) {
         int count = 0;
         for (ZSetEntry entry : new ArrayList<>(entries)) {
             mapDBObj.remove(entry.getValue());
             count++;
         }
-        if (mapDBObj.isEmpty()) {
+        boolean emptied = mapDBObj.isEmpty();
+        if (emptied) {
             base().deleteValue(key);
         } else {
             base().putValue(key, mapDBObj);
+        }
+        if (count > 0) {
+            base().notifyKeyspaceEvent(removalEvent, key);
+            if (emptied) {
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+            }
         }
         return Response.integer(count);
     }

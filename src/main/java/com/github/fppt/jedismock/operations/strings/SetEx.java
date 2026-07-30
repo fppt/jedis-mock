@@ -32,7 +32,8 @@ class SetEx extends Set {
             return Response.error(String.format("ERR invalid expire time in '%s' command", self().value()));
         }
         base().putValue(params().get(0), params().get(2).extract(), timeout);
-        //As with SET ... EX, the expiration is reported as a generic 'expire'
+        //As with SET ... EX: the string 'set', then the generic 'expire'
+        base().notifyKeyspaceEvent(KeyspaceEvent.SET, params().get(0));
         base().notifyKeyspaceEvent(KeyspaceEvent.EXPIRE, params().get(0));
         return Response.OK;
     }

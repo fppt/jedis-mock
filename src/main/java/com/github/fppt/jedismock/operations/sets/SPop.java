@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.ArrayList;
@@ -45,8 +46,14 @@ class SPop extends AbstractRedisOperation {
 
         List<Slice> removedElements = popper(set, numberOfElementsToBeRemoved);
 
-        if (set.isEmpty()) {
-            base().deleteValue(key);
+        //One event per command, and only when something was actually removed:
+        //SPOP key 0 modifies nothing and so is not reported
+        if (!removedElements.isEmpty()) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.SPOP, key);
+            if (set.isEmpty()) {
+                base().deleteValue(key);
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
+            }
         }
 
         if (params().size() > 1) {

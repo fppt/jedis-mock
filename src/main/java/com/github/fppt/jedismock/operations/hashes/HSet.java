@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -18,6 +19,14 @@ class HSet extends AbstractRedisOperation {
         Slice foundValue = base().getSlice(key1, key2);
         base().putSlice(key1, key2, value, null);
         return foundValue;
+    }
+
+    /**
+     * @return whether this command writes regardless of the field's presence.
+     * {@code HSETNX} overrides it to false, so that a no-op reports nothing.
+     */
+    boolean writesUnconditionally() {
+        return true;
     }
 
     @Override
@@ -37,6 +46,12 @@ class HSet extends AbstractRedisOperation {
             if (oldValue == null) {
                 count++;
             }
+        }
+
+        //HSET/HMSET always write, so always report; HSETNX only writes when the
+        //field was absent, which is exactly when count > 0
+        if (writesUnconditionally() || count > 0) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.HSET, hash);
         }
 
         return Response.integer(count);

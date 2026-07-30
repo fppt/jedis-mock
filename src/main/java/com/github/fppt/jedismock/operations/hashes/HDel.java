@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -30,6 +31,14 @@ class HDel extends AbstractRedisOperation {
 
             if (oldValue != null) {
                 ++count;
+            }
+        }
+
+        if (count > 0) {
+            base().notifyKeyspaceEvent(KeyspaceEvent.HDEL, key);
+            //Deleting the last field removes the hash, a generic del
+            if (!base().exists(key)) {
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
             }
         }
 
