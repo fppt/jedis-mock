@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.EnumSet;
@@ -71,6 +72,7 @@ class ZAdd extends AbstractByScoreOperation {
             if (countChange + countAdd > 0) {
                 mapDBObj.put(member, newScore);
                 base().putValue(key, mapDBObj);
+                base().notifyKeyspaceEvent(KeyspaceEvent.ZADD, key);
                 lock.notifyAll();
                 return Response.bulkString(Slice.create(String.valueOf(newScore)));
             }
@@ -98,6 +100,7 @@ class ZAdd extends AbstractByScoreOperation {
         }
         if (countAdd + countChange > 0) {
             base().putValue(key, mapDBObj);
+            base().notifyKeyspaceEvent(KeyspaceEvent.ZADD, key);
             lock.notifyAll();
         }
         return options.contains(CH) ? Response.integer(countAdd + countChange) :

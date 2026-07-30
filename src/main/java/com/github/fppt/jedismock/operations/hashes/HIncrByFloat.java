@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.operations.hashes;
 import com.github.fppt.jedismock.operations.RedisCommand;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.text.DecimalFormat;
@@ -37,6 +38,12 @@ class HIncrByFloat extends HIncrBy {
         }
     }
 
+    @Override
+    KeyspaceEvent incrementEvent() {
+        return KeyspaceEvent.HINCRBYFLOAT;
+    }
+
+    @Override
     Slice hsetValue(Slice key1, Slice key2, Slice value) {
         double numericValue = convertToDouble(String.valueOf(value));
         Slice foundValue = base().getSlice(key1, key2);
@@ -53,12 +60,6 @@ class HIncrByFloat extends HIncrBy {
         return Response.bulkString(res);
     }
 
-    @Override
-    protected Slice response() {
-        Slice key1 = params().get(0);
-        Slice key2 = params().get(1);
-        Slice value = params().get(2);
-
-        return hsetValue(key1, key2, value);
-    }
+    //response() is inherited: it is identical to HIncrBy's and reports the
+    //event returned by incrementEvent() above.
 }

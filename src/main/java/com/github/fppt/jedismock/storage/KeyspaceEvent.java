@@ -45,7 +45,35 @@ public enum KeyspaceEvent {
     LSET("lset", EventClass.LIST),
     LREM("lrem", EventClass.LIST),
     LTRIM("ltrim", EventClass.LIST),
-    SORTSTORE("sortstore", EventClass.LIST);
+    SORTSTORE("sortstore", EventClass.LIST),
+
+    //Set (s)
+    SADD("sadd", EventClass.SET),
+    SREM("srem", EventClass.SET),
+    SPOP("spop", EventClass.SET),
+    SINTERSTORE("sinterstore", EventClass.SET),
+    SUNIONSTORE("sunionstore", EventClass.SET),
+    SDIFFSTORE("sdiffstore", EventClass.SET),
+
+    //Sorted set (z). Note ZINCRBY reports "zincr".
+    ZADD("zadd", EventClass.ZSET),
+    ZINCR("zincr", EventClass.ZSET),
+    ZREM("zrem", EventClass.ZSET),
+    ZREMRANGEBYSCORE("zremrangebyscore", EventClass.ZSET),
+    ZREMRANGEBYRANK("zremrangebyrank", EventClass.ZSET),
+    ZREMRANGEBYLEX("zremrangebylex", EventClass.ZSET),
+    ZUNIONSTORE("zunionstore", EventClass.ZSET),
+    ZINTERSTORE("zinterstore", EventClass.ZSET),
+    ZDIFFSTORE("zdiffstore", EventClass.ZSET),
+    ZRANGESTORE("zrangestore", EventClass.ZSET),
+    ZPOPMIN("zpopmin", EventClass.ZSET),
+    ZPOPMAX("zpopmax", EventClass.ZSET),
+
+    //Hash (h). HSET, HMSET and HSETNX all report "hset".
+    HSET("hset", EventClass.HASH),
+    HDEL("hdel", EventClass.HASH),
+    HINCRBY("hincrby", EventClass.HASH),
+    HINCRBYFLOAT("hincrbyfloat", EventClass.HASH);
 
     private final String eventName;
     private final EventClass eventClass;

@@ -5,6 +5,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.datastructures.ZSetEntry;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.ArrayList;
@@ -162,16 +163,28 @@ abstract class ZStore extends AbstractByScoreOperation {
         return score * weight;
     }
 
+    /** The event this store reports, e.g. {@code zunionstore}. */
+    protected KeyspaceEvent storeEvent() {
+        return null;
+    }
+
     protected long getResultSize() {
         Slice keyDest = params().get(0);
-        if (base().exists(keyDest)) {
+        boolean destinationExisted = base().exists(keyDest);
+        if (destinationExisted) {
             base().deleteValue(keyDest);
         }
         startKeysIndex = 1;
         RMZSet mapDBObj = getFinishedZSet();
         if (!mapDBObj.isEmpty()) {
             base().putValue(keyDest, mapDBObj);
+            if (storeEvent() != null) {
+                base().notifyKeyspaceEvent(storeEvent(), keyDest);
+            }
             lock.notifyAll();
+        } else if (destinationExisted) {
+            //An empty result removes the destination, reported as a generic del
+            base().notifyKeyspaceEvent(KeyspaceEvent.DEL, keyDest);
         }
         return mapDBObj.size();
     }

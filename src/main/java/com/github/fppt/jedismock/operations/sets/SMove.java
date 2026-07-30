@@ -29,6 +29,12 @@ public class SMove extends AbstractRedisOperation {
 
         final int result = new SRem(base(), Arrays.asList(src, member)).remove();
 
+        //The source is reported in full (including the del for the set it
+        //emptied) before the destination's sadd
+        if (result > 0) {
+            SRem.publishRemoval(base(), src);
+        }
+
         if (result > 0 && !getSetFromBaseOrCreateEmpty(dest).getStoredData().contains(member)) {
             new SAdd(base(), Arrays.asList(dest, member)).execute();
         }

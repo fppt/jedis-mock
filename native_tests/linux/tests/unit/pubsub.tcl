@@ -335,8 +335,6 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
-    # Set, zset, hash and stream classes are not implemented yet (issue #406).
-    if 0 {
     test "Keyspace notifications: set events test" {
         r config set notify-keyspace-events Ks
         r del myset
@@ -379,6 +377,8 @@ start_server {tags {"pubsub network"}} {
         $rd1 close
     }
 
+    # The stream class is not implemented yet (issue #406).
+    if 0 {
     test "Keyspace notifications: stream events test" {
         r config set notify-keyspace-events Kt
         r del mystream
