@@ -47,7 +47,7 @@ Add it as a test dependency in Maven as:
 <dependency>
   <groupId>com.github.fppt</groupId>
   <artifactId>jedis-mock</artifactId>
-  <version>1.1.15</version>
+  <version>1.1.16</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -316,4 +316,3 @@ Unsupported operation {}
 
 please feel free to create an issue requesting the missing operation, 
 or implement it yourself in interceptor and send us the code. It's fun!
-
