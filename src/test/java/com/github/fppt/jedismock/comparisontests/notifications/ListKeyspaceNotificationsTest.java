@@ -88,6 +88,31 @@ public class ListKeyspaceNotificationsTest {
     }
 
     @TestTemplate
+    public void trimmingNothingStillPublishesLtrim(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "Elg")) {
+            jedis.rpush("L", "a", "b", "c");
+            assertThat(events.next(1)).containsExactly("__keyevent@0__:rpush -> L");
+            //LTRIM reports unconditionally, even when the range keeps everything
+            jedis.ltrim("L", 0, -1);
+            assertThat(events.next(1)).containsExactly("__keyevent@0__:ltrim -> L");
+            //Whereas removing an absent element reports nothing
+            jedis.lrem("L", 0, "absent");
+            events.assertNoFurtherNotifications();
+        }
+    }
+
+    @TestTemplate
+    public void mutatingAMissingListPublishesNothing(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "Elg")) {
+            jedis.ltrim("nosuchlist", 0, -1);
+            jedis.lrem("nosuchlist", 0, "a");
+            jedis.lpop("nosuchlist");
+            jedis.rpop("nosuchlist");
+            events.assertNoFurtherNotifications();
+        }
+    }
+
+    @TestTemplate
     public void rpoplpushPublishesDestinationPushBeforeSourcePop(Jedis jedis, HostAndPort hostAndPort) throws Exception {
         try (NotificationCollector events = collectorFor(jedis, hostAndPort, "Elg")) {
             jedis.rpush("src", "a");

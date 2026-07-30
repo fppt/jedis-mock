@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.sets;
 
+import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
@@ -25,6 +26,14 @@ public class SMove extends AbstractRedisOperation {
         // check destination type BEFORE deleting from src
         if (base().getValue(dest) != null && base().getSet(dest) == null) {
             throw new WrongValueTypeException("WRONGTYPE dest is not a set");
+        }
+
+        //Moving within one set changes nothing: report only whether the member
+        //is there, without touching the set or publishing any event
+        if (src.equals(dest)) {
+            RMSet set = base().getSet(src);
+            boolean isMember = set != null && set.getStoredData().contains(member);
+            return Response.integer(isMember ? 1 : 0);
         }
 
         final int result = new SRem(base(), Arrays.asList(src, member)).remove();

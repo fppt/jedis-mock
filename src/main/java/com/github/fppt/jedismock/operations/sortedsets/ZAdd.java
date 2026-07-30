@@ -72,7 +72,8 @@ class ZAdd extends AbstractByScoreOperation {
             if (countChange + countAdd > 0) {
                 mapDBObj.put(member, newScore);
                 base().putValue(key, mapDBObj);
-                base().notifyKeyspaceEvent(KeyspaceEvent.ZADD, key);
+                //With INCR this is an increment, reported as 'zincr' not 'zadd'
+                base().notifyKeyspaceEvent(KeyspaceEvent.ZINCR, key);
                 lock.notifyAll();
                 return Response.bulkString(Slice.create(String.valueOf(newScore)));
             }

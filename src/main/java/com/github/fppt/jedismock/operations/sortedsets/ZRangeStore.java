@@ -37,7 +37,12 @@ class ZRangeStore extends AbstractZRangeByIndex {
         params().remove(0);
         key = params().get(0);
         if (!base().exists(key)) {
+            //A missing source empties the destination, a generic del
+            boolean destinationExisted = base().exists(keyDest);
             base().deleteValue(keyDest);
+            if (destinationExisted) {
+                base().notifyKeyspaceEvent(KeyspaceEvent.DEL, keyDest);
+            }
             return Response.integer(0);
         }
         mapDBObj = base().getZSet(key);

@@ -47,7 +47,9 @@ public class SetRange extends AbstractRedisOperation {
         if (offset + value.length() < oldValue.length()) {
             newValue += oldValue.substring(offset + value.length());
         }
-        if (!oldValue.equals(newValue)) {
+        //An empty value writes nothing at all; anything else is a write (and so
+        //is reported) even when the resulting string is identical
+        if (value.length() > 0) {
             base().putValue(key, Slice.create(newValue).extract(), null);
             base().notifyKeyspaceEvent(KeyspaceEvent.SETRANGE, key);
         }

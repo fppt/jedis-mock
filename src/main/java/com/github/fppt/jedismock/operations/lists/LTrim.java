@@ -38,7 +38,7 @@ class LTrim extends AbstractRedisOperation {
         final RMList listDBObj = getListFromBaseOrCreateEmpty(key);
         final List<Slice> list = listDBObj.getStoredData();
 
-        final int sizeBefore = list.size();
+        final boolean existed = base().exists(key);
         int size = list.size();
 
         // start and end can also be negative numbers indicating offsets from the end of the list,
@@ -58,8 +58,10 @@ class LTrim extends AbstractRedisOperation {
             list.subList(0, start).clear();
         }
 
-        //Only an actual trim is reported, and an emptied list also reports 'del'
-        if (list.size() != sizeBefore) {
+        //An existing list is reported as trimmed even when the range covered
+        //all of it and nothing was actually removed (unlike LREM, which only
+        //reports an actual removal). A missing key is left alone entirely.
+        if (existed) {
             base().markKeyModified(key);
             base().notifyKeyspaceEvent(KeyspaceEvent.LTRIM, key);
             if (list.isEmpty()) {
