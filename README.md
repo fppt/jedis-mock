@@ -5,8 +5,8 @@
 
 Jedis-Mock is an in-memory mock of Redis/Valkey for Java testing, which can also work as a test proxy.
 While being simple to use, it faithfully replicates Redis/Valkey behaviour, with rich and precise support
-for data types, streams, transactions, [Lua scripting](#luascripting) and [cluster mode](#cluster) — effectively making it
-a Redis/Valkey reimplementation in Java.
+for data types, streams, transactions, [Lua scripting](#luascripting), [keyspace notifications](#keyspacenotifications)
+and [cluster mode](#cluster) — effectively making it a Redis/Valkey reimplementation in Java.
 
 Despite its name, it works at the network protocol level and can be used with any Redis client
 (be it [Jedis](https://github.com/redis/jedis), [Lettuce](https://github.com/lettuce-io/lettuce-core), [Redisson](https://github.com/redisson/redisson) or others).
@@ -237,8 +237,71 @@ Only the following parameters are actually honoured by the mock:
 | --- | --- | --- |
 | `lua-time-limit` (alias `busy-reply-threshold`) | how long a Lua script may run before other clients get `-BUSY` (see [Script timeouts](#script-timeouts-busy-and-script-kill)) | `5000` (ms); `0` disables |
 | `proto-max-bulk-len` | largest string a command may build, enforced by `SETRANGE`/`APPEND` (`-ERR string exceeds maximum allowed size`) | `536870912` (512 MB) |
+| `notify-keyspace-events` | which [keyspace notifications](#keyspacenotifications) are published | `""` (disabled) |
 
 `proto-max-bulk-len` is capped at `Integer.MAX_VALUE`, since the mock stores strings as `byte[]` and cannot honour a larger limit. Glob-style patterns in `CONFIG GET` are not supported; each argument is treated as a literal parameter name.
+
+
+## <a name="keyspacenotifications">Keyspace notifications</a>
+
+[Keyspace notifications](https://redis.io/docs/latest/develop/pubsub/keyspace-notifications/) are supported: enable them with `CONFIG SET notify-keyspace-events` and subscribe to the
+`__keyspace@<db>__:<key>` and/or `__keyevent@<db>__:<event>` channels as you would against a real server.
+
+```java
+jedis.configSet("notify-keyspace-events", "KEA");   // all events, both channel families
+
+// in another connection
+jedis.psubscribe(new JedisPubSub() {
+    @Override
+    public void onPMessage(String pattern, String channel, String message) {
+        // __keyspace@0__:mykey -> set
+        // __keyevent@0__:set   -> mykey
+    }
+}, "__key*@0__:*");
+```
+
+The flag string is parsed and validated exactly as Redis does, so `CONFIG GET` reports the canonical
+form (`KA` reads back as `AK`) and an unknown flag character is rejected. Pub/Sub is server-wide, so a
+subscriber on one database receives events for every database.
+
+### Supported event classes
+
+| Flag | Class | Events |
+| --- | --- | --- |
+| `K` | keyspace channel | publishes to `__keyspace@<db>__:<key>` |
+| `E` | keyevent channel | publishes to `__keyevent@<db>__:<event>` |
+| `g` | generic | `del`, `expire`, `persist`, `rename_from`, `rename_to`, `move_from`, `move_to`, `copy_to` |
+| `$` | string | `set`, `append`, `setrange`, `incrby`, `incrbyfloat` |
+| `l` | list | `lpush`, `rpush`, `lpop`, `rpop`, `linsert`, `lset`, `lrem`, `ltrim`, `sortstore` |
+| `s` | set | `sadd`, `srem`, `spop`, `sinterstore`, `sunionstore`, `sdiffstore` |
+| `h` | hash | `hset`, `hdel`, `hincrby`, `hincrbyfloat` |
+| `z` | sorted set | `zadd`, `zincr`, `zrem`, `zremrangebyscore`, `zremrangebyrank`, `zremrangebylex`, `zunionstore`, `zinterstore`, `zdiffstore`, `zrangestore`, `zpopmin`, `zpopmax` |
+| `t` | stream | `xadd`, `xtrim`, `xdel` |
+| `x` | expired | `expired` |
+| `n` | new key | `new` |
+| `A` | alias for `g$lshzxet` (and `d`) — note it does **not** cover `n` or `m` | |
+
+As in Redis, the event name is not always the command name: every flavour of assignment reports `set`,
+`DECR`/`DECRBY` report `incrby`, `ZINCRBY` reports `zincr`, `UNLINK` reports `del`, and emptying a
+container reports the *generic* `del` in addition to the type's own event.
+
+### Current limitations
+
+* **No active expiry.** Keys expire lazily, when something touches them, so a key that nobody reads
+  produces its `expired` event later than a real server would (which expires in the background). Code
+  that periodically scans its keys — Spring Session's cleanup task, for example — works fine.
+* **`e` (evicted) and `m` (key-miss) events are not published.** The mock has no `maxmemory`, so
+  nothing is ever evicted, and key misses are not tracked.
+* **`d` (module) events are not published**, as the mock has no module support.
+* **Stream consumer-group events are absent** (`xgroup-create`, `xgroup-createconsumer`,
+  `xgroup-delconsumer`, `xgroup-destroy`, `xsetid`, `xclaim`) because the mock does not implement the
+  consumer-group commands themselves.
+* **`TTL`/`PTTL` on an already-expired key does not publish `expired`.** The event is published from
+  the value-access path, not from TTL lookups.
+* **An expiration set in the past reports `del`, matching Redis**, whereas Valkey reports `expired`
+  for the same command.
+* Events are published for hash-field expiration commands (`HEXPIRE` and friends) only insofar as
+  they set TTLs; the dedicated `hexpired`/`hpersist` events of newer Redis are not implemented.
 
 
 ## Supported and Missing Operations

@@ -8,17 +8,23 @@ import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ExpiringKeyValueStorage extends ExpiringStorage {
     private final Map<Slice, RMDataStructure> values = new HashMap<>();
-    private final Consumer<Slice> expiredKeyNotifier;
+    private final BiConsumer<KeyspaceEvent, Slice> eventPublisher;
 
+    /**
+     * @param eventPublisher publishes the keyspace notifications this layer is
+     * responsible for: {@code expired} for a passive expiry, and {@code new}
+     * for a key that did not exist before a write
+     */
     public ExpiringKeyValueStorage(Supplier<Clock> clockSupplier, Consumer<Slice> keyChangeNotifier,
-                                   Consumer<Slice> expiredKeyNotifier) {
+                                   BiConsumer<KeyspaceEvent, Slice> eventPublisher) {
         super(clockSupplier, keyChangeNotifier);
-        this.expiredKeyNotifier = Objects.requireNonNull(expiredKeyNotifier);
+        this.eventPublisher = Objects.requireNonNull(eventPublisher);
     }
 
     /**
@@ -28,7 +34,18 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
      */
     public void deleteExpired(Slice key) {
         delete(key);
-        expiredKeyNotifier.accept(key);
+        eventPublisher.accept(KeyspaceEvent.EXPIRED, key);
+    }
+
+    /**
+     * Reports the {@code new} event if this write brings the key into
+     * existence. Called before the value is stored, so that {@code new}
+     * precedes the command's own event, as in real Redis.
+     */
+    private void publishIfNewKey(Slice key) {
+        if (!values.containsKey(key)) {
+            eventPublisher.accept(KeyspaceEvent.NEW, key);
+        }
     }
 
     public Map<Slice, RMDataStructure> values() {
@@ -109,6 +126,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
 
     public void put(Slice key, RMDataStructure value, Long ttl) {
         keyChangeNotifier.accept(key);
+        publishIfNewKey(key);
         values().put(key, value);
         configureTTL(key, ttl);
     }
@@ -118,6 +136,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
         keyChangeNotifier.accept(key);
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
+        publishIfNewKey(key);
         values().put(key, value.extract());
         configureTTL(key, ttl);
     }
@@ -131,6 +150,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
         RMHash mapByKey;
 
         if (!values.containsKey(key1)) {
+            eventPublisher.accept(KeyspaceEvent.NEW, key1);
             mapByKey = new RMHash(getClockSupplier());
             values.put(key1, mapByKey);
         } else {

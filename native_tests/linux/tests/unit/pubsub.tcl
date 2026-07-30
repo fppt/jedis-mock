@@ -481,8 +481,6 @@ start_server {tags {"pubsub network"}} {
         assert_equal {AE} [lindex [r config get notify-keyspace-events] 1]
     }
 
-    # The 'n' (new key) event class is not implemented yet (issue #406).
-    if 0 {
     test "Keyspace notifications: new key test" {
         r config set notify-keyspace-events En
         set rd1 [redis_deferring_client]
@@ -494,7 +492,6 @@ start_server {tags {"pubsub network"}} {
         assert_equal "pmessage * __keyevent@${db}__:new foo" [$rd1 read]
         assert_equal "pmessage * __keyevent@${db}__:new bar" [$rd1 read]
         $rd1 close
-    }
     }
 
     test "publish to self inside multi" {

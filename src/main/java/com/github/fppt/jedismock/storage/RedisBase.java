@@ -46,7 +46,7 @@ public class RedisBase {
         this.keyValueStorage = new ExpiringKeyValueStorage(clockSupplier, key -> watchedKeys
                 .getOrDefault(key, Collections.emptySet())
                 .forEach(OperationExecutorState::watchedKeyIsAffected),
-                key -> notifyKeyspaceEvent(KeyspaceEvent.EXPIRED, key));
+                this::notifyKeyspaceEvent);
     }
 
     /**
@@ -58,7 +58,7 @@ public class RedisBase {
      * {@code __keyevent@<db>__:<event> -> <key>}. Only call while holding
      * {@link OperationExecutorState#lock()} (all operations do).
      */
-    public void notifyKeyspaceEvent(KeyspaceEvent event, Slice key) {
+    public final void notifyKeyspaceEvent(KeyspaceEvent event, Slice key) {
         KeyspaceNotificationOptions options = configuration.getKeyspaceNotificationOptions();
         if (!options.isEnabled(event)) {
             return;

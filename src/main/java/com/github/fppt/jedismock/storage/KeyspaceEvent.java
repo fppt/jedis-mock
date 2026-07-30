@@ -80,7 +80,11 @@ public enum KeyspaceEvent {
     //because the mock does not implement the consumer-group commands.
     XADD("xadd", EventClass.STREAM),
     XTRIM("xtrim", EventClass.STREAM),
-    XDEL("xdel", EventClass.STREAM);
+    XDEL("xdel", EventClass.STREAM),
+
+    //New key (n): published once, before the type's own event, when a key
+    //first comes into existence. Not covered by the 'A' alias.
+    NEW("new", EventClass.NEW);
 
     private final String eventName;
     private final EventClass eventClass;
