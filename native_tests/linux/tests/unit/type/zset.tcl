@@ -2391,24 +2391,23 @@ start_server {tags {"zset"}} {
         }
     }
 
-#    Don't support ZRandMember
-#    foreach {type contents} "listpack {1 a 2 b 3 c} skiplist {1 a 2 b 3 [randstring 70 90 alpha]}" {
-#        set original_max_value [lindex [r config get zset-max-ziplist-value] 1]
-#        r config set zset-max-ziplist-value 10
-#        create_zset myzset $contents
-#        assert_encoding $type myzset
-#
-#        test "ZRANDMEMBER - $type" {
-#            unset -nocomplain myzset
-#            array set myzset {}
-#            for {set i 0} {$i < 100} {incr i} {
-#                set key [r zrandmember myzset]
-#                set myzset($key) 1
-#            }
-#            assert_equal [lsort [get_keys $contents]] [lsort [array names myzset]]
-#        }
-#        r config set zset-max-ziplist-value $original_max_value
-#    }
+    foreach {type contents} "listpack {1 a 2 b 3 c} skiplist {1 a 2 b 3 [randstring 70 90 alpha]}" {
+        set original_max_value [lindex [r config get zset-max-ziplist-value] 1]
+        r config set zset-max-ziplist-value 10
+        create_zset myzset $contents
+        assert_encoding $type myzset
+
+        test "ZRANDMEMBER - $type" {
+            unset -nocomplain myzset
+            array set myzset {}
+            for {set i 0} {$i < 100} {incr i} {
+                set key [r zrandmember myzset]
+                set myzset($key) 1
+            }
+            assert_equal [lsort [get_keys $contents]] [lsort [array names myzset]]
+        }
+        r config set zset-max-ziplist-value $original_max_value
+    }
 
 #	Don't support RESP3 
 #    test "ZRANDMEMBER with RESP3" {
@@ -2423,176 +2422,170 @@ start_server {tags {"zset"}} {
 #        r hello 2
 #    }
 
-#    Don't support ZRandMember
-#    test "ZRANDMEMBER count of 0 is handled correctly" {
-#        r zrandmember myzset 0
-#    } {}
+    test "ZRANDMEMBER count of 0 is handled correctly" {
+        r zrandmember myzset 0
+    } {}
 
-#    Don't support ZRandMember
-#    test "ZRANDMEMBER with <count> against non existing key" {
-#        r zrandmember nonexisting_key 100
-#    } {}
+    test "ZRANDMEMBER with <count> against non existing key" {
+        r zrandmember nonexisting_key 100
+    } {}
 
-#    Don't support ZRandMember
-#    test "ZRANDMEMBER count overflow" {
-#        r zadd myzset 0 a
-#        assert_error {*value is out of range*} {r zrandmember myzset -9223372036854770000 withscores}
-#        assert_error {*value is out of range*} {r zrandmember myzset -9223372036854775808 withscores}
-#        assert_error {*value is out of range*} {r zrandmember myzset -9223372036854775808}
-#    } {}
+    test "ZRANDMEMBER count overflow" {
+        r zadd myzset 0 a
+        assert_error {*value is out of range*} {r zrandmember myzset -9223372036854770000 withscores}
+        assert_error {*value is out of range*} {r zrandmember myzset -9223372036854775808 withscores}
+        assert_error {*value is out of range*} {r zrandmember myzset -9223372036854775808}
+    } {}
 
     # Make sure we can distinguish between an empty array and a null response
     r readraw 1
 
-#    Don't support ZRandMember
-#    test "ZRANDMEMBER count of 0 is handled correctly - emptyarray" {
-#        r zrandmember myzset 0
-#    } {*0}
+    test "ZRANDMEMBER count of 0 is handled correctly - emptyarray" {
+        r zrandmember myzset 0
+    } {*0}
 
-#    Don't support ZRandMember
-#    test "ZRANDMEMBER with <count> against non existing key - emptyarray" {
-#        r zrandmember nonexisting_key 100
-#    } {*0}
+    test "ZRANDMEMBER with <count> against non existing key - emptyarray" {
+        r zrandmember nonexisting_key 100
+    } {*0}
 
     r readraw 0
 
-#    Don't support ZRandMember
-#    foreach {type contents} "
-#        skiplist {1 a 2 b 3 c 4 d 5 e 6 f 7 g 7 h 9 i 10 [randstring 70 90 alpha]}
-#        listpack {1 a 2 b 3 c 4 d 5 e 6 f 7 g 7 h 9 i 10 j} " {
-#        test "ZRANDMEMBER with <count> - $type" {
-#            set original_max_value [lindex [r config get zset-max-ziplist-value] 1]
-#            r config set zset-max-ziplist-value 10
-#            create_zset myzset $contents
-#            assert_encoding $type myzset
-#
-#            # create a dict for easy lookup
-#            set mydict [dict create {*}[r zrange myzset 0 -1 withscores]]
-#
-#            # We'll stress different parts of the code, see the implementation
-#            # of ZRANDMEMBER for more information, but basically there are
-#            # four different code paths.
-#
-#            # PATH 1: Use negative count.
-#
-#            # 1) Check that it returns repeated elements with and without values.
-#            # 2) Check that all the elements actually belong to the original zset.
-#            set res [r zrandmember myzset -20]
-#            assert_equal [llength $res] 20
-#            check_member $mydict $res
-#
-#            set res [r zrandmember myzset -1001]
-#            assert_equal [llength $res] 1001
-#            check_member $mydict $res
-#
-#            # again with WITHSCORES
-#            set res [r zrandmember myzset -20 withscores]
-#            assert_equal [llength $res] 40
-#            check_member_and_score $mydict $res
-#
-#            set res [r zrandmember myzset -1001 withscores]
-#            assert_equal [llength $res] 2002
-#            check_member_and_score $mydict $res
-#
-#            # Test random uniform distribution
-#            # df = 9, 40 means 0.00001 probability
-#            set res [r zrandmember myzset -1000]
-#            assert_lessthan [chi_square_value $res] 40
-#            check_member $mydict $res
-#
-#            # 3) Check that eventually all the elements are returned.
-#            #    Use both WITHSCORES and without
-#            unset -nocomplain auxset
-#            set iterations 1000
-#            while {$iterations != 0} {
-#                incr iterations -1
-#                if {[expr {$iterations % 2}] == 0} {
-#                    set res [r zrandmember myzset -3 withscores]
-#                    foreach {key val} $res {
-#                        dict append auxset $key $val
-#                    }
-#                } else {
-#                    set res [r zrandmember myzset -3]
-#                    foreach key $res {
-#                        dict append auxset $key
-#                    }
-#                }
-#                if {[lsort [dict keys $mydict]] eq
-#                    [lsort [dict keys $auxset]]} {
-#                    break;
-#                }
-#            }
-#            assert {$iterations != 0}
-#
-#            # PATH 2: positive count (unique behavior) with requested size
-#            # equal or greater than set size.
-#            foreach size {10 20} {
-#                set res [r zrandmember myzset $size]
-#                assert_equal [llength $res] 10
-#                assert_equal [lsort $res] [lsort [dict keys $mydict]]
-#                check_member $mydict $res
-#
-#                # again with WITHSCORES
-#                set res [r zrandmember myzset $size withscores]
-#                assert_equal [llength $res] 20
-#                assert_equal [lsort $res] [lsort $mydict]
-#                check_member_and_score $mydict $res
-#            }
-#
-#            # PATH 3: Ask almost as elements as there are in the set.
-#            # In this case the implementation will duplicate the original
-#            # set and will remove random elements up to the requested size.
-#            #
-#            # PATH 4: Ask a number of elements definitely smaller than
-#            # the set size.
-#            #
-#            # We can test both the code paths just changing the size but
-#            # using the same code.
-#            foreach size {1 2 8} {
-#                # 1) Check that all the elements actually belong to the
-#                # original set.
-#                set res [r zrandmember myzset $size]
-#                assert_equal [llength $res] $size
-#                check_member $mydict $res
-#
-#                # again with WITHSCORES
-#                set res [r zrandmember myzset $size withscores]
-#                assert_equal [llength $res] [expr {$size * 2}]
-#                check_member_and_score $mydict $res
-#
-#                # 2) Check that eventually all the elements are returned.
-#                #    Use both WITHSCORES and without
-#                unset -nocomplain auxset
-#                unset -nocomplain allkey
-#                set iterations [expr {1000 / $size}]
-#                set all_ele_return false
-#                while {$iterations != 0} {
-#                    incr iterations -1
-#                    if {[expr {$iterations % 2}] == 0} {
-#                        set res [r zrandmember myzset $size withscores]
-#                        foreach {key value} $res {
-#                            dict append auxset $key $value
-#                            lappend allkey $key
-#                        }
-#                    } else {
-#                        set res [r zrandmember myzset $size]
-#                        foreach key $res {
-#                            dict append auxset $key
-#                            lappend allkey $key
-#                        }
-#                    }
-#                    if {[lsort [dict keys $mydict]] eq
-#                        [lsort [dict keys $auxset]]} {
-#                        set all_ele_return true
-#                    }
-#                }
-#                assert_equal $all_ele_return true
-#                # df = 9, 40 means 0.00001 probability
-#                assert_lessthan [chi_square_value $allkey] 40
-#            }
-#        }
-#        r config set zset-max-ziplist-value $original_max_value
-#    }
+    foreach {type contents} "
+        skiplist {1 a 2 b 3 c 4 d 5 e 6 f 7 g 7 h 9 i 10 [randstring 70 90 alpha]}
+        listpack {1 a 2 b 3 c 4 d 5 e 6 f 7 g 7 h 9 i 10 j} " {
+        test "ZRANDMEMBER with <count> - $type" {
+            set original_max_value [lindex [r config get zset-max-ziplist-value] 1]
+            r config set zset-max-ziplist-value 10
+            create_zset myzset $contents
+            assert_encoding $type myzset
+
+            # create a dict for easy lookup
+            set mydict [dict create {*}[r zrange myzset 0 -1 withscores]]
+
+            # We'll stress different parts of the code, see the implementation
+            # of ZRANDMEMBER for more information, but basically there are
+            # four different code paths.
+
+            # PATH 1: Use negative count.
+
+            # 1) Check that it returns repeated elements with and without values.
+            # 2) Check that all the elements actually belong to the original zset.
+            set res [r zrandmember myzset -20]
+            assert_equal [llength $res] 20
+            check_member $mydict $res
+
+            set res [r zrandmember myzset -1001]
+            assert_equal [llength $res] 1001
+            check_member $mydict $res
+
+            # again with WITHSCORES
+            set res [r zrandmember myzset -20 withscores]
+            assert_equal [llength $res] 40
+            check_member_and_score $mydict $res
+
+            set res [r zrandmember myzset -1001 withscores]
+            assert_equal [llength $res] 2002
+            check_member_and_score $mydict $res
+
+            # Test random uniform distribution
+            # df = 9, 40 means 0.00001 probability
+            set res [r zrandmember myzset -1000]
+            assert_lessthan [chi_square_value $res] 40
+            check_member $mydict $res
+
+            # 3) Check that eventually all the elements are returned.
+            #    Use both WITHSCORES and without
+            unset -nocomplain auxset
+            set iterations 1000
+            while {$iterations != 0} {
+                incr iterations -1
+                if {[expr {$iterations % 2}] == 0} {
+                    set res [r zrandmember myzset -3 withscores]
+                    foreach {key val} $res {
+                        dict append auxset $key $val
+                    }
+                } else {
+                    set res [r zrandmember myzset -3]
+                    foreach key $res {
+                        dict append auxset $key
+                    }
+                }
+                if {[lsort [dict keys $mydict]] eq
+                    [lsort [dict keys $auxset]]} {
+                    break;
+                }
+            }
+            assert {$iterations != 0}
+
+            # PATH 2: positive count (unique behavior) with requested size
+            # equal or greater than set size.
+            foreach size {10 20} {
+                set res [r zrandmember myzset $size]
+                assert_equal [llength $res] 10
+                assert_equal [lsort $res] [lsort [dict keys $mydict]]
+                check_member $mydict $res
+
+                # again with WITHSCORES
+                set res [r zrandmember myzset $size withscores]
+                assert_equal [llength $res] 20
+                assert_equal [lsort $res] [lsort $mydict]
+                check_member_and_score $mydict $res
+            }
+
+            # PATH 3: Ask almost as elements as there are in the set.
+            # In this case the implementation will duplicate the original
+            # set and will remove random elements up to the requested size.
+            #
+            # PATH 4: Ask a number of elements definitely smaller than
+            # the set size.
+            #
+            # We can test both the code paths just changing the size but
+            # using the same code.
+            foreach size {1 2 8} {
+                # 1) Check that all the elements actually belong to the
+                # original set.
+                set res [r zrandmember myzset $size]
+                assert_equal [llength $res] $size
+                check_member $mydict $res
+
+                # again with WITHSCORES
+                set res [r zrandmember myzset $size withscores]
+                assert_equal [llength $res] [expr {$size * 2}]
+                check_member_and_score $mydict $res
+
+                # 2) Check that eventually all the elements are returned.
+                #    Use both WITHSCORES and without
+                unset -nocomplain auxset
+                unset -nocomplain allkey
+                set iterations [expr {1000 / $size}]
+                set all_ele_return false
+                while {$iterations != 0} {
+                    incr iterations -1
+                    if {[expr {$iterations % 2}] == 0} {
+                        set res [r zrandmember myzset $size withscores]
+                        foreach {key value} $res {
+                            dict append auxset $key $value
+                            lappend allkey $key
+                        }
+                    } else {
+                        set res [r zrandmember myzset $size]
+                        foreach key $res {
+                            dict append auxset $key
+                            lappend allkey $key
+                        }
+                    }
+                    if {[lsort [dict keys $mydict]] eq
+                        [lsort [dict keys $auxset]]} {
+                        set all_ele_return true
+                    }
+                }
+                assert_equal $all_ele_return true
+                # df = 9, 40 means 0.00001 probability
+                assert_lessthan [chi_square_value $allkey] 40
+            }
+        }
+        r config set zset-max-ziplist-value $original_max_value
+    }
 
     test {zset score double range} {
         set dblmax 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.00000000000000000
