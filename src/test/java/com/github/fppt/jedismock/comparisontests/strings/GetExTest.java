@@ -11,6 +11,8 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.GetExParams;
 import redis.clients.jedis.params.SetParams;
 
+import java.nio.charset.StandardCharsets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -42,7 +44,9 @@ public class GetExTest {
 
     private static String getexString(Jedis jedis, String... args) {
         Object reply = getex(jedis, args);
-        return reply == null ? null : new String((byte[]) reply);
+        //Jedis encodes the request as UTF-8, so decode the reply the same way
+        //rather than with whatever the platform default happens to be
+        return reply == null ? null : new String((byte[]) reply, StandardCharsets.UTF_8);
     }
 
     @TestTemplate
@@ -298,7 +302,11 @@ public class GetExTest {
     @TestTemplate
     public void expiredKeysAreTreatedAsMissing(Jedis jedis) {
         jedis.set("foo", "bar", SetParams.setParams().px(1));
-        Awaitility.await().until(() -> jedis.getEx("foo", GetExParams.getExParams().ex(100)) == null);
+        //The poll must not carry an option: an expiring one would reinstate the
+        //TTL on any round that still saw the key, and it would never expire
+        Awaitility.await().until(() -> jedis.getEx("foo", GetExParams.getExParams()) == null);
+        //Nor can the expiring form resurrect what has already gone
+        assertThat(jedis.getEx("foo", GetExParams.getExParams().ex(100))).isNull();
         assertThat(jedis.exists("foo")).isFalse();
     }
 }
