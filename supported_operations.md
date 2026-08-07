@@ -86,7 +86,7 @@
 | --- | --- | --- | --- | --- | --- |
 | :heavy_check_mark: [sadd](https://valkey.io/commands/sadd/) | :heavy_check_mark: [sdiffstore](https://valkey.io/commands/sdiffstore/) | :heavy_check_mark: [sinterstore](https://valkey.io/commands/sinterstore/) | :heavy_check_mark: [smismember](https://valkey.io/commands/smismember/) | :heavy_check_mark: [srandmember](https://valkey.io/commands/srandmember/) | :heavy_check_mark: [sunion](https://valkey.io/commands/sunion/) |
 | :heavy_check_mark: [scard](https://valkey.io/commands/scard/) | :heavy_check_mark: [sinter](https://valkey.io/commands/sinter/) | :heavy_check_mark: [sismember](https://valkey.io/commands/sismember/) | :heavy_check_mark: [smove](https://valkey.io/commands/smove/) | :heavy_check_mark: [srem](https://valkey.io/commands/srem/) | :heavy_check_mark: [sunionstore](https://valkey.io/commands/sunionstore/) |
-| :heavy_check_mark: [sdiff](https://valkey.io/commands/sdiff/) | :x: [sintercard](https://valkey.io/commands/sintercard/) | :heavy_check_mark: [smembers](https://valkey.io/commands/smembers/) | :heavy_check_mark: [spop](https://valkey.io/commands/spop/) | :heavy_check_mark: [sscan](https://valkey.io/commands/sscan/) |  |
+| :heavy_check_mark: [sdiff](https://valkey.io/commands/sdiff/) | :heavy_check_mark: [sintercard](https://valkey.io/commands/sintercard/) | :heavy_check_mark: [smembers](https://valkey.io/commands/smembers/) | :heavy_check_mark: [spop](https://valkey.io/commands/spop/) | :heavy_check_mark: [sscan](https://valkey.io/commands/sscan/) |  |
 
 ## Sorted Sets
 
