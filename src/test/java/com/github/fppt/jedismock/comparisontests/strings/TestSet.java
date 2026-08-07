@@ -137,6 +137,45 @@ public class TestSet {
         assertThat(jedis.get(NON_EXISTENT)).isEqualTo(SET_VALUE);
     }
 
+    /**
+     * NX and XX ask only whether the key is there, never what it holds, so a
+     * key of another type is ordinary input to them rather than a WRONGTYPE.
+     */
+    @TestTemplate
+    public void nxAndXxLookAtPresenceNotType(Jedis jedis) {
+        jedis.rpush("mylist", "a");
+        //Present, so NX declines — and says so with a nil, not an error
+        assertThat(jedis.set("mylist", "v", SetParams.setParams().nx())).isNull();
+        assertThat(jedis.type("mylist")).isEqualTo("list");
+        //Present, so XX writes, replacing the list with a string
+        assertThat(jedis.set("mylist", "v2", SetParams.setParams().xx())).isEqualTo("OK");
+        assertThat(jedis.type("mylist")).isEqualTo("string");
+        assertThat(jedis.get("mylist")).isEqualTo("v2");
+    }
+
+    @TestTemplate
+    public void xxReplacesAnyTypeAndStillSetsTheExpiration(Jedis jedis) {
+        jedis.hset("myhash", "f", "v");
+        assertThat(jedis.set("myhash", "v2", SetParams.setParams().xx().ex(100L))).isEqualTo("OK");
+        assertThat(jedis.get("myhash")).isEqualTo("v2");
+        assertThat(jedis.ttl("myhash")).isEqualTo(100L);
+    }
+
+    @TestTemplate
+    public void plainSetReplacesAnyType(Jedis jedis) {
+        jedis.sadd("myset", "a");
+        assertThat(jedis.set("myset", "v")).isEqualTo("OK");
+        assertThat(jedis.get("myset")).isEqualTo("v");
+    }
+
+    @TestTemplate
+    public void nxOnAKeyWhoseExpirationHasPassedTreatsItAsAbsent(Jedis jedis) throws InterruptedException {
+        jedis.set(SET_KEY, SET_ANOTHER_VALUE, SetParams.setParams().px(50L));
+        Thread.sleep(150);
+        assertThat(jedis.set(SET_KEY, SET_VALUE, SetParams.setParams().nx())).isEqualTo("OK");
+        assertThat(jedis.get(SET_KEY)).isEqualTo(SET_VALUE);
+    }
+
     @TestTemplate
     public void testSetNonUTF8binary(Jedis jedis) {
         byte[] msg = new byte[]{(byte) 0xbe};

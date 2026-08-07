@@ -116,10 +116,14 @@ class Set extends AbstractRedisOperation {
             }
         }
 
-        //Raises WRONGTYPE for a non-string key
-        boolean exists = existence != null && base().getSlice(key) != null;
-        if (existence == Option.NX && exists || existence == Option.XX && !exists) {
-            return Response.NULL;
+        //Only the key's presence matters, never its type: SET replaces a value
+        //of any type, so NX on a list declines with a nil and XX overwrites it.
+        //Reading the value instead would wrongly raise WRONGTYPE
+        if (existence != null) {
+            boolean required = existence == Option.XX;
+            if (base().exists(key) != required) {
+                return Response.NULL;
+            }
         }
         store(key, value.extract(), expiration, millis);
         return Response.OK;
