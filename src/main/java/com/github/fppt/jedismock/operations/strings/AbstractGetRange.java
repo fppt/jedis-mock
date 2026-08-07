@@ -6,7 +6,6 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
@@ -44,8 +43,7 @@ abstract class AbstractGetRange extends AbstractRedisOperation {
             //An empty bulk string, not a nil — unlike GET
             return Response.bulkString(Slice.empty());
         }
-        byte[] data = value.getStoredData();
-        long length = data.length;
+        long length = value.size();
 
         //Adding the length to a negative offset cannot overflow: length is
         //non-negative, so the sum only ever moves towards zero
@@ -64,6 +62,6 @@ abstract class AbstractGetRange extends AbstractRedisOperation {
             return Response.bulkString(Slice.empty());
         }
         //Both bounds now lie within [0, length), so the casts are safe
-        return Response.bulkString(Slice.create(Arrays.copyOfRange(data, (int) start, (int) end + 1)));
+        return Response.bulkString(Slice.create(value.getStoredDataRange((int) start, (int) end + 1)));
     }
 }
