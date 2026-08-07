@@ -21,6 +21,11 @@ class SScan extends Scan {
     }
 
     @Override
+    protected int minArgs() {
+        return 2;
+    }
+
+    @Override
     protected void doOptionalWork() {
         this.keySlice = params().get(0);
         this.cursorSlice = params().get(1);

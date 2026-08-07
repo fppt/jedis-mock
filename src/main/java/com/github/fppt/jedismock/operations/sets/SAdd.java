@@ -18,6 +18,11 @@ class SAdd extends AbstractRedisOperation {
     }
 
     @Override
+    protected int minArgs() {
+        return 1;
+    }
+
+    @Override
     protected Slice response() {
         Slice key = params().get(0);
         RMSet setDBObj = getSetFromBaseOrCreateEmpty(key);

@@ -19,6 +19,16 @@ class SMembers extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 1;
+    }
+
+    @Override
+    protected int maxArgs() {
+        return 1;
+    }
+
     protected Slice response() {
         final Slice key = params().get(0);
         final RMSet setDBObj = getSetFromBaseOrCreateEmpty(key);

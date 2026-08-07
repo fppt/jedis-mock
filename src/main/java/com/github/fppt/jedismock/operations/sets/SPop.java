@@ -20,6 +20,11 @@ class SPop extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 1;
+    }
+
     private List<Slice> popper(Set<Slice> collection, int numberToBeRemoved) {
         List<Slice> result = new ArrayList<>();
         Iterator<Slice> it = collection.iterator();

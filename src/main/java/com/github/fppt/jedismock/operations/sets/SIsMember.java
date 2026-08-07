@@ -18,6 +18,16 @@ public class SIsMember extends AbstractRedisOperation {
     }
 
     @Override
+    protected int minArgs() {
+        return 2;
+    }
+
+    @Override
+    protected int maxArgs() {
+        return 2;
+    }
+
+    @Override
     protected Slice response() {
         Slice key = params().get(0);
         Slice member = params().get(1);
