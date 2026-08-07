@@ -3,11 +3,21 @@ package com.github.fppt.jedismock;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
 
 import java.io.Closeable;
+import java.util.OptionalLong;
+import java.util.regex.Pattern;
 
 /**
  * Created by Xiaolu on 2015/4/21.
  */
 public class Utils {
+
+    /**
+     * The integers Redis' own {@code string2ll} accepts: no leading plus, no
+     * leading zeroes, no {@code -0} and no surrounding whitespace. Java's
+     * {@link Long#parseLong} is more permissive than all of these, so the
+     * grammar has to be checked before parsing.
+     */
+    private static final Pattern REDIS_INTEGER = Pattern.compile("0|-?[1-9][0-9]*");
 
     public static void closeQuietly(Closeable closeable) {
         try {
@@ -17,12 +27,26 @@ public class Utils {
         }
     }
 
-    public static long convertToLong(String value) {
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            throw new WrongValueTypeException("ERR value is not an integer or out of range");
+    /**
+     * Parses {@code value} exactly as Redis' {@code string2ll} would, returning
+     * empty rather than throwing so callers can raise the error message their
+     * own command uses.
+     */
+    public static OptionalLong parseRedisLong(String value) {
+        if (!REDIS_INTEGER.matcher(value).matches()) {
+            return OptionalLong.empty();
         }
+        try {
+            return OptionalLong.of(Long.parseLong(value));
+        } catch (NumberFormatException e) {
+            //Grammatically an integer, but out of range
+            return OptionalLong.empty();
+        }
+    }
+
+    public static long convertToLong(String value) {
+        return parseRedisLong(value).orElseThrow(() ->
+                new WrongValueTypeException("ERR value is not an integer or out of range"));
     }
 
     public static byte convertToByte(String value) {
@@ -38,21 +62,21 @@ public class Utils {
     }
 
     public static int convertToNonNegativeInteger(String value) {
-        try {
-            int pos = Integer.parseInt(value);
-            if (pos < 0) throw new NumberFormatException("Int less than 0");
-            return pos;
-        } catch (NumberFormatException e) {
+        OptionalLong parsed = parseRedisLong(value);
+        if (!parsed.isPresent() || parsed.getAsLong() < 0 || parsed.getAsLong() > Integer.MAX_VALUE) {
             throw new WrongValueTypeException("ERR bit offset is not an integer or out of range");
         }
+        return (int) parsed.getAsLong();
     }
 
     public static int convertToInteger(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
+        OptionalLong parsed = parseRedisLong(value);
+        if (!parsed.isPresent()
+                || parsed.getAsLong() < Integer.MIN_VALUE
+                || parsed.getAsLong() > Integer.MAX_VALUE) {
             throw new WrongValueTypeException("ERR value is not an integer or out of range");
         }
+        return (int) parsed.getAsLong();
     }
 
     public static double convertToDouble(String value) {
