@@ -19,6 +19,11 @@ class SRem extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 2;
+    }
+
     final int remove() {
         Slice key = params().get(0);
         RMSet setDBObj = getSetFromBaseOrCreateEmpty(key);

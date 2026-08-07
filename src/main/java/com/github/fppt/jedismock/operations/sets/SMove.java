@@ -18,6 +18,16 @@ public class SMove extends AbstractRedisOperation {
     }
 
     @Override
+    protected int minArgs() {
+        return 3;
+    }
+
+    @Override
+    protected int maxArgs() {
+        return 3;
+    }
+
+    @Override
     protected Slice response() {
         Slice src = params().get(0);
         Slice dest = params().get(1);
