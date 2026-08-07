@@ -11,10 +11,12 @@ import redis.clients.jedis.params.SetParams;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestSet {
 
+    private static final String INVALID_EXPIRE = "ERR invalid expire time in 'set' command";
     private static final String SET_KEY = "my_simple_key";
     private static final String SET_VALUE = "my_simple_value";
     private static final String SET_ANOTHER_VALUE = "another_value";
@@ -118,6 +120,46 @@ public class TestSet {
                         .hasMessage("ERR invalid expire time in 'set' command")
         );
         softly.assertAll();
+    }
+
+    /**
+     * EXAT and PXAT are already absolute, so — unlike EX and PX — the current
+     * time is never added to them. They therefore accept deadlines that the
+     * very same number overflows as a relative expiration.
+     */
+    @TestTemplate
+    public void absoluteExpirationsAreNotOffsetByTheCurrentTime(Jedis jedis) {
+        assertThat(jedis.set("exat", "v", SetParams.setParams().exAt(9223372036854775L)))
+                .isEqualTo("OK");
+        assertThat(jedis.ttl("exat")).isGreaterThan(0L);
+        assertThat(jedis.set("pxat", "v", SetParams.setParams().pxAt(Long.MAX_VALUE)))
+                .isEqualTo("OK");
+        assertThat(jedis.pexpireTime("pxat")).isEqualTo(Long.MAX_VALUE);
+
+        //The same magnitudes overflow once the current time is added to them
+        assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().ex(9223372036854775L)))
+                .hasMessage(INVALID_EXPIRE);
+        assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().px(Long.MAX_VALUE)))
+                .hasMessage(INVALID_EXPIRE);
+    }
+
+    @TestTemplate
+    public void absoluteExpirationsStillRejectWhatRedisRejects(Jedis jedis) {
+        SoftAssertions softly = new SoftAssertions();
+        //Seconds are refused as soon as they overflow milliseconds
+        softly.assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().exAt(9223372036854776L)))
+                .hasMessage(INVALID_EXPIRE);
+        softly.assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().exAt(Long.MAX_VALUE)))
+                .hasMessage(INVALID_EXPIRE);
+        //A non-positive deadline is out of range for the absolute options too
+        for (long bad : new long[]{0L, -1L}) {
+            softly.assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().exAt(bad)))
+                    .hasMessage(INVALID_EXPIRE);
+            softly.assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().pxAt(bad)))
+                    .hasMessage(INVALID_EXPIRE);
+        }
+        softly.assertAll();
+        assertThat(jedis.exists("k")).isFalse();
     }
 
     @TestTemplate

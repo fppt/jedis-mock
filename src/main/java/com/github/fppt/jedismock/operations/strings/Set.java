@@ -1,6 +1,5 @@
 package com.github.fppt.jedismock.operations.strings;
 
-import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.RMDataStructure;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
@@ -115,7 +114,8 @@ class Set extends AbstractRedisOperation {
         //Only the four timed options set a time, so the two are non-null together
         if (expiration != null && time != null) {
             try {
-                millis = parseAndValidate(time.toString(), expiration.seconds ? 1000 : 1);
+                millis = ExpirationArgument.millis(time.toString(), expiration.seconds,
+                        expiration.absolute, base().getClock().millis(), self().value());
             } catch (IllegalArgumentException e) {
                 return Response.error(e.getMessage());
             }
@@ -164,22 +164,4 @@ class Set extends AbstractRedisOperation {
         }
     }
 
-    private long parseAndValidate(String param, int multiplier) {
-        long value = Utils.convertToLong(param);
-        if (value <= 0) {
-            throw invalidExpireTime();
-        }
-        try {
-            value = Math.multiplyExact(multiplier, value);
-            Math.addExact(base().getClock().millis(), value);
-        } catch (ArithmeticException e) {
-            throw invalidExpireTime();
-        }
-        return value;
-    }
-
-    private IllegalArgumentException invalidExpireTime() {
-        return new IllegalArgumentException(
-                String.format("ERR invalid expire time in '%s' command", self().value()));
-    }
 }

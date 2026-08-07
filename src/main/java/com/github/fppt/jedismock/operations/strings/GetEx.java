@@ -114,30 +114,9 @@ class GetEx extends AbstractRedisOperation {
 
     /** The absolute deadline in milliseconds, rejecting values Redis refuses. */
     private long deadline(Option option, Slice time) {
-        long value;
-        try {
-            value = Long.parseLong(time.toString());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ERR value is not an integer or out of range");
-        }
-        //A non-positive expiration is out of range for every unit, absolute ones
-        //included, and seconds are rejected once they overflow milliseconds
-        if (value <= 0 || option.seconds && value > Long.MAX_VALUE / 1000) {
-            throw invalidExpireTime();
-        }
-        long millis = option.seconds ? value * 1000 : value;
-        if (option.absolute) {
-            return millis;
-        }
         long now = base().getClock().millis();
-        if (millis >= Long.MAX_VALUE - now) {
-            throw invalidExpireTime();
-        }
-        return millis + now;
-    }
-
-    private IllegalArgumentException invalidExpireTime() {
-        return new IllegalArgumentException(
-                String.format("ERR invalid expire time in '%s' command", self().value()));
+        long millis = ExpirationArgument.millis(
+                time.toString(), option.seconds, option.absolute, now, self().value());
+        return option.absolute ? millis : millis + now;
     }
 }
