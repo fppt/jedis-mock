@@ -14,16 +14,16 @@ import java.util.function.BiFunction;
 public abstract class SStore extends AbstractRedisOperation {
     private final BiFunction<RedisBase, List<Slice>, Set<Slice>> operation;
 
-    @Override
-    protected int minArgs() {
-        return 2;
-    }
-
     public SStore(RedisBase base,
                   List<Slice> params,
                   BiFunction<RedisBase, List<Slice>, Set<Slice>> operation) {
         super(base, params);
         this.operation = operation;
+    }
+
+    @Override
+    protected int minArgs() {
+        return 2;
     }
 
     /** The event this store reports, e.g. {@code sinterstore}. */
