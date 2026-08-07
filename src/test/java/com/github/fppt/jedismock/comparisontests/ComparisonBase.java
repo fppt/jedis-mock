@@ -23,7 +23,7 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
         BeforeAllCallback, AfterAllCallback {
     private static RedisServer fakeServer;
 
-    private static final GenericContainer<?> redis = new GenericContainer<>("redis:7.4-alpine")
+    private static final GenericContainer<?> redis = new GenericContainer<>("redis:8.8-alpine")
             .withExposedPorts(6379);
 
 
