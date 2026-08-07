@@ -11,10 +11,12 @@ import redis.clients.jedis.params.SetParams;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class TestSet {
 
+    private static final String INVALID_EXPIRE = "ERR invalid expire time in 'set' command";
     private static final String SET_KEY = "my_simple_key";
     private static final String SET_VALUE = "my_simple_value";
     private static final String SET_ANOTHER_VALUE = "another_value";
@@ -120,6 +122,46 @@ public class TestSet {
         softly.assertAll();
     }
 
+    /**
+     * EXAT and PXAT are already absolute, so — unlike EX and PX — the current
+     * time is never added to them. They therefore accept deadlines that the
+     * very same number overflows as a relative expiration.
+     */
+    @TestTemplate
+    public void absoluteExpirationsAreNotOffsetByTheCurrentTime(Jedis jedis) {
+        assertThat(jedis.set("exat", "v", SetParams.setParams().exAt(9223372036854775L)))
+                .isEqualTo("OK");
+        assertThat(jedis.ttl("exat")).isGreaterThan(0L);
+        assertThat(jedis.set("pxat", "v", SetParams.setParams().pxAt(Long.MAX_VALUE)))
+                .isEqualTo("OK");
+        assertThat(jedis.pexpireTime("pxat")).isEqualTo(Long.MAX_VALUE);
+
+        //The same magnitudes overflow once the current time is added to them
+        assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().ex(9223372036854775L)))
+                .hasMessage(INVALID_EXPIRE);
+        assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().px(Long.MAX_VALUE)))
+                .hasMessage(INVALID_EXPIRE);
+    }
+
+    @TestTemplate
+    public void absoluteExpirationsStillRejectWhatRedisRejects(Jedis jedis) {
+        SoftAssertions softly = new SoftAssertions();
+        //Seconds are refused as soon as they overflow milliseconds
+        softly.assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().exAt(9223372036854776L)))
+                .hasMessage(INVALID_EXPIRE);
+        softly.assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().exAt(Long.MAX_VALUE)))
+                .hasMessage(INVALID_EXPIRE);
+        //A non-positive deadline is out of range for the absolute options too
+        for (long bad : new long[]{0L, -1L}) {
+            softly.assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().exAt(bad)))
+                    .hasMessage(INVALID_EXPIRE);
+            softly.assertThatThrownBy(() -> jedis.set("k", "v", SetParams.setParams().pxAt(bad)))
+                    .hasMessage(INVALID_EXPIRE);
+        }
+        softly.assertAll();
+        assertThat(jedis.exists("k")).isFalse();
+    }
+
     @TestTemplate
     public void keepTTL(Jedis jedis) {
         long exat = System.currentTimeMillis() / 1000 + 1050;
@@ -135,6 +177,45 @@ public class TestSet {
         assertThat(jedis.exists(NON_EXISTENT)).isFalse();
         jedis.set(NON_EXISTENT, SET_VALUE, SetParams.setParams().keepTtl());
         assertThat(jedis.get(NON_EXISTENT)).isEqualTo(SET_VALUE);
+    }
+
+    /**
+     * NX and XX ask only whether the key is there, never what it holds, so a
+     * key of another type is ordinary input to them rather than a WRONGTYPE.
+     */
+    @TestTemplate
+    public void nxAndXxLookAtPresenceNotType(Jedis jedis) {
+        jedis.rpush("mylist", "a");
+        //Present, so NX declines — and says so with a nil, not an error
+        assertThat(jedis.set("mylist", "v", SetParams.setParams().nx())).isNull();
+        assertThat(jedis.type("mylist")).isEqualTo("list");
+        //Present, so XX writes, replacing the list with a string
+        assertThat(jedis.set("mylist", "v2", SetParams.setParams().xx())).isEqualTo("OK");
+        assertThat(jedis.type("mylist")).isEqualTo("string");
+        assertThat(jedis.get("mylist")).isEqualTo("v2");
+    }
+
+    @TestTemplate
+    public void xxReplacesAnyTypeAndStillSetsTheExpiration(Jedis jedis) {
+        jedis.hset("myhash", "f", "v");
+        assertThat(jedis.set("myhash", "v2", SetParams.setParams().xx().ex(100L))).isEqualTo("OK");
+        assertThat(jedis.get("myhash")).isEqualTo("v2");
+        assertThat(jedis.ttl("myhash")).isEqualTo(100L);
+    }
+
+    @TestTemplate
+    public void plainSetReplacesAnyType(Jedis jedis) {
+        jedis.sadd("myset", "a");
+        assertThat(jedis.set("myset", "v")).isEqualTo("OK");
+        assertThat(jedis.get("myset")).isEqualTo("v");
+    }
+
+    @TestTemplate
+    public void nxOnAKeyWhoseExpirationHasPassedTreatsItAsAbsent(Jedis jedis) throws InterruptedException {
+        jedis.set(SET_KEY, SET_ANOTHER_VALUE, SetParams.setParams().px(50L));
+        Thread.sleep(150);
+        assertThat(jedis.set(SET_KEY, SET_VALUE, SetParams.setParams().nx())).isEqualTo("OK");
+        assertThat(jedis.get(SET_KEY)).isEqualTo(SET_VALUE);
     }
 
     @TestTemplate

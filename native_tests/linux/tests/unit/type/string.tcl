@@ -102,6 +102,75 @@ start_server {tags {"string"}} {
         assert_equal 20 [r get x]
     }
 
+    test "GETEX EX option" {
+        r del foo
+        r set foo bar
+        r getex foo ex 10
+        assert_range [r ttl foo] 5 10
+    }
+
+    test "GETEX PX option" {
+        r del foo
+        r set foo bar
+        r getex foo px 10000
+        assert_range [r pttl foo] 5000 10000
+    }
+
+    test "GETEX EXAT option" {
+        r del foo
+        r set foo bar
+        r getex foo exat [expr [clock seconds] + 10]
+        assert_range [r ttl foo] 5 10
+    }
+
+    test "GETEX PXAT option" {
+        r del foo
+        r set foo bar
+        r getex foo pxat [expr [clock milliseconds] + 10000]
+        assert_range [r pttl foo] 5000 10000
+    }
+
+    test "GETEX PERSIST option" {
+        r del foo
+        r set foo bar ex 10
+        assert_range [r ttl foo] 5 10
+        r getex foo persist
+        assert_equal -1 [r ttl foo]
+    }
+
+    test "GETEX no option" {
+        r del foo
+        r set foo bar
+        r getex foo
+        assert_equal bar [r getex foo]
+    }
+
+    test "GETEX syntax errors" {
+        set ex {}
+        catch {r getex foo non-existent-option} ex
+        set ex
+    } {*syntax*}
+
+    test "GETEX and GET expired key or not exist" {
+        r del foo
+        r set foo bar px 1
+        after 2
+        assert_equal {} [r getex foo]
+        assert_equal {} [r get foo]
+    }
+
+    test "GETEX no arguments" {
+         set ex {}
+         catch {r getex} ex
+         set ex
+     } {*wrong number of arguments for 'getex' command}
+
+    test "GETDEL command" {
+        r del foo
+        r set foo bar
+        assert_equal bar [r getdel foo ]
+        assert_equal {} [r getdel foo ]
+    }
     test {MGET} {
         r flushdb
         r set foo BAR
@@ -337,47 +406,61 @@ start_server {tags {"string"}} {
         assert_error "*maximum allowed size*" {r setrange mykey [expr 512*1024*1024-4] world}
     }
 
-    #test "GETRANGE against non-existing key" {
-    #    r del mykey
-    #    assert_equal "" [r getrange mykey 0 -1]
-    #}
+    test "GETRANGE against non-existing key" {
+        r del mykey
+        assert_equal "" [r getrange mykey 0 -1]
+    }
 
-    #test "GETRANGE against string value" {
-    #    r set mykey "Hello World"
-    #    assert_equal "Hell" [r getrange mykey 0 3]
-    #    assert_equal "Hello World" [r getrange mykey 0 -1]
-    #    assert_equal "orld" [r getrange mykey -4 -1]
-    #    assert_equal "" [r getrange mykey 5 3]
-    #    assert_equal " World" [r getrange mykey 5 5000]
-    #    assert_equal "Hello World" [r getrange mykey -5000 10000]
-    #}
+    test "GETRANGE against wrong key type" {
+        r lpush lkey1 "list"
+        assert_error {WRONGTYPE Operation against a key holding the wrong kind of value*} {r getrange lkey1 0 -1}
+    }
 
-    #test "GETRANGE against integer-encoded value" {
-    #    r set mykey 1234
-    #    assert_equal "123" [r getrange mykey 0 2]
-    #    assert_equal "1234" [r getrange mykey 0 -1]
-    #    assert_equal "234" [r getrange mykey -3 -1]
-    #    assert_equal "" [r getrange mykey 5 3]
-    #    assert_equal "4" [r getrange mykey 3 5000]
-    #    assert_equal "1234" [r getrange mykey -5000 10000]
-    #}
+    test "GETRANGE against string value" {
+        r set mykey "Hello World"
+        assert_equal "Hell" [r getrange mykey 0 3]
+        assert_equal "Hello World" [r getrange mykey 0 -1]
+        assert_equal "orld" [r getrange mykey -4 -1]
+        assert_equal "" [r getrange mykey 5 3]
+        assert_equal " World" [r getrange mykey 5 5000]
+        assert_equal "Hello World" [r getrange mykey -5000 10000]
+    }
 
-    #test "GETRANGE fuzzing" {
-    #    for {set i 0} {$i < 1000} {incr i} {
-    #        r set bin [set bin [randstring 0 1024 binary]]
-    #        set _start [set start [randomInt 1500]]
-    #        set _end [set end [randomInt 1500]]
-    #        if {$_start < 0} {set _start "end-[abs($_start)-1]"}
-    #        if {$_end < 0} {set _end "end-[abs($_end)-1]"}
-    #        assert_equal [string range $bin $_start $_end] [r getrange bin $start $end]
-    #    }
-    #}
+    test "GETRANGE against integer-encoded value" {
+        r set mykey 1234
+        assert_equal "123" [r getrange mykey 0 2]
+        assert_equal "1234" [r getrange mykey 0 -1]
+        assert_equal "234" [r getrange mykey -3 -1]
+        assert_equal "" [r getrange mykey 5 3]
+        assert_equal "4" [r getrange mykey 3 5000]
+        assert_equal "1234" [r getrange mykey -5000 10000]
+    }
 
-    #test {Extended SET can detect syntax errors} {
-    #    set e {}
-    #    catch {r set foo bar non-existing-option} e
-    #    set e
-    #} {*syntax*}
+    test "GETRANGE fuzzing" {
+        for {set i 0} {$i < 1000} {incr i} {
+            r set bin [set bin [randstring 0 1024 binary]]
+            set _start [set start [randomInt 1500]]
+            set _end [set end [randomInt 1500]]
+            if {$_start < 0} {set _start "end-[abs($_start)-1]"}
+            if {$_end < 0} {set _end "end-[abs($_end)-1]"}
+            assert_equal [string range $bin $_start $_end] [r getrange bin $start $end]
+        }
+    }
+
+    test "Coverage: SUBSTR" {
+        r set key abcde
+        assert_equal "a" [r substr key 0 0]
+        assert_equal "abcd" [r substr key 0 3]
+        assert_equal "bcde" [r substr key -4 -1]
+        assert_equal "" [r substr key -1 -3]
+        assert_equal "" [r substr key 7 8]
+        assert_equal "" [r substr nokey 0 1]
+    }
+    test {Extended SET can detect syntax errors} {
+        set e {}
+        catch {r set foo bar non-existing-option} e
+        set e
+    } {*syntax*}
 
     test {Extended SET NX option} {
         r del foo
@@ -394,6 +477,58 @@ start_server {tags {"string"}} {
         list $v1 $v2 [r get foo]
     } {{} OK 2}
 
+    test {Extended SET GET option} {
+        r del foo
+        r set foo bar
+        set old_value [r set foo bar2 GET]
+        set new_value [r get foo]
+        list $old_value $new_value
+    } {bar bar2}
+
+    test {Extended SET GET option with no previous value} {
+        r del foo
+        set old_value [r set foo bar GET]
+        set new_value [r get foo]
+        list $old_value $new_value
+    } {{} bar}
+
+    test {Extended SET GET option with XX} {
+        r del foo
+        r set foo bar
+        set old_value [r set foo baz GET XX]
+        set new_value [r get foo]
+        list $old_value $new_value
+    } {bar baz}
+
+    test {Extended SET GET option with XX and no previous value} {
+        r del foo
+        set old_value [r set foo bar GET XX]
+        set new_value [r get foo]
+        list $old_value $new_value
+    } {{} {}}
+
+    test {Extended SET GET option with NX} {
+        r del foo
+        set old_value [r set foo bar GET NX]
+        set new_value [r get foo]
+        list $old_value $new_value
+    } {{} bar}
+
+    test {Extended SET GET option with NX and previous value} {
+        r del foo
+        r set foo bar
+        set old_value [r set foo baz GET NX]
+        set new_value [r get foo]
+        list $old_value $new_value
+    } {bar bar}
+
+    test {Extended SET GET with incorrect type should result in wrong type error} {
+      r del foo
+      r rpush foo waffle
+      catch {r set foo bar GET} err1
+      assert_equal "waffle" [r rpop foo]
+      set err1
+    } {*WRONGTYPE*}
     test {Extended SET EX option} {
         r del foo
         r set foo bar ex 10
@@ -408,6 +543,51 @@ start_server {tags {"string"}} {
         assert {$ttl <= 10 && $ttl > 5}
     }
 
+    test "Extended SET EXAT option" {
+        r del foo
+        r set foo bar exat [expr [clock seconds] + 10]
+        assert_range [r ttl foo] 5 10
+    }
+
+    test "Extended SET PXAT option" {
+        r del foo
+        r set foo bar pxat [expr [clock milliseconds] + 10000]
+        assert_range [r ttl foo] 5 10
+    }
+
+    test "SET EXAT / PXAT Expiration time is expired" {
+        r debug set-active-expire 0
+        set repl [attach_to_replication_stream]
+
+        # Key exists.
+        r set foo bar
+        r set foo bar exat [expr [clock seconds] - 100]
+        assert_error {ERR no such key} {r debug object foo}
+        r set foo bar
+        r set foo bar pxat [expr [clock milliseconds] - 10000]
+        assert_error {ERR no such key} {r debug object foo}
+
+        # Key does not exist.
+        r del foo
+        r set foo bar exat [expr [clock seconds] - 100]
+        assert_error {ERR no such key} {r debug object foo}
+        r set foo bar pxat [expr [clock milliseconds] - 10000]
+        assert_error {ERR no such key} {r debug object foo}
+
+        r incr foo
+        assert_replication_stream $repl {
+           {select *}
+           {set foo bar}
+           {unlink foo}
+           {set foo bar}
+           {unlink foo}
+           {incr foo}
+        }
+
+        r debug set-active-expire 1
+        close_replication_stream $repl
+    } {} {needs:debug needs:repl}
+
     test {Extended SET using multiple options at once} {
         r set foo val
         assert {[r set foo bar xx px 10000] eq {OK}}
@@ -415,10 +595,10 @@ start_server {tags {"string"}} {
         assert {$ttl <= 10 && $ttl > 5}
     }
 
-    #test {GETRANGE with huge ranges, Github issue #1844} {
-    #    r set foo bar
-    #    r getrange foo 0 4294967297
-    #} {bar}
+    test {GETRANGE with huge ranges, Github issue #1844} {
+        r set foo bar
+        r getrange foo 0 4294967297
+    } {bar}
 
     set rna1 {CACCTTCCCAGGTAACAAACCAACCAACTTTCGATCTCTTGTAGATCTGTTCTCTAAACGAACTTTAAAATCTGTGTGGCTGTCACTCGGCTGCATGCTTAGTGCACTCACGCAGTATAATTAATAACTAATTACTGTCGTTGACAGGACACGAGTAACTCGTCTATCTTCTGCAGGCTGCTTACGGTTTCGTCCGTGTTGCAGCCGATCATCAGCACATCTAGGTTTCGTCCGGGTGTG}
     set rna2 {ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCTCTTGTAGATCTGTTCTCTAAACGAACTTTAAAATCTGTGTGGCTGTCACTCGGCTGCATGCTTAGTGCACTCACGCAGTATAATTAATAACTAATTACTGTCGTTGACAGGACACGAGTAACTCGTCTATCTTCTGCAGGCTGCTTACGGTTTCGTCCGTGTTGCAGCCGATCATCAGCACATCTAGGTTT}

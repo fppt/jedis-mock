@@ -22,6 +22,15 @@ public class RMString implements RMDataStructure, Serializable {
         return Arrays.copyOf(storedData, storedData.length);
     }
 
+    /**
+     * The bytes in {@code [from, to)} as a fresh array — the caller gets sole
+     * ownership, exactly as with {@link #getStoredData()}, but a window can be
+     * taken without first duplicating the whole value.
+     */
+    public byte[] getStoredDataRange(int from, int to) {
+        return Arrays.copyOfRange(storedData, from, to);
+    }
+
     public String getStoredDataAsString() {
         return new String(storedData, StandardCharsets.UTF_8);
     }

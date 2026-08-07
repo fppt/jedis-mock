@@ -114,6 +114,8 @@ public class StringKeyspaceNotificationsTest {
             jedis.msetnx("exists", "other", "fresh", "v");
             jedis.set("missing", "v", SetParams.setParams().xx());
             jedis.set("exists", "v", SetParams.setParams().nx());
+            //GET reports the previous value but does not make the write happen
+            jedis.setGet("exists", "other", SetParams.setParams().nx());
             events.assertNoFurtherNotifications();
         }
     }
