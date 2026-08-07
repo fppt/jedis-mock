@@ -22,6 +22,10 @@ import java.util.List;
  * before the expiration value is converted, which is observable: {@code SET k
  * v EX notanumber} reports the bad conversion, but {@code SET k v EX
  * notanumber badoption} reports the syntax error instead.
+ * <p>
+ * GET replaces the OK with whatever the key held before, or a nil, and reports
+ * it even when NX or XX then declines to write. Reading the old value is also
+ * what makes WRONGTYPE possible: without GET, SET overwrites a key of any type.
  */
 @RedisCommand("set")
 class Set extends AbstractRedisOperation {
@@ -104,6 +108,7 @@ class Set extends AbstractRedisOperation {
 
         Option existence = chosen.get(Group.EXISTENCE);
         Option expiration = chosen.get(Group.EXPIRATION);
+        boolean get = chosen.containsKey(Group.RETURN);
         //Only now that the list is known to be well formed is the expiration
         //looked at, and it is checked before the key is even read
         long millis = 0;
@@ -116,17 +121,24 @@ class Set extends AbstractRedisOperation {
             }
         }
 
-        //Only the key's presence matters, never its type: SET replaces a value
-        //of any type, so NX on a list declines with a nil and XX overwrites it.
-        //Reading the value instead would wrongly raise WRONGTYPE
+        //GET is the one option that reads the key, and so the only reason SET
+        //ever answers WRONGTYPE. It does so only once the expiration has been
+        //accepted, and before NX or XX gets to decide anything
+        Slice previous = get ? base().getSlice(key) : null;
+
+        //For the decision itself only the key's presence matters, never its
+        //type: a plain SET replaces a value of any type, so NX on a list
+        //declines with a nil and XX overwrites it
         if (existence != null) {
             boolean required = existence == Option.XX;
             if (base().exists(key) != required) {
-                return Response.NULL;
+                //A declined write still reports the previous value under GET;
+                //without it, and for an absent key, the reply is a nil
+                return get ? Response.bulkString(previous) : Response.NULL;
             }
         }
         store(key, value.extract(), expiration, millis);
-        return Response.OK;
+        return get ? Response.bulkString(previous) : Response.OK;
     }
 
     private void store(Slice key, RMDataStructure value, Option expiration, long millis) {

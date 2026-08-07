@@ -11,7 +11,6 @@ import redis.clients.jedis.Protocol;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -166,16 +165,15 @@ public class TestSetOptionParsing {
     }
 
     @TestTemplate
-    public void getIsAValidOption(Jedis jedis) {
-        //GET must keep parsing cleanly. Its reply — the previous value — is a
-        //separate, still-missing feature, so only the absence of a syntax
-        //error is asserted here
+    public void getCombinesWithEveryOtherOption(Jedis jedis) {
         jedis.set("foo", "old");
-        assertThatCode(() -> set(jedis, "foo", "bar", "get")).doesNotThrowAnyException();
-        assertThatCode(() -> set(jedis, "foo", "bar", "get", "get")).doesNotThrowAnyException();
-        assertThatCode(() -> set(jedis, "foo", "bar", "nx", "get")).doesNotThrowAnyException();
-        assertThatCode(() -> set(jedis, "foo", "bar", "xx", "get", "ex", "10")).doesNotThrowAnyException();
-        assertThat(jedis.get("foo")).isEqualTo("bar");
+        assertThat(setReply(jedis, "foo", "a", "get")).isEqualTo("old");
+        assertThat(setReply(jedis, "foo", "b", "get", "get")).isEqualTo("a");
+        //NX declines the write, yet GET still reports what was there
+        assertThat(setReply(jedis, "foo", "c", "nx", "get")).isEqualTo("b");
+        assertThat(setReply(jedis, "foo", "d", "xx", "get", "ex", "10")).isEqualTo("b");
+        assertThat(jedis.get("foo")).isEqualTo("d");
+        assertThat(jedis.ttl("foo")).isEqualTo(10L);
     }
 
     @TestTemplate
