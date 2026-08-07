@@ -253,17 +253,17 @@ start_server {tags {"expire"}} {
         set e
     } {ERR invalid expire time in 'set' command}
 
-    #test {GETEX with big integer should report an error} {
-    #    r set foo bar
-    #    catch {r GETEX foo EX 10000000000000000} e
-    #    set e
-    #} {ERR invalid expire time in 'getex' command}
+    test {GETEX with big integer should report an error} {
+        r set foo bar
+        catch {r GETEX foo EX 10000000000000000} e
+        set e
+    } {ERR invalid expire time in 'getex' command}
 
-    #test {GETEX with smallest integer should report an error} {
-    #    r set foo bar
-    #    catch {r GETEX foo EX -9999999999999999} e
-    #    set e
-    #} {ERR invalid expire time in 'getex' command}
+    test {GETEX with smallest integer should report an error} {
+        r set foo bar
+        catch {r GETEX foo EX -9999999999999999} e
+        set e
+    } {ERR invalid expire time in 'getex' command}
 
     test {EXPIRE with big integer overflows when converted to milliseconds} {
         r set foo bar
@@ -615,11 +615,11 @@ start_server {tags {"expire"}} {
     #    assert {$ttl <= 98 && $ttl > 90}
     #} {} {needs:debug}
 
-    #test {GETEX use of PERSIST option should remove TTL} {
-    #   r set foo bar EX 100
-    #   r getex foo PERSIST
-    #   r ttl foo
-    #} {-1}
+    test {GETEX use of PERSIST option should remove TTL} {
+       r set foo bar EX 100
+       r getex foo PERSIST
+       r ttl foo
+    } {-1}
 
     #test {GETEX use of PERSIST option should remove TTL after loadaof} {
     #   r config set appendonly yes

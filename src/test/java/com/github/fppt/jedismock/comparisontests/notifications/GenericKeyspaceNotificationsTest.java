@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.params.GetExParams;
 import redis.clients.jedis.params.SetParams;
 
 import static com.github.fppt.jedismock.comparisontests.notifications.NotificationCollector.collectorFor;
@@ -153,8 +154,60 @@ public class GenericKeyspaceNotificationsTest {
         }
     }
 
-    //GETEX is not implemented by the mock at all, so its expire/persist events
-    //are out of scope here; add a case once the command itself is supported.
+    @TestTemplate
+    public void getexPublishesExpirePersistOrDelete(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        //GETEX reports only what it did to the expiration, and always as a
+        //generic event -- never the string 'set', despite being a write command
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "KEg")) {
+            jedis.set("gx", "v");
+            jedis.getEx("gx", GetExParams.getExParams().ex(100));
+            jedis.getEx("gx", GetExParams.getExParams().persist());
+            jedis.getEx("gx", GetExParams.getExParams().exAt(1));
+            assertThat(events.next(6)).containsExactly(
+                    "__keyspace@0__:gx -> expire",
+                    "__keyevent@0__:expire -> gx",
+                    "__keyspace@0__:gx -> persist",
+                    "__keyevent@0__:persist -> gx",
+                    //An absolute deadline in the past deletes the key: a 'del'
+                    "__keyspace@0__:gx -> del",
+                    "__keyevent@0__:del -> gx");
+            events.assertNoFurtherNotifications();
+            assertThat(jedis.exists("gx")).isFalse();
+        }
+    }
+
+    @TestTemplate
+    public void getexIsSilentWhenItChangesNoExpiration(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "Egx$n")) {
+            jedis.set("gx", "v", SetParams.setParams().ex(100));
+            assertThat(events.next(3)).containsExactly(
+                    "__keyevent@0__:new -> gx",
+                    "__keyevent@0__:set -> gx",
+                    "__keyevent@0__:expire -> gx");
+            //No option at all: a plain read, so nothing is published
+            jedis.getEx("gx", GetExParams.getExParams());
+            jedis.persist("gx");
+            assertThat(events.next(1)).containsExactly("__keyevent@0__:persist -> gx");
+            //PERSIST with no TTL left to remove, and GETEX on a missing key
+            jedis.getEx("gx", GetExParams.getExParams().persist());
+            jedis.getEx("nosuchkey", GetExParams.getExParams().ex(100));
+            jedis.getEx("nosuchkey", GetExParams.getExParams().exAt(1));
+            events.assertNoFurtherNotifications();
+        }
+    }
+
+    @TestTemplate
+    public void getexEventsBelongToTheGenericClassAlone(Jedis jedis, HostAndPort hostAndPort) throws Exception {
+        try (NotificationCollector events = collectorFor(jedis, hostAndPort, "E$")) {
+            jedis.set("gx", "v");
+            assertThat(events.next(1)).containsExactly("__keyevent@0__:set -> gx");
+            //Under the string class alone none of GETEX's events get through
+            jedis.getEx("gx", GetExParams.getExParams().ex(100));
+            jedis.getEx("gx", GetExParams.getExParams().persist());
+            jedis.getEx("gx", GetExParams.getExParams().pxAt(1));
+            events.assertNoFurtherNotifications();
+        }
+    }
 
     @TestTemplate
     public void settingWithExpirationPublishesGenericExpire(Jedis jedis, HostAndPort hostAndPort) throws Exception {
