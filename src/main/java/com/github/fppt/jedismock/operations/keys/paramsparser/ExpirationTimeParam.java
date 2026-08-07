@@ -1,6 +1,9 @@
 package com.github.fppt.jedismock.operations.keys.paramsparser;
 
+import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.Slice;
+
+import java.util.OptionalLong;
 
 public final class ExpirationTimeParam {
     private final long millis;
@@ -9,12 +12,11 @@ public final class ExpirationTimeParam {
                         Slice param,
                         boolean useMillis,
                         long timestampToCheckOverflow) throws ExpirationParamsException {
-        long value;
-        try {
-            value = Long.parseLong(new String(param.data()));
-        } catch (NumberFormatException e) {
+        OptionalLong parsed = Utils.parseRedisLong(new String(param.data()));
+        if (!parsed.isPresent()) {
             throw new ExpirationParamsException("ERR value is not an integer or out of range");
         }
+        long value = parsed.getAsLong();
         try {
             millis = useMillis ? value : Math.multiplyExact(value, 1000L);
             Math.addExact(millis, timestampToCheckOverflow);
