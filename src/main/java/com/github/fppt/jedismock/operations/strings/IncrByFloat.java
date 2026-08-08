@@ -11,4 +11,9 @@ class IncrByFloat extends IncrOrDecrByFloat {
     IncrByFloat(RedisBase base, List<Slice> params) {
         super(base, params);
     }
+
+    @Override
+    protected int maxArgs() {
+        return 2;
+    }
 }

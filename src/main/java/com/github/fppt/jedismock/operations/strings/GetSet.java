@@ -15,6 +15,16 @@ class GetSet extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 2;
+    }
+
+    @Override
+    protected int maxArgs() {
+        return 2;
+    }
+
     protected Slice response() {
         Slice value = base().getSlice(params().get(0));
         base().putValue(params().get(0), params().get(1).extract());

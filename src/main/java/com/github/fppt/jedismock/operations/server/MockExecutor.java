@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.operations.server;
 
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.Response;
@@ -103,7 +104,10 @@ public class MockExecutor {
                     state.errorTransaction();
                     return Response.error(String.format("Unsupported operation: %s", name));
                 }
-            } catch (Exception e) {
+            } catch (ArgumentException | IllegalArgumentException e) {
+                state.errorTransaction();
+                return Response.error(e.getMessage());
+            } catch (RuntimeException e) {
                 LOG.error("Malformed request", e);
                 state.errorTransaction();
                 return Response.error(e.getMessage());

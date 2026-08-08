@@ -14,6 +14,11 @@ class IncrBy extends IncrOrDecrBy {
         super(base, params);
     }
 
+    @Override
+    protected int maxArgs() {
+        return 2;
+    }
+
     long incrementOrDecrementValue(List<Slice> params){
         return convertToLong(String.valueOf(params.get(1)));
     }

@@ -161,6 +161,23 @@ public class StringOperationsTest {
     }
 
     @TestTemplate
+    public void decrByLongOverflow(Jedis jedis) {
+        String key = "mykey";
+        jedis.decrBy(key, Long.MAX_VALUE);
+        assertThat(jedis.get(key)).isEqualTo(Long.toString(-Long.MAX_VALUE));
+        jedis.del(key);
+        //Negation overflow
+        assertThatThrownBy(() -> jedis.decrBy(key, Long.MIN_VALUE)).hasMessageContaining(
+                "decrement would overflow");
+    }
+
+    @TestTemplate
+    public void emptyDel(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.del(new String[0])).hasMessageContaining(
+                "wrong number of arguments for 'del' command");
+    }
+
+    @TestTemplate
     public void testSetNXNonUTF8binary(Jedis jedis) {
         jedis.setnx("foo".getBytes(), msg);
         assertThat(jedis.get("foo".getBytes())).containsExactlyInAnyOrder(msg);

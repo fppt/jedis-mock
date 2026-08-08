@@ -14,7 +14,17 @@ class DecrBy extends IncrOrDecrBy {
         super(base, params);
     }
 
-    long incrementOrDecrementValue(List<Slice> params){
-        return convertToLong(String.valueOf(params.get(1))) * -1;
+    @Override
+    protected int maxArgs() {
+        return 2;
+    }
+
+    long incrementOrDecrementValue(List<Slice> params) {
+        long d = convertToLong(String.valueOf(params.get(1)));
+        if (d == Long.MIN_VALUE) {
+            throw new IllegalArgumentException("ERR decrement would overflow");
+        } else {
+            return -d;
+        }
     }
 }

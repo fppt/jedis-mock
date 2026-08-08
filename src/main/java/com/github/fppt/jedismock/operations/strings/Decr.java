@@ -13,6 +13,11 @@ class Decr extends DecrBy {
     }
 
     @Override
+    protected int maxArgs() {
+        return 1;
+    }
+
+    @Override
     long incrementOrDecrementValue(List<Slice> params){
         return -1L;
     }

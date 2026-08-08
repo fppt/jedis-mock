@@ -15,6 +15,11 @@ class Del extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 1;
+    }
+
     protected Slice response() {
         int count = 0;
         for (Slice key : params()) {

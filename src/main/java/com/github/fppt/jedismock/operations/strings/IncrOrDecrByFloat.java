@@ -15,6 +15,11 @@ abstract class IncrOrDecrByFloat extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 1;
+    }
+
     private static BigDecimal toBigDecimal(String value) {
         if (value != null) {
             if (value.toLowerCase().endsWith("inf")) {
