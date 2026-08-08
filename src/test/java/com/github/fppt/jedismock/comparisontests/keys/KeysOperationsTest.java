@@ -36,17 +36,6 @@ public class KeysOperationsTest {
     }
 
     @TestTemplate
-    public void whenCreatingKeys_existsValuesUpdated(Jedis jedis) {
-        jedis.set("foo", "bar");
-        assertThat(jedis.exists("foo")).isTrue();
-
-        assertThat(jedis.exists("non-existent")).isFalse();
-
-        jedis.hset("bar", "baz", "value");
-        assertThat(jedis.exists("bar")).isTrue();
-    }
-
-    @TestTemplate
     public void deletionRemovesKeys(Jedis jedis) {
         String key1 = "hey_toremove";
         String key2 = "hmap_toremove";

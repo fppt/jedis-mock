@@ -14,10 +14,18 @@ class Exists extends AbstractRedisOperation {
         super(base, params);
     }
 
+    @Override
+    protected int minArgs() {
+        return 1;
+    }
+
     protected Slice response() {
-        if (base().exists(params().get(0))) {
-            return Response.integer(1);
+        int count = 0;
+        for (Slice key : params()) {
+            if (base().exists(key)) {
+                count++;
+            }
         }
-        return Response.integer(0);
+        return Response.integer(count);
     }
 }

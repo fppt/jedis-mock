@@ -18,6 +18,11 @@ abstract class IncrOrDecrBy extends AbstractRedisOperation {
 
     abstract long incrementOrDecrementValue(List<Slice> params);
 
+    @Override
+    protected int minArgs() {
+        return 1;
+    }
+
     protected Slice response() {
         Slice key = params().get(0);
         long d = incrementOrDecrementValue(params());
