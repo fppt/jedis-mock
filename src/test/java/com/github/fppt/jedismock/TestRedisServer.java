@@ -8,7 +8,9 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import static com.github.fppt.jedismock.RedisServer.newRedisServer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -134,7 +136,11 @@ public class TestRedisServer {
     }
 
     private static boolean isIPv6Available() {
-        try (ServerSocket ignored = new ServerSocket(0, 0, InetAddress.getByName("::"))) {
+        try (ServerSocket serverSocket = new ServerSocket(0, 0, InetAddress.getByName("::"));
+             Socket client = new Socket()) {
+            //Binding the wildcard address still succeeds when the IPv6 loopback is disabled
+            //(net.ipv6.conf.lo.disable_ipv6=1), so probe the ::1 route as well.
+            client.connect(new InetSocketAddress(InetAddress.getByName("::1"), serverSocket.getLocalPort()), 500);
             return true;
         } catch (IOException e) {
             return false;
