@@ -1,6 +1,5 @@
 package com.github.fppt.jedismock.operations.scripting.cjson;
 
-import com.google.gson.Gson;
 import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -13,8 +12,6 @@ import java.util.Map;
 class Decode extends OneArgFunction {
 
     private static final String JSON_NULL = "null";
-
-    private final Gson gson = new Gson();
 
     @Override
     public LuaValue call(LuaValue arg) {
@@ -37,7 +34,7 @@ class Decode extends OneArgFunction {
         return toDecode.substring(1, toDecode.length() - 1);
     }
 
-    private Object toJavaObject(String value) {
+    private static Object toJavaObject(String value) {
         if (isNull(value)) {
             return null;
         }
@@ -50,7 +47,7 @@ class Decode extends OneArgFunction {
         if (isDouble(value)) {
             return Double.parseDouble(value);
         }
-        return gson.fromJson(value, Object.class);
+        return JsonParser.parse(value);
     }
 
     private static LuaValue coerceToLuaValue(Object object) {

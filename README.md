@@ -183,6 +183,10 @@ jedis.lrange("mylist", 0, -1));
 
 A long-running (or even infinite) script does not lock up the mock. Once a script has been running longer than `lua-time-limit` milliseconds, other connections get the same `-BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.` reply as real Redis, and `SCRIPT KILL` aborts the running script (replying `-NOTBUSY` when nothing is running). The threshold defaults to 5000 ms and can be changed with `CONFIG SET lua-time-limit <ms>` (its alias `busy-reply-threshold` is also accepted); `0` disables it. This lets you test client behaviour around busy scripts and transactions interrupted by a script timeout.
 
+### Nesting depth and thread stack size
+
+Deeply nested `cjson.encode` input is bounded at 1000 levels, matching real Redis, but the check is recursive. Running with a reduced thread stack size (roughly under 512 KB, e.g. `-Xss256k` or `-Xss512k`) can surface a `StackOverflowError` before the limit is reached, wedging the connection since `StackOverflowError` escapes `pcall`.
+
 Feel free to report an issue if you have any problems with Lua scripting in Jedis-Mock.
 
 ## <a name="clockinjection">Clock injection</a>
