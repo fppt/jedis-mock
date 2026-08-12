@@ -89,11 +89,6 @@
             <artifactId>luaj-jse</artifactId>
             <version>3.0.1</version>
         </dependency>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${jedis.version}</version>
-        </dependency>
 
         <!-- test dependencies -->
         <dependency>
@@ -106,6 +101,12 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>${jedis.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

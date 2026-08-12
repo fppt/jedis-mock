@@ -1,6 +1,8 @@
 package com.github.fppt.jedismock.operations.scripting;
 
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.exception.ErrorReplyException;
+import com.github.fppt.jedismock.exception.NoScriptException;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.operations.connection.Select;
@@ -10,11 +12,7 @@ import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.exceptions.JedisNoScriptException;
-import redis.clients.jedis.util.RedisInputStream;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -122,7 +120,7 @@ public class LuaRedisCallback {
             return LuaValue.FALSE;
         } else {
             byte[] data = result.data();
-            return toLuaValue(new RedisInputStream(new ByteArrayInputStream(data)));
+            return toLuaValue(new RespReplyReader(data));
         }
     }
 
@@ -136,7 +134,7 @@ public class LuaRedisCallback {
         }
     }
 
-    private static LuaValue toLuaValue(final RedisInputStream is) {
+    private static LuaValue toLuaValue(final RespReplyReader is) {
         byte b = is.readByte();
         switch (b) {
             case '+':
@@ -155,9 +153,9 @@ public class LuaRedisCallback {
             case '-':
                 String message = is.readLine();
                 if (message.startsWith(NOSCRIPT_PREFIX)) {
-                    throw new JedisNoScriptException(message);
+                    throw new NoScriptException(message);
                 } else {
-                    throw new JedisDataException(message);
+                    throw new ErrorReplyException(message);
                 }
             default:
                 return LuaValue.NONE;
@@ -165,11 +163,11 @@ public class LuaRedisCallback {
 
     }
 
-    private static byte[] processStatusCodeReply(RedisInputStream is) {
+    private static byte[] processStatusCodeReply(RespReplyReader is) {
         return is.readLineBytes();
     }
 
-    private static byte[] processBulkReply(RedisInputStream is) {
+    private static byte[] processBulkReply(RespReplyReader is) {
         int len = is.readIntCrLf();
         if (len <= 0) {
             return new byte[0];
@@ -188,11 +186,11 @@ public class LuaRedisCallback {
         }
     }
 
-    private static Long processInteger(RedisInputStream is) {
+    private static Long processInteger(RespReplyReader is) {
         return is.readLongCrLf();
     }
 
-    private static List<LuaValue> processMultiBulkReply(RedisInputStream is) {
+    private static List<LuaValue> processMultiBulkReply(RespReplyReader is) {
         int num = is.readIntCrLf();
         if (num <= 0) {
             return Collections.emptyList();
@@ -201,7 +199,7 @@ public class LuaRedisCallback {
             for (int i = 0; i < num; ++i) {
                 try {
                     ret.add(toLuaValue(is));
-                } catch (JedisDataException e) {
+                } catch (ErrorReplyException e) {
                     //An error reply nested inside a multi-bulk is dropped from the
                     //resulting Lua array (matching how scripts see partial errors).
                     LOG.warn("Skipping error element in multi-bulk reply: {}", e.getMessage());

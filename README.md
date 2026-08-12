@@ -52,6 +52,10 @@ Add it as a test dependency in Maven as:
 </dependency>
 ```
 
+Jedis-Mock does not bring a Redis client of its own onto your classpath — add
+whichever client you already use (Jedis, Lettuce, Redisson, ...) as a
+dependency alongside it. The examples below use Jedis.
+
 Create a Redis server and bind it to your client:
 
 ```java
