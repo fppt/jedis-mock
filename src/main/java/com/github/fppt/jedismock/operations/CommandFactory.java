@@ -2,24 +2,6 @@ package com.github.fppt.jedismock.operations;
 
 import com.github.fppt.jedismock.RedisClient;
 import com.github.fppt.jedismock.datastructures.Slice;
-// BEGIN GENERATED COMMAND IMPORTS (scripts/generate-command-registries.sh)
-import com.github.fppt.jedismock.operations.bitmaps.BitmapsCommands;
-import com.github.fppt.jedismock.operations.cluster.ClusterCommands;
-import com.github.fppt.jedismock.operations.connection.ConnectionCommands;
-import com.github.fppt.jedismock.operations.hashes.HashesCommands;
-import com.github.fppt.jedismock.operations.hashes.expiration.HashesExpirationCommands;
-import com.github.fppt.jedismock.operations.hyperloglog.HyperloglogCommands;
-import com.github.fppt.jedismock.operations.keys.KeysCommands;
-import com.github.fppt.jedismock.operations.lists.ListsCommands;
-import com.github.fppt.jedismock.operations.pubsub.PubsubCommands;
-import com.github.fppt.jedismock.operations.scripting.ScriptingCommands;
-import com.github.fppt.jedismock.operations.server.ServerCommands;
-import com.github.fppt.jedismock.operations.sets.SetsCommands;
-import com.github.fppt.jedismock.operations.sortedsets.SortedsetsCommands;
-import com.github.fppt.jedismock.operations.streams.StreamsCommands;
-import com.github.fppt.jedismock.operations.strings.StringsCommands;
-import com.github.fppt.jedismock.operations.transactions.TransactionsCommands;
-// END GENERATED COMMAND IMPORTS
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.storage.SubscriptionRegistry;
@@ -27,9 +9,10 @@ import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
@@ -40,25 +23,8 @@ public class CommandFactory {
 
     static {
         commands =
-                Stream.of(
-                                // BEGIN GENERATED COMMAND LIST (scripts/generate-command-registries.sh)
-                                BitmapsCommands.commands(),
-                                ClusterCommands.commands(),
-                                ConnectionCommands.commands(),
-                                HashesCommands.commands(),
-                                HashesExpirationCommands.commands(),
-                                HyperloglogCommands.commands(),
-                                KeysCommands.commands(),
-                                ListsCommands.commands(),
-                                PubsubCommands.commands(),
-                                ScriptingCommands.commands(),
-                                ServerCommands.commands(),
-                                SetsCommands.commands(),
-                                SortedsetsCommands.commands(),
-                                StreamsCommands.commands(),
-                                StringsCommands.commands(),
-                                TransactionsCommands.commands())
-                                // END GENERATED COMMAND LIST
+                StreamSupport.stream(registries().spliterator(), false)
+                        .map(CommandRegistry::commands)
                         .flatMap(List::stream)
                         .collect(groupingBy(c -> c.getAnnotation(RedisCommand.class).transactional(),
                                 toMap(c -> c.getAnnotation(RedisCommand.class).value(), identity())));
@@ -124,6 +90,18 @@ public class CommandFactory {
         return commands.values().stream()
                 .flatMap(byName -> byName.values().stream())
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * The per-package registries, discovered through {@link ServiceLoader}
+     * from META-INF/services rather than by scanning the classpath.
+     *
+     * <p>Loaded with this class's own class loader instead of the thread
+     * context one, so discovery does not depend on which thread first touches
+     * the factory.
+     */
+    private static ServiceLoader<CommandRegistry> registries() {
+        return ServiceLoader.load(CommandRegistry.class, CommandFactory.class.getClassLoader());
     }
 
     public static void initialize() {

@@ -334,15 +334,16 @@ declares what the command needs and the arguments are injected by type — see t
 javadoc on `CommandFactory.buildOperation` for the list of resolvable types.
 
 Registration is explicit: every command class must be listed in a
-`<Package>Commands.commands()`, which `CommandFactory` reads at startup.
+`<Package>Commands` registry, and every registry in
+`src/main/resources/META-INF/services/com.github.fppt.jedismock.operations.CommandRegistry`,
+from which `CommandFactory` loads them at startup via `ServiceLoader`.
 
 * Adding a command to an **existing** package — add the class to the
   `commands()` list in that package's `<Package>Commands` class by hand, or
   just regenerate it (below).
 * Adding a command in a **brand-new** subpackage — run the generator. It
-  creates the new `<Package>Commands` class for you and updates
-  `CommandFactory`'s import and registration list to match, so there is no
-  separate manual `CommandFactory` edit to remember.
+  creates the new `<Package>Commands` class and adds it to the service file;
+  `CommandFactory` needs no edit at all.
 
 ```bash
 ./scripts/generate-command-registries.sh
@@ -350,8 +351,13 @@ Registration is explicit: every command class must be listed in a
 
 This single command is the answer to every registration question: it
 regenerates every `<Package>Commands` class from the `@RedisCommand`
-annotations and rewrites the generated import block and `Stream.of(...)` list
-in `CommandFactory.java` to match. `CommandRegistryCompletenessTest` fails
-with the exact missing entry if a command is implemented but not registered.
-The script itself is plain, portable `bash` and behaves the same on Linux and
-macOS.
+annotations, and the service file that lists them. The script is plain,
+portable `bash` and behaves the same on Linux and macOS.
+
+You don't have to remember to run it. `mvn verify` runs
+`generate-command-registries.sh --check`, which regenerates into a temporary
+directory and fails the build with a diff if the committed registries are
+stale (skip with `-Dcommand.registries.check.skip=true`; the check is
+Unix-only, but CI runs it on every pull request). `CommandRegistryCompletenessTest`
+covers the same ground from the other side, naming the exact class that is
+implemented but not registered.

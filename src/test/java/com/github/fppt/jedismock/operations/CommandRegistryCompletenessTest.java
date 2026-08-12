@@ -7,9 +7,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,11 +37,28 @@ class CommandRegistryCompletenessTest {
                 .as("The per-package command registries are out of sync with the "
                         + "@RedisCommand annotations. Re-run "
                         + "scripts/generate-command-registries.sh — it regenerates every "
-                        + "<Package>Commands class and rewrites CommandFactory's import "
-                        + "block and registration list to match, including for a command "
-                        + "in a brand-new subpackage. (For a command in an existing "
-                        + "package, you may instead add the class by hand to that "
-                        + "package's <Package>Commands.commands() list.)")
+                        + "<Package>Commands class and the META-INF/services file listing "
+                        + "them, including for a command in a brand-new subpackage. (For a "
+                        + "command in an existing package, you may instead add the class by "
+                        + "hand to that package's <Package>Commands.commands() list.)")
+                .containsExactlyInAnyOrderElementsOf(declared);
+    }
+
+    @Test
+    void everyPackageRegistryIsDiscoverableAsAService() throws IOException {
+        Set<String> declared = registriesInSources();
+        Set<String> discovered = StreamSupport.stream(
+                        ServiceLoader.load(CommandRegistry.class,
+                                CommandFactory.class.getClassLoader()).spliterator(), false)
+                .map(registry -> registry.getClass().getName())
+                .collect(Collectors.toSet());
+
+        assertThat(discovered)
+                .as("The <Package>Commands registries and the "
+                        + "META-INF/services/com.github.fppt.jedismock.operations.CommandRegistry "
+                        + "service file are out of sync, so CommandFactory would silently miss "
+                        + "the commands of an undiscovered package. Re-run "
+                        + "scripts/generate-command-registries.sh, which writes both.")
                 .containsExactlyInAnyOrderElementsOf(declared);
     }
 
@@ -60,6 +79,15 @@ class CommandRegistryCompletenessTest {
             return paths
                     .filter(path -> path.toString().endsWith(".java"))
                     .filter(CommandRegistryCompletenessTest::isAnnotated)
+                    .map(CommandRegistryCompletenessTest::toClassName)
+                    .collect(Collectors.toSet());
+        }
+    }
+
+    private static Set<String> registriesInSources() throws IOException {
+        try (Stream<Path> paths = Files.walk(OPERATIONS_ROOT)) {
+            return paths
+                    .filter(path -> path.getFileName().toString().endsWith("Commands.java"))
                     .map(CommandRegistryCompletenessTest::toClassName)
                     .collect(Collectors.toSet());
         }
