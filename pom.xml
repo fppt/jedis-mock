@@ -196,6 +196,36 @@
                                 <requireReleaseDeps/>
                                 <!-- No duplicate <dependency> entries in this POM -->
                                 <banDuplicatePomDependencyVersions/>
+                                <!--
+                                    jedis-mock's published compile scope is deliberately just
+                                    slf4j-api + luaj-jse (see the commit that dropped
+                                    org.reflections and redis.clients:jedis from it). This rule
+                                    is the build-enforced guard for that: it fails the build if
+                                    org.reflections, redis.clients:jedis or com.google.code.gson
+                                    ever reappear on the compile/runtime classpath, including
+                                    transitively, which is exactly how gson arrived in the first
+                                    place, pulled in by jedis. jedis stays legal at test scope,
+                                    where the test suite depends on it heavily. Do not remove this
+                                    without re-confirming compile scope is still slf4j-api +
+                                    luaj-jse only (mvn dependency:tree -Dscope=compile).
+                                -->
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.reflections:reflections:*:*:compile</exclude>
+                                        <exclude>org.reflections:reflections:*:*:runtime</exclude>
+                                        <exclude>org.reflections:reflections:*:*:provided</exclude>
+                                        <exclude>org.reflections:reflections:*:*:system</exclude>
+                                        <exclude>redis.clients:jedis:*:*:compile</exclude>
+                                        <exclude>redis.clients:jedis:*:*:runtime</exclude>
+                                        <exclude>redis.clients:jedis:*:*:provided</exclude>
+                                        <exclude>redis.clients:jedis:*:*:system</exclude>
+                                        <exclude>com.google.code.gson:gson:*:*:compile</exclude>
+                                        <exclude>com.google.code.gson:gson:*:*:runtime</exclude>
+                                        <exclude>com.google.code.gson:gson:*:*:provided</exclude>
+                                        <exclude>com.google.code.gson:gson:*:*:system</exclude>
+                                    </excludes>
+                                </bannedDependencies>
                             </rules>
                             <fail>true</fail>
                         </configuration>
