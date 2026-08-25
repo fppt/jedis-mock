@@ -210,6 +210,15 @@
                                 <requireReleaseDeps/>
                                 <!-- No duplicate <dependency> entries in this POM -->
                                 <banDuplicatePomDependencyVersions/>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.reflections:reflections:*:*:compile</exclude>
+                                        <exclude>org.reflections:reflections:*:*:runtime</exclude>
+                                        <exclude>org.reflections:reflections:*:*:provided</exclude>
+                                        <exclude>org.reflections:reflections:*:*:system</exclude>
+                                    </excludes>
+                                </bannedDependencies>
                             </rules>
                             <fail>true</fail>
                         </configuration>
