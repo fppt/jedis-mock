@@ -60,8 +60,10 @@
         <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
         <extra.enforcer.rules.version>1.12.0</extra.enforcer.rules.version>
         <javapoet.version>0.19.0</javapoet.version>
-        <processor.sources>${project.basedir}/src/processor/java</processor.sources>
+        <processor.package>com/github/fppt/jedismock/processor/*.java</processor.package>
         <processor.classes>${project.build.directory}/processor-classes</processor.classes>
+        <processor.lib>${project.build.directory}/processor-lib</processor.lib>
+        <javapoet.jar>${processor.lib}/javapoet.jar</javapoet.jar>
     </properties>
 
     <distributionManagement>
@@ -210,15 +212,6 @@
                                 <requireReleaseDeps/>
                                 <!-- No duplicate <dependency> entries in this POM -->
                                 <banDuplicatePomDependencyVersions/>
-                                <bannedDependencies>
-                                    <searchTransitive>true</searchTransitive>
-                                    <excludes>
-                                        <exclude>org.reflections:reflections:*:*:compile</exclude>
-                                        <exclude>org.reflections:reflections:*:*:runtime</exclude>
-                                        <exclude>org.reflections:reflections:*:*:provided</exclude>
-                                        <exclude>org.reflections:reflections:*:*:system</exclude>
-                                    </excludes>
-                                </bannedDependencies>
                             </rules>
                             <fail>true</fail>
                         </configuration>
@@ -245,11 +238,22 @@
                 <version>3.9.0</version>
                 <executions>
                     <execution>
-                        <id>resolve-processor-path</id>
+                        <id>stage-processor-path</id>
                         <phase>initialize</phase>
                         <goals>
-                            <goal>properties</goal>
+                            <goal>copy</goal>
                         </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.palantir.javapoet</groupId>
+                                    <artifactId>javapoet</artifactId>
+                                    <version>${javapoet.version}</version>
+                                    <destFileName>javapoet.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${processor.lib}</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -269,9 +273,9 @@
                             <goal>compile</goal>
                         </goals>
                         <configuration>
-                            <compileSourceRoots>
-                                <compileSourceRoot>${processor.sources}</compileSourceRoot>
-                            </compileSourceRoots>
+                            <includes>
+                                <include>${processor.package}</include>
+                            </includes>
                             <outputDirectory>${processor.classes}</outputDirectory>
                             <release>17</release>
                             <proc>none</proc>
@@ -280,6 +284,9 @@
                     <execution>
                         <id>default-compile</id>
                         <configuration>
+                            <excludes>
+                                <exclude>${processor.package}</exclude>
+                            </excludes>
                             <annotationProcessors>
                                 <annotationProcessor>
                                     com.github.fppt.jedismock.processor.CommandRegistryProcessor
@@ -287,7 +294,7 @@
                             </annotationProcessors>
                             <compilerArgs>
                                 <arg>-processorpath</arg>
-                                <arg>${processor.classes}${path.separator}${com.palantir.javapoet:javapoet:jar}</arg>
+                                <arg>${processor.classes}${path.separator}${javapoet.jar}</arg>
                             </compilerArgs>
                         </configuration>
                     </execution>

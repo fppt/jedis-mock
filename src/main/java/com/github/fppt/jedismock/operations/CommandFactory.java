@@ -8,23 +8,8 @@ import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toMap;
 
 public class CommandFactory {
-    private static final Map<Boolean, Map<String, Class<? extends RedisOperation>>> commands;
-
-    static {
-        commands =
-                CommandRegistries.all().stream()
-                        .collect(groupingBy(c -> c.getAnnotation(RedisCommand.class).transactional(),
-                                toMap(c -> c.getAnnotation(RedisCommand.class).value(), identity())));
-    }
 
     /**
      * Instantiates the operation class registered for the command, resolving
@@ -41,7 +26,7 @@ public class CommandFactory {
      */
     public static RedisOperation buildOperation(String name, boolean transactional,
                                                           OperationExecutorState state, List<Slice> params) {
-        Class<? extends RedisOperation> commandClass = commands.get(transactional).get(name);
+        Class<? extends RedisOperation> commandClass = CommandRegistries.commands.get(transactional).get(name);
         if (commandClass != null) {
             try {
                 Constructor<?> declaredConstructor = commandClass.getDeclaredConstructors()[0];
@@ -73,18 +58,6 @@ public class CommandFactory {
         } else {
             return null;
         }
-    }
-
-    /**
-     * Every operation class registered with this factory.
-     *
-     * <p>Exposed so that the supported-operations documentation can be generated
-     * without a second, independent scan of the classpath.
-     */
-    public static Set<Class<? extends RedisOperation>> registeredCommandClasses() {
-        return commands.values().stream()
-                .flatMap(byName -> byName.values().stream())
-                .collect(Collectors.toSet());
     }
 
     public static void initialize() {

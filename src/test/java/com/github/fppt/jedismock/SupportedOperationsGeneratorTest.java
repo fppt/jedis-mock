@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock;
 
-import com.github.fppt.jedismock.operations.CommandFactory;
-import com.github.fppt.jedismock.operations.RedisCommand;
+import com.github.fppt.jedismock.operations.CommandRegistries;
 import com.github.fppt.jedismock.util.OperationCategory;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -15,7 +14,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Testcontainers
@@ -28,9 +30,9 @@ public class SupportedOperationsGeneratorTest {
     private final GenericContainer<?> redis =
             new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(6379);
 
-    private final static Set<String> implementedOperations =
-            CommandFactory.registeredCommandClasses().stream()
-                    .map(op -> op.getAnnotation(RedisCommand.class).value())
+    public final static Set<String> implementedOperations =
+            CommandRegistries.commands.values().stream()
+                    .flatMap(byName -> byName.keySet().stream())
                     .collect(Collectors.toSet());
 
     private void writeToFile(List<String> lines) throws IOException {
