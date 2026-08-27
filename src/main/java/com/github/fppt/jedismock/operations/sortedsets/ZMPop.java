@@ -44,7 +44,10 @@ public class ZMPop extends ZPop {
                 List<Slice> newParams = new ArrayList<>();
                 newParams.add(key);
                 newParams.add(Slice.create(String.valueOf(Math.min(count, mapDBObj.size()))));
-                List<Slice> result = new ZPop(base(), newParams, options.contains(Options.MAX)).pop();
+                ZPop pop = options.contains(Options.MAX)
+                        ? new ZPopMax(base(), newParams)
+                        : new ZPopMin(base(), newParams);
+                List<Slice> result = pop.pop();
 
                 List<Slice> popedList = new ArrayList<>();
                 for (int index = 0; index < result.size(); index += 2) {

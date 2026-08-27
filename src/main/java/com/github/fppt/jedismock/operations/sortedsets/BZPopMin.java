@@ -19,7 +19,7 @@ public class BZPopMin extends BZPop {
 
     @Override
     protected Slice popper(List<Slice> params) {
-        List<Slice> result = new ZPop(base(), params, false).pop();
+        List<Slice> result = new ZPopMin(base(), params).pop();
         return Response.array(Response.bulkString(params.get(0)), result.get(0), result.get(1));
     }
 }
