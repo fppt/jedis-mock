@@ -316,3 +316,8 @@ Unsupported operation {}
 
 please feel free to create an issue requesting the missing operation, 
 or implement it yourself in interceptor and send us the code. It's fun!
+
+Command implementations live in `src/main/java/com/github/fppt/jedismock/operations/`,
+one class per command, annotated with `@RedisCommand("name")`. The constructor
+declares what the command needs and the arguments are injected by type, see the
+javadoc on `CommandFactory.buildOperation` for the list of resolvable types.

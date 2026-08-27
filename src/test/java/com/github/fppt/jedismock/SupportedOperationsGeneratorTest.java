@@ -1,11 +1,8 @@
 package com.github.fppt.jedismock;
 
-import com.github.fppt.jedismock.operations.CommandFactory;
-import com.github.fppt.jedismock.operations.RedisCommand;
-import com.github.fppt.jedismock.operations.RedisOperation;
+import com.github.fppt.jedismock.operations.CommandRegistries;
 import com.github.fppt.jedismock.util.OperationCategory;
 import org.junit.jupiter.api.Test;
-import org.reflections.Reflections;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -17,10 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import static org.reflections.util.ReflectionUtilsPredicates.withAnnotation;
 
 @Testcontainers
 public class SupportedOperationsGeneratorTest {
@@ -32,17 +30,10 @@ public class SupportedOperationsGeneratorTest {
     private final GenericContainer<?> redis =
             new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(6379);
 
-    private final static Set<String> implementedOperations;
-
-    static {
-        Reflections scanner = new Reflections(CommandFactory.class.getPackage().getName());
-        Set<Class<? extends RedisOperation>> redisOperations = scanner.getSubTypesOf(RedisOperation.class);
-        implementedOperations =
-                redisOperations.stream()
-                        .filter(withAnnotation(RedisCommand.class))
-                        .map(op -> op.getAnnotation(RedisCommand.class).value())
-                        .collect(Collectors.toSet());
-    }
+    public final static Set<String> implementedOperations =
+            CommandRegistries.commands.values().stream()
+                    .flatMap(byName -> byName.keySet().stream())
+                    .collect(Collectors.toSet());
 
     private void writeToFile(List<String> lines) throws IOException {
         Path path = Paths.get(System.getProperty("user.dir"), "supported_operations.md");

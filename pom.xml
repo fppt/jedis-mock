@@ -59,6 +59,11 @@
         <java.version>1.8</java.version>
         <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
         <extra.enforcer.rules.version>1.12.0</extra.enforcer.rules.version>
+        <javapoet.version>0.19.0</javapoet.version>
+        <processor.package>com/github/fppt/jedismock/processor/*.java</processor.package>
+        <processor.classes>${project.build.directory}/processor-classes</processor.classes>
+        <processor.lib>${project.build.directory}/processor-lib</processor.lib>
+        <javapoet.jar>${processor.lib}/javapoet.jar</javapoet.jar>
     </properties>
 
     <distributionManagement>
@@ -75,11 +80,6 @@
     <dependencies>
         <!-- transitive dependencies -->
         <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.10.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
@@ -93,6 +93,14 @@
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
             <version>${jedis.version}</version>
+        </dependency>
+
+        <!-- build-only dependency -->
+        <dependency>
+            <groupId>com.palantir.javapoet</groupId>
+            <artifactId>javapoet</artifactId>
+            <version>${javapoet.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- test dependencies -->
@@ -195,6 +203,10 @@
                                     <ignoredScopes>
                                         <ignoredScope>test</ignoredScope>
                                     </ignoredScopes>
+                                    <!-- JavaPoet targets Java 17 bytecode but only at build time -->
+                                    <excludes>
+                                        <exclude>com.palantir.javapoet:javapoet</exclude>
+                                    </excludes>
                                 </enforceBytecodeVersion>
                                 <!-- Released library must not depend on SNAPSHOT artifacts -->
                                 <requireReleaseDeps/>
@@ -222,12 +234,71 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.9.0</version>
+                <executions>
+                    <execution>
+                        <id>stage-processor-path</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.palantir.javapoet</groupId>
+                                    <artifactId>javapoet</artifactId>
+                                    <version>${javapoet.version}</version>
+                                    <destFileName>javapoet.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${processor.lib}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.15.0</version>
                 <configuration>
                     <release>8</release>
                     <testRelease>17</testRelease>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>compile-command-registry-processor</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>${processor.package}</include>
+                            </includes>
+                            <outputDirectory>${processor.classes}</outputDirectory>
+                            <release>17</release>
+                            <proc>none</proc>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-compile</id>
+                        <configuration>
+                            <excludes>
+                                <exclude>${processor.package}</exclude>
+                            </excludes>
+                            <annotationProcessors>
+                                <annotationProcessor>
+                                    com.github.fppt.jedismock.processor.CommandRegistryProcessor
+                                </annotationProcessor>
+                            </annotationProcessors>
+                            <compilerArgs>
+                                <arg>-processorpath</arg>
+                                <arg>${processor.classes}${path.separator}${javapoet.jar}</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

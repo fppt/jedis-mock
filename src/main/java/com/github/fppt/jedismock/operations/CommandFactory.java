@@ -5,30 +5,11 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.storage.SubscriptionRegistry;
-import org.reflections.Reflections;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toMap;
-import static org.reflections.ReflectionUtils.withAnnotation;
 
 public class CommandFactory {
-    private static final Map<Boolean, Map<String, Class<? extends RedisOperation>>> commands;
-
-    static {
-        Reflections scanner = new Reflections(CommandFactory.class.getPackage().getName());
-        Set<Class<? extends RedisOperation>> redisOperations = scanner.getSubTypesOf(RedisOperation.class);
-        commands =
-                redisOperations.stream()
-                        .filter(withAnnotation(RedisCommand.class))
-                        .collect(groupingBy(c -> c.getAnnotation(RedisCommand.class).transactional(),
-                                toMap(c -> c.getAnnotation(RedisCommand.class).value(), identity())));
-    }
 
     /**
      * Instantiates the operation class registered for the command, resolving
@@ -45,7 +26,7 @@ public class CommandFactory {
      */
     public static RedisOperation buildOperation(String name, boolean transactional,
                                                           OperationExecutorState state, List<Slice> params) {
-        Class<? extends RedisOperation> commandClass = commands.get(transactional).get(name);
+        Class<? extends RedisOperation> commandClass = CommandRegistries.commands.get(transactional).get(name);
         if (commandClass != null) {
             try {
                 Constructor<?> declaredConstructor = commandClass.getDeclaredConstructors()[0];
