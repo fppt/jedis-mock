@@ -17,7 +17,7 @@ import java.util.Map;
 import static com.github.fppt.jedismock.datastructures.streams.StreamErrors.NOT_AN_INTEGER_ERROR;
 import static com.github.fppt.jedismock.datastructures.streams.StreamErrors.SYNTAX_ERROR;
 
-public class Ranges extends AbstractRedisOperation {
+public abstract class Ranges extends AbstractRedisOperation {
     /**
      * Multiplier for comparison:<br>
      * 1 - 'xrange'<br>

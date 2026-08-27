@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class ZPop extends AbstractByScoreOperation {
+abstract class ZPop extends AbstractByScoreOperation {
      private final boolean isRev;
 
     ZPop(RedisBase base, List<Slice> params, boolean isRev) {
