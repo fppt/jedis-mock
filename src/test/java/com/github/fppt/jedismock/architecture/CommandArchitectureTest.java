@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClass;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
@@ -156,13 +157,10 @@ class CommandArchitectureTest {
      * cannot simply be moved: it is public API, and the README shows interceptors
      * delegating to {@code MockExecutor.proceed}. So it is named here instead.
      *
-     * <p>Held separately rather than by a broader "non-commands in command packages"
-     * rule, because such helpers legitimately do reach for commands: {@code
-     * LuaRedisCallback} constructs {@code Select} to serve {@code redis.call("select")}.
      */
     @Test
     void theDefaultInterceptorKnowsNoConcreteCommands() {
-        noClasses().that().haveFullyQualifiedName(MockExecutor.class.getName())
+        noClass(MockExecutor.class)
                 .should().dependOnClassesThat().areAnnotatedWith(RedisCommand.class)
                 .because("dispatch goes through CommandFactory, never a named command")
                 .check(mainClasses);
@@ -173,7 +171,7 @@ class CommandArchitectureTest {
     private static DescribedPredicate<JavaClass> resideOutsideOfCommandPackages() {
         //A command package is a *sub*package of operations; CommandFactory and the
         //RedisOperation API sit directly in operations and are held to the barrier.
-        return new DescribedPredicate<JavaClass>(
+        return new DescribedPredicate<>(
                 "reside outside of " + OPERATIONS + ".<subpackage>") {
             @Override
             public boolean test(JavaClass javaClass) {
@@ -183,7 +181,7 @@ class CommandArchitectureTest {
     }
 
     private static ArchCondition<JavaClass> haveALowerCaseCommandName() {
-        return new ArchCondition<JavaClass>("have a lower-case command name") {
+        return new ArchCondition<>("have a lower-case command name") {
             @Override
             public void check(JavaClass item, ConditionEvents events) {
                 String name = item.getAnnotationOfType(RedisCommand.class).value();
@@ -195,7 +193,7 @@ class CommandArchitectureTest {
     }
 
     private static ArchCondition<JavaClass> haveExactlyOneConstructor() {
-        return new ArchCondition<JavaClass>("declare exactly one constructor") {
+        return new ArchCondition<>("declare exactly one constructor") {
             @Override
             public void check(JavaClass item, ConditionEvents events) {
                 int count = item.getConstructors().size();
@@ -206,7 +204,7 @@ class CommandArchitectureTest {
     }
 
     private static ArchCondition<JavaClass> takeOnlyInjectableConstructorParameters() {
-        return new ArchCondition<JavaClass>("take only injectable constructor parameters") {
+        return new ArchCondition<>("take only injectable constructor parameters") {
             @Override
             public void check(JavaClass item, ConditionEvents events) {
                 for (JavaConstructor constructor : item.getConstructors()) {
