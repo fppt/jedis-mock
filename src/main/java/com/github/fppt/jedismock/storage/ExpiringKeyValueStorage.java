@@ -173,7 +173,8 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
             mapByKey = getRMHash(key1);
         }
         mapByKey.put(key2, value);
-        configureTTL(key1, ttl);
+        configureTTL(key1, null);
+        mapByKey.configureTTL(key2, ttl);
     }
 
     private RMHash getRMHash(Slice key) {
