@@ -88,6 +88,26 @@ public class HashOperationsTest {
     }
 
     @TestTemplate
+    public void hSetClearsFieldTtl(Jedis jedis) {
+        jedis.hset(HASH, Map.of(FIELD_1, VALUE_1, FIELD_2, VALUE_2));
+        jedis.hexpire(HASH, 200, FIELD_1);
+        jedis.hexpire(HASH, 100, FIELD_2);
+        assertThat(jedis.hmget(HASH, FIELD_1, FIELD_2)).contains(VALUE_1, VALUE_2);
+        assertThat(jedis.httl(HASH, FIELD_1, FIELD_2)).satisfiesExactly(
+                ttl -> assertThat(ttl).isBetween(190L, 201L),
+                ttl -> assertThat(ttl).isBetween(90L, 101L)
+        );
+
+        assertThat(jedis.hset(HASH, FIELD_1, VALUE_2)).isEqualTo(0);
+
+        assertThat(jedis.hget(HASH, FIELD_1)).isEqualTo(VALUE_2);
+        assertThat(jedis.httl(HASH, FIELD_1, FIELD_2)).satisfiesExactly(
+                ttl -> assertThat(ttl).isEqualTo(-1),
+                ttl -> assertThat(ttl).isBetween(80L, 101L)
+        );
+    }
+
+    @TestTemplate
     public void whenHGetAll_EnsureAllKeysAndValuesReturned(Jedis jedis) {
         jedis.hset(HASH, FIELD_1, VALUE_1);
         jedis.hset(HASH, FIELD_2, VALUE_2);
