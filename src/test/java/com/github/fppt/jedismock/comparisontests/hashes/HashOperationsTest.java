@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
 import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.InstanceOfAssertFactories.LONG;
 
 @ExtendWith(ComparisonBase.class)
 public class HashOperationsTest {
@@ -201,6 +202,17 @@ public class HashOperationsTest {
     }
 
     @TestTemplate
+    public void hIncrByFloatDoesNotClearHashTtl(Jedis jedis) {
+        jedis.hset(HASH, FIELD_1, VALUE_1);
+        jedis.expire(HASH, 200);
+        assertThat(jedis.ttl(HASH)).isBetween(190L, 201L);
+
+        assertThat(jedis.hsetnx(HASH, FIELD_2, VALUE_2)).isEqualTo(1);
+
+        assertThat(jedis.ttl(HASH)).isBetween(180L, 201L);
+    }
+
+    @TestTemplate
     public void whenIncrementingWithHIncrByFloat_ensureValuesAreCorrect(Jedis jedis) {
         jedis.hset("key", "subkey", "0");
         jedis.hincrByFloat("key", "subkey", 1.);
@@ -225,6 +237,34 @@ public class HashOperationsTest {
                 .isInstanceOf(JedisDataException.class);
         assertThatThrownBy(() -> jedis.hincrByFloat("key", "subkey", 1.5))
                 .isInstanceOf(JedisDataException.class);
+    }
+
+    @TestTemplate
+    public void hIncrByDoesNotClearTtls(Jedis jedis) {
+        jedis.hset(HASH, FIELD_1, "1");
+        jedis.hexpire(HASH, 100, FIELD_1);
+        jedis.expire(HASH, 200);
+        assertThat(jedis.httl(HASH, FIELD_1)).singleElement().asInstanceOf(LONG).isBetween(90L, 101L);
+        assertThat(jedis.ttl(HASH)).isBetween(190L, 201L);
+
+        assertThat(jedis.hincrBy(HASH, FIELD_1, 3)).isEqualTo(4);
+
+        assertThat(jedis.httl(HASH, FIELD_1)).singleElement().asInstanceOf(LONG).isBetween(90L, 101L);
+        assertThat(jedis.ttl(HASH)).isBetween(180L, 201L);
+    }
+
+    @TestTemplate
+    public void hIncrByFloatDoesNotClearTtls(Jedis jedis) {
+        jedis.hset(HASH, FIELD_1, "1.0");
+        jedis.hexpire(HASH, 100, FIELD_1);
+        jedis.expire(HASH, 200);
+        assertThat(jedis.httl(HASH, FIELD_1)).singleElement().asInstanceOf(LONG).isBetween(90L, 101L);
+        assertThat(jedis.ttl(HASH)).isBetween(190L, 201L);
+
+        assertThat(jedis.hincrByFloat(HASH, FIELD_1, 3.5)).isEqualTo(4.5);
+
+        assertThat(jedis.httl(HASH, FIELD_1)).singleElement().asInstanceOf(LONG).isBetween(90L, 101L);
+        assertThat(jedis.ttl(HASH)).isBetween(180L, 201L);
     }
 
     @TestTemplate

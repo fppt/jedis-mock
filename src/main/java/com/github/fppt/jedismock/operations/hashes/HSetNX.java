@@ -15,7 +15,7 @@ class HSetNX extends HSet {
     Slice hsetValue(Slice key1, Slice key2, Slice value){
         Slice foundValue = base().getSlice(key1, key2);
         if(foundValue == null){
-            base().putSlice(key1, key2, value, -1L);
+            base().putSlice(key1, key2, value, null);
         }
         return foundValue;
     }
