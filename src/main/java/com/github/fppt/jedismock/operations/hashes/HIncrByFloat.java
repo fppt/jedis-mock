@@ -56,7 +56,7 @@ class HIncrByFloat extends HIncrBy {
         separator.setDecimalSeparator('.');
         DecimalFormat formatter = new DecimalFormat("#.#################", separator);
         Slice res = Slice.create(formatter.format(numericValue));
-        base().putSlice(key1, key2, res, -1L);
+        base().putSlice(key1, key2, res, null);
         return Response.bulkString(res);
     }
 
