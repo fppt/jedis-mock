@@ -26,12 +26,16 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
     private static final GenericContainer<?> redis = new GenericContainer<>("redis:8.0-alpine")
             .withExposedPorts(6379);
 
+    private static final GenericContainer<?> valkey = new GenericContainer<>("valkey/valkey:9.1-alpine")
+            .withExposedPorts(6379);
+
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
 
         // Docker container:
         redis.start();
+        valkey.start();
 
         //Start up the fake redis server
         fakeServer = RedisServer.newRedisServer();
@@ -43,6 +47,7 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
 
         // Docker container:
         redis.stop();
+        valkey.stop();
 
         //Kill the fake redis server
         fakeServer.stop();
@@ -59,9 +64,12 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
                 new JedisTestTemplateInvocationContext("mock",
                         new Jedis(fakeServer.getHost(), fakeServer.getBindPort(), 1000000),
                         new HostAndPort(fakeServer.getHost(), fakeServer.getBindPort())),
-                new JedisTestTemplateInvocationContext("real",
+                new JedisTestTemplateInvocationContext("real-redis",
                         new Jedis(redis.getHost(), redis.getFirstMappedPort()),
-                        new HostAndPort(redis.getHost(), redis.getFirstMappedPort())));
+                        new HostAndPort(redis.getHost(), redis.getFirstMappedPort())),
+                new JedisTestTemplateInvocationContext("real-valkey",
+                        new Jedis(valkey.getHost(), valkey.getFirstMappedPort()),
+                        new HostAndPort(valkey.getHost(), valkey.getFirstMappedPort())));
     }
 
     private static class JedisTestTemplateInvocationContext implements TestTemplateInvocationContext {
