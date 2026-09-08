@@ -45,11 +45,9 @@ public final class NotificationCollector implements AutoCloseable {
     }
 
     /**
-     * Clears the key space, enables the given event flags and starts
-     * collecting, returning only once the subscription is established.
+     * Enables the given event flags and starts collecting, returning only once the subscription is established.
      */
     public static NotificationCollector collectorFor(Jedis jedis, HostAndPort hostAndPort, String flags) {
-        jedis.flushAll();
         jedis.configSet(PARAM, flags);
         NotificationCollector collector = new NotificationCollector(hostAndPort);
         Awaitility.await().until(() -> jedis.pubsubNumPat() > 0);
