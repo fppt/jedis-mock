@@ -61,7 +61,7 @@ jobs:
 
       - name: hash
         if: always()
-        run: ./testnative unit/type/hash
+        run: ./testnative unit/type/hash unit/hashexpire
         working-directory: native_tests
 
       - name: list
