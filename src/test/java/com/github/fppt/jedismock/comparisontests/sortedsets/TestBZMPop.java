@@ -35,8 +35,7 @@ public class TestBZMPop {
     private static final String ZSET_KEY = "myzset";
 
     @BeforeEach
-    public void setUp(Jedis jedis, HostAndPort hostAndPort) {
-        jedis.flushAll();
+    public void setUp(HostAndPort hostAndPort) {
         blockedClient = new Jedis(hostAndPort.getHost(), hostAndPort.getPort());
         blockedClient2 = new Jedis(hostAndPort.getHost(), hostAndPort.getPort());
         blockingThread = Executors.newFixedThreadPool(4);

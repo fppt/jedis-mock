@@ -17,7 +17,6 @@ public class TestZDiffStore {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushDB();
         jedis.zadd(ZSET_KEY_1, 0, "a");
         jedis.zadd(ZSET_KEY_1, 1, "b");
         jedis.zadd(ZSET_KEY_1, 2, "c");

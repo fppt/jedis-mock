@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.hyperloglog;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -12,10 +11,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 public class HLLOperationsTest {
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     @TestTemplate
     public void testPfadd(Jedis jedis) {

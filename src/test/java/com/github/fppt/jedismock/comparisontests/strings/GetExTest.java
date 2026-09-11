@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.strings;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
@@ -31,11 +30,6 @@ public class GetExTest {
     private static final String INVALID_EXPIRE = "ERR invalid expire time in 'getex' command";
     private static final String NOT_AN_INTEGER = "ERR value is not an integer or out of range";
     private static final String SYNTAX_ERROR = "ERR syntax error";
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     /** Sends GETEX verbatim, for the cases Jedis's typed API cannot express. */
     private static Object getex(Jedis jedis, String... args) {

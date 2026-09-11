@@ -2,7 +2,6 @@ package com.github.fppt.jedismock.comparisontests.strings;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
@@ -25,11 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class StringOperationsTest {
 
     private final static byte[] msg = new byte[]{(byte) 0xbe};
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     @TestTemplate
     public void whenSettingKeyAndRetrievingIt_CorrectResultIsReturned(Jedis jedis) {

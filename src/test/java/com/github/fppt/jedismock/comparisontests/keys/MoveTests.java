@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.keys;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -13,12 +12,6 @@ public class MoveTests {
     private final String srcKey = "first";
     private final int dstDb = 11;
     private final String val = "abracadabra";
-
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     @TestTemplate
     public void successfulMove(Jedis jedis) {

@@ -21,7 +21,6 @@ public class TestZRangeByLex {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushDB();
         Map<String, Double> members = new HashMap<>();
         members.put("bbb", 0d);
         members.put("ddd", 0d);

@@ -16,7 +16,6 @@ public class TestZRevRangeByScore {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushDB();
         jedis.zadd(ZSET_KEY, 1, "one");
         jedis.zadd(ZSET_KEY, 2, "two");
         jedis.zadd(ZSET_KEY, 3, "three");

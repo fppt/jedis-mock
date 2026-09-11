@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.sortedsets;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -19,11 +18,6 @@ import static redis.clients.jedis.params.ZRangeParams.zrangeByScoreParams;
 public class TestZRangeWithByScoreArg {
 
     private static final String ZSET_KEY = "myzset";
-
-    @BeforeEach
-    public void clearKey(Jedis jedis) {
-        jedis.del(ZSET_KEY);
-    }
 
     @TestTemplate
     public void whenUsingZrangeByScore_EnsureItReturnsEmptySetForNonDefinedKey(Jedis jedis) {

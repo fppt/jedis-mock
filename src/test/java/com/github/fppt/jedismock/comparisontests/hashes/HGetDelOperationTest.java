@@ -2,7 +2,6 @@ package com.github.fppt.jedismock.comparisontests.hashes;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import com.github.fppt.jedismock.comparisontests.notifications.NotificationCollector;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
@@ -29,11 +28,6 @@ public class HGetDelOperationTest {
     private final String VALUE_2 = "value2";
     private final String FIELD_3 = "field3";
     private final String VALUE_3 = "value3";
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     @TestTemplate
     public void whenHGetDelSingleField_EnsureDeletedValueIsReturned(Jedis jedis) {

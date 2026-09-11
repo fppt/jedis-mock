@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.sortedsets;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -17,11 +16,6 @@ public class TestZInter {
 
     private static final String ZSET_KEY_1 = "myzset";
     private static final String ZSET_KEY_2 = "ztmp";
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     @TestTemplate
     public void testZInterNotExistKeyToNotExistDest(Jedis jedis) {

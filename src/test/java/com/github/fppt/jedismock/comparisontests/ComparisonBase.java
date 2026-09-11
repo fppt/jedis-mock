@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.RedisServer;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -94,7 +95,9 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
                 public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
                     return parameterContext.getParameter().getType() == Jedis.class ? jedis : hostAndPort;
                 }
-            }, (AfterEachCallback) context ->
+            },
+            (BeforeEachCallback) context -> jedis.flushAll(),
+            (AfterEachCallback) context ->
             {
                 if (context.getExecutionException().isPresent() &&
                         context.getExecutionException().get().getMessage().startsWith(TestErrorMessages.DEADLOCK_ERROR_MESSAGE)) {

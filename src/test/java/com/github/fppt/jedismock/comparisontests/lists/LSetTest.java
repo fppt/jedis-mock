@@ -16,7 +16,6 @@ public class LSetTest {
     private static final String key = "lset_list_key";
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushAll();
         jedis.rpush(key, "1", "2", "3");
     }
 

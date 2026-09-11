@@ -21,7 +21,6 @@ public class TestZScan {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushDB();
         for (int i = 0; i < 10; i++) {
             jedis.zadd(ZSET_KEY, i, "a" + i);
         }

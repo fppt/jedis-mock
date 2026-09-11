@@ -2,7 +2,6 @@ package com.github.fppt.jedismock.comparisontests.scripting;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import com.github.fppt.jedismock.operations.scripting.Script;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -12,11 +11,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(ComparisonBase.class)
 class EvalShaTest {
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     @TestTemplate
     public void evalShaWorksLowercase(Jedis jedis) {

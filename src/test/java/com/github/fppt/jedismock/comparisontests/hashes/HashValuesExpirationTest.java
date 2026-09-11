@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.*;
 public class HashValuesExpirationTest {
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushAll();
         jedis.hset("mykey", "field1", "hello");
         jedis.hset("mykey", "field2", "world");
     }

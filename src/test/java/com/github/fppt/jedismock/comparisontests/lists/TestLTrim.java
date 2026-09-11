@@ -17,7 +17,6 @@ public class TestLTrim {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushAll();
         jedis.del(key);
         jedis.rpush(key, "e0");
         jedis.rpush(key, "e1");

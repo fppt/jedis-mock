@@ -40,8 +40,7 @@ public class XReadTests {
     private Jedis blockedClient;
 
     @BeforeEach
-    public void setUp(Jedis jedis, HostAndPort hostAndPort) {
-        jedis.flushAll();
+    public void setUp(HostAndPort hostAndPort) {
         blockedClient = new Jedis(hostAndPort.getHost(), hostAndPort.getPort());
         scheduledThreadPool = Executors.newScheduledThreadPool(4);
     }

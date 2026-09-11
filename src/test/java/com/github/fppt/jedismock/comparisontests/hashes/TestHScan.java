@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.hashes;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -18,12 +17,6 @@ import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
 public class TestHScan {
 
     private static final String key = "hscankey";
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushDB();
-    }
-
 
     @TestTemplate
     public void hscanReturnsAllValues(Jedis jedis) {

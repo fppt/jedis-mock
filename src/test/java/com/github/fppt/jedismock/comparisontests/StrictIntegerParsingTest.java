@@ -23,7 +23,6 @@ public class StrictIntegerParsingTest {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushAll();
         jedis.set("n", "10");
         jedis.rpush("mylist", "a", "b", "c");
     }
