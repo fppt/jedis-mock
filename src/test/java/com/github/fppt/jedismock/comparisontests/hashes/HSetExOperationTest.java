@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static com.github.fppt.jedismock.comparisontests.notifications.NotificationCollector.collectorFor;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -233,11 +234,11 @@ public class HSetExOperationTest {
     public void hSetExWithMissingValue(Jedis jedis) {
         assertThat(jedis.hgetAll(HASH)).isEmpty();
 
-        assertThat(List.of(
-                new String[]{HASH, "FIELDS", "1", FIELD_1},
-                new String[]{HASH, "FNX", "FIELDS", "1", FIELD_1},
-                new String[]{HASH, "FIELDS", "2", FIELD_1, VALUE_1, FIELD_2}
-        )).allSatisfy(args ->
+        everyArgumentSet(
+                List.of(HASH, "FIELDS", "1", FIELD_1),
+                List.of(HASH, "FNX", "FIELDS", "1", FIELD_1),
+                List.of(HASH, "FIELDS", "2", FIELD_1, VALUE_1, FIELD_2)
+        ).shouldSatisfy(args ->
                 assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.HSETEX, args))
                         .isInstanceOf(JedisDataException.class)
                         .hasMessage("ERR wrong number of arguments for 'hsetex' command"));
@@ -258,21 +259,22 @@ public class HSetExOperationTest {
 
     @TestTemplate
     public void hSetExReturnsErrorWhenFieldsArgIsIncorrect(Jedis jedis) {
-        assertThat(List.of(
-                new String[]{HASH},
-                new String[]{HASH, "FIELDS", "1", FIELD_1, VALUE_1, "FIELDS", "1", FIELD_2, VALUE_2}
-        )).allSatisfy(args ->
-                assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.HSETEX, HASH))
+        everyArgumentSet(
+                List.of(HASH),
+                List.of(HASH, "FIELDS", "1", FIELD_1, VALUE_1, "FIELDS", "1", FIELD_2, VALUE_2)
+        ).shouldSatisfy(args ->
+                assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.HSETEX, args))
                         .isInstanceOf(JedisDataException.class)
                         .hasMessage("ERR wrong number of arguments for 'hsetex' command")
         );
 
-        assertThat(List.of(
-                new String[]{HASH, "NOTFIELDS", "2", FIELD_1, VALUE_1, FIELD_2, VALUE_2},
-                new String[]{HASH, "FNX", "NOTFIELDS", "2", FIELD_1, VALUE_1, FIELD_2, VALUE_2},
-                new String[]{HASH, "EX", "1", "NOTFIELDS", "2", FIELD_1, VALUE_1, FIELD_2, VALUE_2},
-                new String[]{HASH, "FNX", "EX", "1", "NOTFIELDS", "2", FIELD_1, VALUE_1, FIELD_2, VALUE_2}
-        )).allSatisfy((args) -> assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.HSETEX, args))
+        everyArgumentSet(
+                List.of(HASH, "NOTFIELDS", "2", FIELD_1, VALUE_1, FIELD_2, VALUE_2),
+                List.of(HASH, "FNX", "NOTFIELDS", "2", FIELD_1, VALUE_1, FIELD_2, VALUE_2),
+                List.of(HASH, "EX", "1", "NOTFIELDS", "2", FIELD_1, VALUE_1, FIELD_2, VALUE_2),
+                List.of(HASH, "FNX", "EX", "1", "NOTFIELDS", "2", FIELD_1, VALUE_1, FIELD_2, VALUE_2)
+        ).shouldSatisfy((args) -> assertThatThrownBy(() -> jedis.sendCommand(
+                Protocol.Command.HSETEX, args))
                 .isInstanceOf(JedisDataException.class)
                 .hasMessage("ERR unknown argument: NOTFIELDS"));
 
@@ -281,28 +283,28 @@ public class HSetExOperationTest {
 
     @TestTemplate
     public void hSetExReturnsErrorWhenNumFieldsIsIncorrect(Jedis jedis) {
-        assertThat(List.of(
-                new String[]{HASH},
-                new String[]{HASH, "FIELDS"},
-                new String[]{HASH, "FNX", "FIELDS"},
-                new String[]{HASH, "FNX", "FIELDS"},
-                new String[]{HASH, "EX", "1", "FIELDS"},
-                new String[]{HASH, "FNX", "EX", "1", "FIELDS"},
-                new String[]{HASH, "FNX", "EX", "1", "FIELDS", "0", FIELD_1},
-                new String[]{HASH, "FIELDS", "1", FIELD_1, VALUE_1, FIELD_3, VALUE_3},
-                new String[]{HASH, "FIELDS", "3", FIELD_1, VALUE_1, FIELD_3, VALUE_3}
-        )).allSatisfy(args ->
+        everyArgumentSet(
+                List.of(HASH),
+                List.of(HASH, "FIELDS"),
+                List.of(HASH, "FNX", "FIELDS"),
+                List.of(HASH, "FNX", "FIELDS"),
+                List.of(HASH, "EX", "1", "FIELDS"),
+                List.of(HASH, "FNX", "EX", "1", "FIELDS"),
+                List.of(HASH, "FNX", "EX", "1", "FIELDS", "0", FIELD_1),
+                List.of(HASH, "FIELDS", "1", FIELD_1, VALUE_1, FIELD_3, VALUE_3),
+                List.of(HASH, "FIELDS", "3", FIELD_1, VALUE_1, FIELD_3, VALUE_3)
+        ).shouldSatisfy(args ->
                 assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.HSETEX, args))
                         .isInstanceOf(JedisDataException.class)
                         .hasMessage("ERR wrong number of arguments for 'hsetex' command")
         );
-        assertThat(List.of(
-                new String[]{HASH, "FIELDS", "not a number", FIELD_1, VALUE_1, FIELD_3, VALUE_3},
-                new String[]{HASH, "FIELDS", "-1", FIELD_1, VALUE_1, FIELD_3, VALUE_3},
-                new String[]{HASH, "FIELDS", "0", FIELD_1, VALUE_1},
-                new String[]{HASH, "FIELDS", "0", FIELD_1, VALUE_1, FIELD_3},
-                new String[]{HASH, "FIELDS", "0", FIELD_1, VALUE_1, FIELD_3, VALUE_3}
-        )).allSatisfy(args ->
+        everyArgumentSet(
+                List.of(HASH, "FIELDS", "not a number", FIELD_1, VALUE_1, FIELD_3, VALUE_3),
+                List.of(HASH, "FIELDS", "-1", FIELD_1, VALUE_1, FIELD_3, VALUE_3),
+                List.of(HASH, "FIELDS", "0", FIELD_1, VALUE_1),
+                List.of(HASH, "FIELDS", "0", FIELD_1, VALUE_1, FIELD_3),
+                List.of(HASH, "FIELDS", "0", FIELD_1, VALUE_1, FIELD_3, VALUE_3)
+        ).shouldSatisfy(args ->
                 assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.HSETEX, args))
                         .isInstanceOf(JedisDataException.class)
                         .hasMessage("ERR invalid number of fields")
@@ -336,10 +338,10 @@ public class HSetExOperationTest {
 
     @TestTemplate
     public void hSetExAcceptsPreFieldsOptionsInAnyOrder(Jedis jedis) {
-        assertThat(List.of(
-                new String[]{HASH, "EX", "1", "FNX", "FIELDS", "1", FIELD_1, VALUE_1},
-                new String[]{HASH, "FNX", "EX", "1", "FIELDS", "1", FIELD_1, VALUE_1}
-        )).allSatisfy(args -> {
+        everyArgumentSet(
+                List.of(HASH, "EX", "1", "FNX", "FIELDS", "1", FIELD_1, VALUE_1),
+                List.of(HASH, "FNX", "EX", "1", "FIELDS", "1", FIELD_1, VALUE_1)
+        ).shouldSatisfy(args -> {
             jedis.flushAll();
 
             jedis.sendCommand(Protocol.Command.HSETEX, args);
@@ -359,19 +361,19 @@ public class HSetExOperationTest {
 
     @TestTemplate
     public void hSetExRejectsConflictingExpiryOptions(Jedis jedis) {
-        List<String[]> options = List.of(
-                new String[]{"EX", "100"},
-                new String[]{"PX", "100"},
-                new String[]{"EXAT", "100"},
-                new String[]{"PXAT", "100"},
-                new String[]{"KEEPTTL"}
+        List<List<String>> options = List.of(
+                List.of("EX", "100"),
+                List.of("PX", "100"),
+                List.of("EXAT", "100"),
+                List.of("PXAT", "100"),
+                List.of("KEEPTTL")
         );
         assertThat(options).allSatisfy(option1 ->
                 assertThat(options).allSatisfy(option2 -> {
                             List<String> args = new ArrayList<>();
                             args.add(HASH);
-                            args.addAll(List.of(option1));
-                            args.addAll(List.of(option2));
+                            args.addAll(option1);
+                            args.addAll(option2);
                             args.addAll(List.of("FIELDS", "1", FIELD_1, VALUE_1));
                             assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.HSETEX, args.toArray(new String[0])))
                                     .isInstanceOf(JedisDataException.class)
@@ -385,17 +387,15 @@ public class HSetExOperationTest {
 
     @TestTemplate
     public void handlesSettingFieldOnLazilyExpiredFieldAndHash(Jedis jedis) {
-        assertThat(List.of(
-                new String[]{HASH, "EX", "0", "FIELDS", "1", FIELD_1, VALUE_1},
-                new String[]{HASH, "PX", "0", "FIELDS", "1", FIELD_1, VALUE_1},
-                new String[]{HASH, "EXAT", "100", "FIELDS", "1", FIELD_1, VALUE_1},
-                new String[]{HASH, "PXAT", "100", "FIELDS", "1", FIELD_1, VALUE_1}
-        )).allSatisfy(args -> {
+        everyArgumentSet(
+                List.of(HASH, "EX", "0", "FIELDS", "1", FIELD_1, VALUE_1),
+                List.of(HASH, "PX", "0", "FIELDS", "1", FIELD_1, VALUE_1),
+                List.of(HASH, "EXAT", "100", "FIELDS", "1", FIELD_1, VALUE_1),
+                List.of(HASH, "PXAT", "100", "FIELDS", "1", FIELD_1, VALUE_1)
+        ).shouldSatisfy(args -> {
             jedis.flushAll();
             jedis.hsetex(HASH, hSetExParams().exAt(100), FIELD_1, VALUE_1);
-
             jedis.sendCommand(Protocol.Command.HSETEX, args);
-
             assertThat(jedis.hgetAll(HASH)).isEmpty();
         });
     }
@@ -438,5 +438,17 @@ public class HSetExOperationTest {
 
             events.assertNoFurtherNotifications();
         }
+    }
+
+
+    @FunctionalInterface
+    private interface Checker {
+        void shouldSatisfy(Consumer<String[]> checker);
+    }
+
+    @SafeVarargs
+    static Checker everyArgumentSet(List<String>... arguments) {
+        return checker -> assertThat(arguments)
+                .allSatisfy(args -> checker.accept(args.toArray(new String[0])));
     }
 }
