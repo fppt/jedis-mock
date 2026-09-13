@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by Xiaolu on 2015/4/18.
@@ -39,6 +40,7 @@ public class RedisServer {
     private final ScriptingManager scriptingManager = new ScriptingManager();
     private final RedisConfiguration configuration = new RedisConfiguration();
     private final SubscriptionRegistry subscriptionRegistry = new SubscriptionRegistry();
+    private final AtomicLong clientIds = new AtomicLong();
     private volatile ExecutorService singleThreadPool;
     private volatile RedisServiceJob service;
     private volatile Clock clock = Clock.systemDefaultZone();
@@ -148,6 +150,16 @@ public class RedisServer {
 
     SubscriptionRegistry getSubscriptionRegistry() {
         return subscriptionRegistry;
+    }
+
+    /**
+     * Ids handed out to connections, mirroring the monotonically increasing,
+     * server-wide client ids of a real Redis (reported by HELLO).
+     *
+     * @return the id for the next connection.
+     */
+    long nextClientId() {
+        return clientIds.incrementAndGet();
     }
 
     public ServiceOptions options() {

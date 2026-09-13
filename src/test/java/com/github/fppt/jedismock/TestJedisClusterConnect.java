@@ -7,10 +7,13 @@ import org.junit.jupiter.api.Test;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.Protocol;
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +47,22 @@ public class TestJedisClusterConnect {
             jedis.sadd("planets", planets);
             assertThat(jedis.smembers("planets")).containsExactlyInAnyOrder(planets);
             assertThat(jedis.getClusterNodes()).hasSize(1);
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void helloReportsClusterMode() {
+        try (Jedis jedis = new Jedis(new HostAndPort(server.getHost(), server.getBindPort()))) {
+            //The reply is a flat array of alternating field names and values.
+            List<Object> hello = (List<Object>) jedis.sendCommand(Protocol.Command.HELLO, "2");
+            String mode = null;
+            for (int i = 0; i + 1 < hello.size(); i += 2) {
+                if ("mode".equals(SafeEncoder.encode((byte[]) hello.get(i)))) {
+                    mode = SafeEncoder.encode((byte[]) hello.get(i + 1));
+                }
+            }
+            assertThat(mode).isEqualTo("cluster");
         }
     }
 
