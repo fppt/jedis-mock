@@ -27,7 +27,7 @@ public class SupportedOperationsGeneratorTest {
     private static final String SYMBOL_SUPPORTED = ":heavy_check_mark:";
     private static final String SYMBOL_UNSUPPORTED = ":x:";
     @Container
-    private final GenericContainer<?> redis = new RedisContainer();
+    private final GenericContainer<?> redis = new RedisContainer().withExposedPorts(6379);
 
     public final static Set<String> implementedOperations =
             CommandRegistries.commands.values().stream()
