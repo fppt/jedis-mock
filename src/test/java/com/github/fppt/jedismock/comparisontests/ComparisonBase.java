@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.comparisontests;
 
+import com.github.fppt.jedismock.RedisContainer;
 import com.github.fppt.jedismock.RedisServer;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -24,7 +25,7 @@ public class ComparisonBase implements TestTemplateInvocationContextProvider,
         BeforeAllCallback, AfterAllCallback {
     private static RedisServer fakeServer;
 
-    private static final GenericContainer<?> redis = new GenericContainer<>("redis:8.0-alpine")
+    private static final GenericContainer<?> redis = new RedisContainer()
             .withExposedPorts(6379);
 
 
