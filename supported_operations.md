@@ -4,10 +4,11 @@
 
 |     |     |     |     |     |     |
 | --- | --- | --- | --- | --- | --- |
-| :x: [acl](https://valkey.io/commands/acl/) | :heavy_check_mark: [cluster](https://valkey.io/commands/cluster/) | :x: [lastsave](https://valkey.io/commands/lastsave/) | :x: [pfdebug](https://valkey.io/commands/pfdebug/) | :x: [replicaof](https://valkey.io/commands/replicaof/) | :x: [slaveof](https://valkey.io/commands/slaveof/) |
-| :x: [bgrewriteaof](https://valkey.io/commands/bgrewriteaof/) | :heavy_check_mark: [config](https://valkey.io/commands/config/) | :x: [latency](https://valkey.io/commands/latency/) | :x: [pfselftest](https://valkey.io/commands/pfselftest/) | :x: [role](https://valkey.io/commands/role/) | :x: [slowlog](https://valkey.io/commands/slowlog/) |
-| :x: [bgsave](https://valkey.io/commands/bgsave/) | :x: [debug](https://valkey.io/commands/debug/) | :x: [module](https://valkey.io/commands/module/) | :x: [psync](https://valkey.io/commands/psync/) | :x: [save](https://valkey.io/commands/save/) | :x: [sync](https://valkey.io/commands/sync/) |
-| :heavy_check_mark: [client](https://valkey.io/commands/client/) | :x: [failover](https://valkey.io/commands/failover/) | :x: [monitor](https://valkey.io/commands/monitor/) | :x: [replconf](https://valkey.io/commands/replconf/) | :x: [shutdown](https://valkey.io/commands/shutdown/) |  |
+| :x: [FT.CONFIG](https://valkey.io/commands/FT.CONFIG/) | :x: [bgrewriteaof](https://valkey.io/commands/bgrewriteaof/) | :x: [debug](https://valkey.io/commands/debug/) | :x: [monitor](https://valkey.io/commands/monitor/) | :x: [replconf](https://valkey.io/commands/replconf/) | :x: [shutdown](https://valkey.io/commands/shutdown/) |
+| :x: [FT._LIST](https://valkey.io/commands/FT._LIST/) | :x: [bgsave](https://valkey.io/commands/bgsave/) | :x: [failover](https://valkey.io/commands/failover/) | :x: [pfdebug](https://valkey.io/commands/pfdebug/) | :x: [replicaof](https://valkey.io/commands/replicaof/) | :x: [slaveof](https://valkey.io/commands/slaveof/) |
+| :x: [_FT.CONFIG](https://valkey.io/commands/_FT.CONFIG/) | :heavy_check_mark: [client](https://valkey.io/commands/client/) | :x: [lastsave](https://valkey.io/commands/lastsave/) | :x: [pfselftest](https://valkey.io/commands/pfselftest/) | :x: [role](https://valkey.io/commands/role/) | :x: [slowlog](https://valkey.io/commands/slowlog/) |
+| :x: [_FT.DEBUG](https://valkey.io/commands/_FT.DEBUG/) | :heavy_check_mark: [cluster](https://valkey.io/commands/cluster/) | :x: [latency](https://valkey.io/commands/latency/) | :x: [psync](https://valkey.io/commands/psync/) | :x: [save](https://valkey.io/commands/save/) | :x: [sync](https://valkey.io/commands/sync/) |
+| :x: [acl](https://valkey.io/commands/acl/) | :heavy_check_mark: [config](https://valkey.io/commands/config/) | :x: [module](https://valkey.io/commands/module/) |  |  |  |
 
 ## Bitmaps
 
@@ -32,13 +33,13 @@
 
 ## Hashes
 
-|     |     |     |     |     |
-| --- | --- | --- | --- | --- |
-| :heavy_check_mark: [hdel](https://valkey.io/commands/hdel/) | :heavy_check_mark: [hget](https://valkey.io/commands/hget/) | :heavy_check_mark: [hlen](https://valkey.io/commands/hlen/) | :heavy_check_mark: [hpexpireat](https://valkey.io/commands/hpexpireat/) | :heavy_check_mark: [hset](https://valkey.io/commands/hset/) |
-| :heavy_check_mark: [hexists](https://valkey.io/commands/hexists/) | :heavy_check_mark: [hgetall](https://valkey.io/commands/hgetall/) | :heavy_check_mark: [hmget](https://valkey.io/commands/hmget/) | :heavy_check_mark: [hpexpiretime](https://valkey.io/commands/hpexpiretime/) | :heavy_check_mark: [hsetnx](https://valkey.io/commands/hsetnx/) |
-| :heavy_check_mark: [hexpire](https://valkey.io/commands/hexpire/) | :heavy_check_mark: [hincrby](https://valkey.io/commands/hincrby/) | :heavy_check_mark: [hmset](https://valkey.io/commands/hmset/) | :heavy_check_mark: [hpttl](https://valkey.io/commands/hpttl/) | :heavy_check_mark: [hstrlen](https://valkey.io/commands/hstrlen/) |
-| :heavy_check_mark: [hexpireat](https://valkey.io/commands/hexpireat/) | :heavy_check_mark: [hincrbyfloat](https://valkey.io/commands/hincrbyfloat/) | :heavy_check_mark: [hpersist](https://valkey.io/commands/hpersist/) | :x: [hrandfield](https://valkey.io/commands/hrandfield/) | :heavy_check_mark: [httl](https://valkey.io/commands/httl/) |
-| :heavy_check_mark: [hexpiretime](https://valkey.io/commands/hexpiretime/) | :heavy_check_mark: [hkeys](https://valkey.io/commands/hkeys/) | :heavy_check_mark: [hpexpire](https://valkey.io/commands/hpexpire/) | :heavy_check_mark: [hscan](https://valkey.io/commands/hscan/) | :heavy_check_mark: [hvals](https://valkey.io/commands/hvals/) |
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |
+| :heavy_check_mark: [hdel](https://valkey.io/commands/hdel/) | :heavy_check_mark: [hget](https://valkey.io/commands/hget/) | :heavy_check_mark: [hincrbyfloat](https://valkey.io/commands/hincrbyfloat/) | :heavy_check_mark: [hpersist](https://valkey.io/commands/hpersist/) | :x: [hrandfield](https://valkey.io/commands/hrandfield/) | :heavy_check_mark: [hsetnx](https://valkey.io/commands/hsetnx/) |
+| :heavy_check_mark: [hexists](https://valkey.io/commands/hexists/) | :heavy_check_mark: [hgetall](https://valkey.io/commands/hgetall/) | :heavy_check_mark: [hkeys](https://valkey.io/commands/hkeys/) | :heavy_check_mark: [hpexpire](https://valkey.io/commands/hpexpire/) | :heavy_check_mark: [hscan](https://valkey.io/commands/hscan/) | :heavy_check_mark: [hstrlen](https://valkey.io/commands/hstrlen/) |
+| :heavy_check_mark: [hexpire](https://valkey.io/commands/hexpire/) | :heavy_check_mark: [hgetdel](https://valkey.io/commands/hgetdel/) | :heavy_check_mark: [hlen](https://valkey.io/commands/hlen/) | :heavy_check_mark: [hpexpireat](https://valkey.io/commands/hpexpireat/) | :heavy_check_mark: [hset](https://valkey.io/commands/hset/) | :heavy_check_mark: [httl](https://valkey.io/commands/httl/) |
+| :heavy_check_mark: [hexpireat](https://valkey.io/commands/hexpireat/) | :x: [hgetex](https://valkey.io/commands/hgetex/) | :heavy_check_mark: [hmget](https://valkey.io/commands/hmget/) | :heavy_check_mark: [hpexpiretime](https://valkey.io/commands/hpexpiretime/) | :heavy_check_mark: [hsetex](https://valkey.io/commands/hsetex/) | :heavy_check_mark: [hvals](https://valkey.io/commands/hvals/) |
+| :heavy_check_mark: [hexpiretime](https://valkey.io/commands/hexpiretime/) | :heavy_check_mark: [hincrby](https://valkey.io/commands/hincrby/) | :heavy_check_mark: [hmset](https://valkey.io/commands/hmset/) | :heavy_check_mark: [hpttl](https://valkey.io/commands/hpttl/) |  |  |
 
 ## HyperLogLog
 
