@@ -33,6 +33,7 @@ public final class RedisClient implements Runnable {
     private final InputStream in;
     private final OutputStream out;
     private final Consumer<RedisClient> onClose;
+    private final long clientId;
 
     RedisClient(RedisServer server,
                 Socket socket,
@@ -41,6 +42,7 @@ public final class RedisClient implements Runnable {
         Objects.requireNonNull(socket);
         Objects.requireNonNull(onClose);
         this.server = server;
+        this.clientId = server.nextClientId();
         OperationExecutorState state = new OperationExecutorState(this,
                 server.getRedisBases(), server.getBlockingManager(), server.getScriptingManager(),
                 server.getConfiguration(), server.getSubscriptionRegistry());
@@ -134,6 +136,13 @@ public final class RedisClient implements Runnable {
 
     public ServiceOptions options() {
         return server.options();
+    }
+
+    /**
+     * @return the server-wide id of this connection, as reported by HELLO.
+     */
+    public long getClientId() {
+        return clientId;
     }
 
     public int getPort() {
