@@ -12,7 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestType {
     @BeforeEach
     void setUp(Jedis jedis) {
-        jedis.flushDB();
         jedis.set("key", "string");
         jedis.lpush("lkey", "value1", "value2");
         jedis.sadd("skey", "val1", "val2");

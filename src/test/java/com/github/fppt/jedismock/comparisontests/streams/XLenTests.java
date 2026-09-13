@@ -17,8 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class XLenTests {
     Random r;
     @BeforeEach
-    void setUp(Jedis jedis) {
-        jedis.flushAll();
+    void setUp() {
         r = new Random();
     }
 

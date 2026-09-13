@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.streams;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -19,11 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class XDelTests {
 
     private static final Map<String, String> HASH = Collections.singletonMap("a", "b");
-
-    @BeforeEach
-    void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     @TestTemplate
     void whenTopEntryIsDeleted_ensureTopIdDoesNotDecrease(Jedis jedis) {

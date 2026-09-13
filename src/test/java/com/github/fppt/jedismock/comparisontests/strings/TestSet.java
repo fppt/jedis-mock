@@ -2,7 +2,6 @@ package com.github.fppt.jedismock.comparisontests.strings;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -20,11 +19,6 @@ public class TestSet {
     private static final String SET_KEY = "my_simple_key";
     private static final String SET_VALUE = "my_simple_value";
     private static final String SET_ANOTHER_VALUE = "another_value";
-
-    @BeforeEach
-    public void clearKey(Jedis jedis) {
-        jedis.flushDB();
-    }
 
     // SET key value NX
     @TestTemplate

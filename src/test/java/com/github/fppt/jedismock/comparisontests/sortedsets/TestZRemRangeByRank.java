@@ -18,7 +18,6 @@ public class TestZRemRangeByRank {
 
     @BeforeEach
     public void clearKey(Jedis jedis) {
-        jedis.flushDB();
         Map<String, Double> members = new HashMap<>();
         members.put("a", 1d);
         members.put("b", 2d);

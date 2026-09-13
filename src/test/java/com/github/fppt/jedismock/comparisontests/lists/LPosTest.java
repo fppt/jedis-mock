@@ -20,8 +20,6 @@ public class LPosTest {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushAll();
-
         jedis.rpush(key, "a", "b", "c", "1", "2", "3", "c", "c");
     }
 

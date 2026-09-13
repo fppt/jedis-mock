@@ -20,7 +20,6 @@ public class BitMapsOperationsTest {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushAll();
         for (int i : bits) {
             jedis.setbit("bm", i, true);
         }

@@ -28,8 +28,7 @@ public class WatchInPlaceMutationTest {
     private Jedis anotherJedis;
 
     @BeforeEach
-    public void setup(Jedis jedis, HostAndPort hostAndPort) {
-        jedis.flushAll();
+    public void setup(HostAndPort hostAndPort) {
         anotherJedis = new Jedis(hostAndPort.getHost(), hostAndPort.getPort());
     }
 

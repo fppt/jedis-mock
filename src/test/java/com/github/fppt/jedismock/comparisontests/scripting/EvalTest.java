@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.scripting;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -19,10 +18,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 
 @ExtendWith(ComparisonBase.class)
 public class EvalTest {
-    @BeforeEach
-    void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     @TestTemplate
     void evalTest(Jedis jedis) {

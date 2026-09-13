@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.comparisontests.strings;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -34,11 +33,6 @@ public class TestGetRange {
     private static final Protocol.Command[] BOTH_NAMES = {
             Protocol.Command.GETRANGE, Protocol.Command.SUBSTR
     };
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushAll();
-    }
 
     private static String range(Jedis jedis, Protocol.Command command, String key, String start, String end) {
         Object reply = jedis.sendCommand(command, key, start, end);

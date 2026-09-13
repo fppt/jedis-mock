@@ -32,8 +32,6 @@ public class SortTest {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushAll();
-
         jedis.rpush(key, "a", "b", "c", "1", "2", "3", "c", "c");
         jedis.rpush(numerical_sort_key, "5", "4", "3", "2", "1");
     }

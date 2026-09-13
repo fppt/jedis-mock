@@ -2,7 +2,6 @@ package com.github.fppt.jedismock.comparisontests.strings;
 
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
@@ -30,11 +29,6 @@ public class TestSetOptionParsing {
     private static final String SYNTAX_ERROR = "ERR syntax error";
     private static final String NOT_AN_INTEGER = "ERR value is not an integer or out of range";
     private static final String INVALID_EXPIRE = "ERR invalid expire time in 'set' command";
-
-    @BeforeEach
-    public void setUp(Jedis jedis) {
-        jedis.flushDB();
-    }
 
     private static Object set(Jedis jedis, String... args) {
         return jedis.sendCommand(Protocol.Command.SET, args);

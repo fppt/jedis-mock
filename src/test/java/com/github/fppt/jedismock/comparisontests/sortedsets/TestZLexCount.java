@@ -19,7 +19,6 @@ public class TestZLexCount {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushDB();
         Map<String, Double> members = new HashMap<>();
         members.put("alpha", 0d);
         members.put("bar", 0d);

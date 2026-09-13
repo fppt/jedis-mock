@@ -19,7 +19,6 @@ public class LInsertTest {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushAll();
         jedis.rpush(key, "1", "2", "3", "3", "4");
     }
 

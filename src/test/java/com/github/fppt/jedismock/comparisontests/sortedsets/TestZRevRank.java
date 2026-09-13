@@ -15,7 +15,6 @@ public class TestZRevRank {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushDB();
         jedis.zadd(ZSET_KEY, 2, "bbb");
         jedis.zadd(ZSET_KEY, 3, "ccc");
         jedis.zadd(ZSET_KEY, 1, "aaa");

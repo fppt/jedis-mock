@@ -25,7 +25,6 @@ public class TestZRange {
 
     @BeforeEach
     public void setUp(Jedis jedis) {
-        jedis.flushDB();
         jedis.zadd(ZSET_KEY, 2, "aaaa");
         jedis.zadd(ZSET_KEY, 3, "bbbb");
         jedis.zadd(ZSET_KEY, 1, "cccc");

@@ -32,8 +32,7 @@ public class BlockingOperationsTest {
     private Jedis blockedClient;
 
     @BeforeEach
-    public void setUp(Jedis jedis, HostAndPort hostAndPort) {
-        jedis.flushAll();
+    public void setUp(HostAndPort hostAndPort) {
         blockedClient = new Jedis(hostAndPort.getHost(), hostAndPort.getPort());
         blockingThread = Executors.newSingleThreadExecutor();
     }

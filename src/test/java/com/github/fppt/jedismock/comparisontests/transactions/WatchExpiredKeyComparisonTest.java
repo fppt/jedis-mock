@@ -27,7 +27,6 @@ public class WatchExpiredKeyComparisonTest {
 
     @TestTemplate
     public void watchConsidersTouchedExpiredKeys(Jedis jedis) {
-        jedis.flushAll();
         jedis.del("x");
         jedis.set("x", "foo");
         jedis.pexpire("x", 50);
