@@ -11,7 +11,6 @@ import com.github.fppt.jedismock.storage.ScriptingManager;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaClosure;
 import org.luaj.vm2.LuaError;
-import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
@@ -35,8 +34,8 @@ public class Eval extends AbstractRedisOperation {
 
     private static final String SCRIPT_RUNTIME_ERROR = "Error running script (call to function returned nil)";
     private static final String REDIS_LUA = loadResource();
-    private static final Pattern LOCATION_SEPARATOR = Pattern.compile("^(user_script:\\d+) ");
-    private static final Pattern USER_SCRIPT_LINE = Pattern.compile("@?user_script:(\\d+)");
+    private static final Pattern LOCATION_SEPARATOR = Pattern.compile("^(user_(?:script|function):\\d+) ");
+    private static final Pattern USER_SCRIPT_LINE = Pattern.compile("(@?user_(?:script|function):\\d+)");
     private static final Pattern JAVA_EXCEPTION =
             Pattern.compile("^(?:[\\w$]+\\.)+[\\w$]*(?:Exception|Error):\\s*");
     private static final Pattern ERROR_CODE = Pattern.compile("^[A-Z][A-Z0-9_]+ ");
@@ -78,22 +77,9 @@ public class Eval extends AbstractRedisOperation {
         //instead makes it wait for lua-time-limit and reply -BUSY.
         scripting.start();
         try {
-            /*
-            An alias for 'unpack' function: unpack() was moved to table.unpack() in Lua 5.2,
-            but Redis uses Lua 5.1.
-             */
-            globals.set("unpack", globals.load("return table.unpack(...)").checkfunction());
-            globals.set("redis", globals.load(REDIS_LUA).call().checktable());
             globals.set("KEYS", embedLuaListToValue(args.subList(0, keysNum)));
             globals.set("ARGV", embedLuaListToValue(args.subList(keysNum, args.size())));
-            globals.set("_mock", CoerceJavaToLua.coerce(new LuaRedisCallback(state)));
-            globals.set("cjson", globals.load(new LuaCjsonLib()));
-            //Install a per-instruction hook so a concurrent SCRIPT KILL can abort
-            //this script, even a tight infinite loop.
-            globals.load(new InterruptibleDebugLib(scripting));
-            //Lock down the environment (read-only globals, no host access) and run the
-            //user script inside it, exactly as real Redis sandboxes Lua.
-            final LuaTable sandbox = LuaSandbox.install(globals, state);
+            final LuaTable sandbox = createLuaSandbox(globals, state);
             //Load under a fixed chunk name so error locations read "user_script:N"
             //(as in real Redis) instead of echoing the whole script body.
             final LuaValue chunk = globals.load(script, "@user_script");
@@ -111,14 +97,28 @@ public class Eval extends AbstractRedisOperation {
             final LuaValue result = chunk.call();
             return resolveResult(result);
         } catch (LuaError e) {
-            if (scripting.isKillRequested()) {
-                return Response.error("Script killed by user with SCRIPT KILL...");
-            }
             return Response.error(scriptErrorReply(e, sha));
         } finally {
             scripting.stop();
             state.changeActiveRedisBase(selected);
         }
+    }
+
+    public static LuaTable createLuaSandbox(Globals globals, OperationExecutorState state) {
+        /*
+        An alias for 'unpack' function: unpack() was moved to table.unpack() in Lua 5.2,
+        but Redis uses Lua 5.1.
+         */
+        globals.set("unpack", globals.load("return table.unpack(...)").checkfunction());
+        globals.set("redis", globals.load(REDIS_LUA).call().checktable());
+        globals.set("_mock", CoerceJavaToLua.coerce(new LuaRedisCallback(state)));
+        globals.set("cjson", globals.load(new LuaCjsonLib()));
+        //Install a per-instruction hook so a concurrent SCRIPT KILL can abort
+        //this script, even a tight infinite loop.
+        globals.load(new InterruptibleDebugLib(state.scriptingManager()));
+        //Lock down the environment (read-only globals, no host access) and run the
+        //user script inside it, exactly as real Redis sandboxes Lua.
+        return LuaSandbox.install(globals, state);
     }
 
     private static String stripTraceback(String message) {
@@ -132,8 +132,8 @@ public class Eval extends AbstractRedisOperation {
     }
 
     /**
-     * Build a Redis-style error reply from a raised {@link LuaError}. Real Redis
-     * (7.x):
+     * Build a Redis-style error reply from a raised {@link LuaError}, for an
+     * actual {@code EVAL}/{@code FCALL} invocation. Real Redis (7.x):
      * <ul>
      *   <li>{@code error({err=X})} / {@code error({})} -&gt; {@code X} verbatim
      *       (or {@code "unknown error"}), ERR-prefixed when it has no code;</li>
@@ -142,10 +142,32 @@ public class Eval extends AbstractRedisOperation {
      *   <li>command/callback failures -&gt; unwrap luaj's
      *       {@code "vm error: java.lang.SomeException: .."} wrapper.</li>
      * </ul>
-     * In every case it appends Redis's {@code " script: <sha>, on @user_script:N."}
-     * context. CR/LF in the message are collapsed to spaces by {@link Response#error}.
+     * In every case it appends Redis's {@code " script: <scriptName>, on @user_script:N."}
+     * context: real Redis's {@code luaCallFunction} always runs the user's script/
+     * function through a {@code lua_pcall} message handler that captures the
+     * failing source/line via {@code debug.getinfo} and attaches it to the error,
+     * regardless of whether the raised value already carried a location of its
+     * own. CR/LF in the message are collapsed to spaces by {@link Response#error}.
      */
-    private static String scriptErrorReply(LuaError e, String sha) {
+    public static String scriptErrorReply(LuaError e, String scriptName) {
+        return errorMessage(e, scriptName);
+    }
+
+    /**
+     * Build a Redis-style error message from a raised {@link LuaError} during a
+     * FUNCTION library's top-level load script (not an invocation). Unlike
+     * {@link #scriptErrorReply}, this never appends the {@code " script: X, on
+     * Y."} context: real Redis's {@code luaEngineCreate} runs that script through
+     * a plain {@code lua_pcall} with no message handler installed at all, so no
+     * source/line ever gets attached to the error &mdash; only whatever location
+     * a runtime error or {@code luaL_error}/{@code error(string)} call already
+     * baked into the message text itself survives.
+     */
+    public static String libraryLoadErrorMessage(LuaError e) {
+        return errorMessage(e, null);
+    }
+
+    private static String errorMessage(LuaError e, String scriptName) {
         String raw = stripTraceback(e.getMessage());
         //Derive the script line from luaj's location before any stripping; it is
         //present for runtime errors ("user_script:N: ..") and command/callback
@@ -153,27 +175,29 @@ public class Eval extends AbstractRedisOperation {
         //tables carry no location, in which case we fall back to line 1.
         String line = lineOf(raw);
         LuaValue obj = e.getMessageObject();
+        String msg;
         if (obj != null && obj.istable()) {
             LuaValue err = obj.rawget("err");
-            String msg = err.isnil() ? "unknown error" : err.tojstring();
-            return appendScriptContext(ensureErrorCode(msg), sha, line);
-        }
-        String msg = raw;
-        int vm = msg.indexOf("vm error:");
-        if (vm >= 0) {
-            //A Redis command/callback raised: unwrap the Java exception wrapper.
-            msg = stripJavaExceptionClass(msg.substring(vm + "vm error:".length()).trim());
+            msg = err.isnil() ? "unknown error" : err.tojstring();
         } else {
-            //A pure Lua runtime error (incl. error("string")): keep the location.
-            msg = fixLuaWording(normalizeLocation(stripAtMarker(msg)));
+            msg = raw;
+            int vm = msg.indexOf("vm error:");
+            if (vm >= 0) {
+                //A Redis command/callback raised: unwrap the Java exception wrapper.
+                msg = stripJavaExceptionClass(msg.substring(vm + "vm error:".length()).trim());
+            } else {
+                //A pure Lua runtime error (incl. error("string")): keep the location.
+                msg = fixLuaWording(normalizeLocation(stripAtMarker(msg)));
+            }
         }
-        return appendScriptContext(ensureErrorCode(msg), sha, line);
+        msg = ensureErrorCode(msg);
+        return scriptName == null ? msg : appendScriptContext(msg, scriptName, line);
     }
 
     private static String lineOf(String message) {
         Matcher m = USER_SCRIPT_LINE.matcher(message);
         //Fall back to 1 only when luaj gives no location (e.g. an error() table).
-        return m.find() ? m.group(1) : "1";
+        return m.find() ? m.group(1) : "@user_script:1";
     }
 
     private static String stripAtMarker(String msg) {
@@ -187,8 +211,8 @@ public class Eval extends AbstractRedisOperation {
         return LOCATION_SEPARATOR.matcher(msg).replaceFirst("$1: ");
     }
 
-    private static String appendScriptContext(String msg, String sha, String line) {
-        return msg + " script: " + sha + ", on @user_script:" + line + ".";
+    private static String appendScriptContext(String msg, String scriptName, String line) {
+        return msg + " script: " + scriptName + ", on " + line + ".";
     }
 
     private static String stripJavaExceptionClass(String msg) {
@@ -228,14 +252,14 @@ public class Eval extends AbstractRedisOperation {
         return LuaValue.listOf(luaValues.toArray(new LuaValue[0]));
     }
 
-    private Slice resolveResult(LuaValue result) {
+    public static Slice resolveResult(LuaValue result) {
         if (result.isnil()) {
             return Response.NULL;
         }
 
         switch (result.typename()) {
             case "string":
-                return Response.bulkString(Slice.create(((LuaString) result).m_bytes));
+                return Response.bulkString(Slice.create(result.checkstring().m_bytes));
             case "number":
                 return Response.integer(result.tolong());
             case "table":
@@ -264,7 +288,7 @@ public class Eval extends AbstractRedisOperation {
         return Response.error(SCRIPT_RUNTIME_ERROR);
     }
 
-    private ArrayList<Slice> luaTableToList(LuaValue result) {
+    private static ArrayList<Slice> luaTableToList(LuaValue result) {
         //Like Redis: raw-get indices 1, 2, ... and stop at the first nil.
         final ArrayList<Slice> list = new ArrayList<>();
         for (int i = 1; ; i++) {
