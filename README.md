@@ -179,6 +179,28 @@ jedis.lrange("mylist", 0, -1));
 
 A long-running (or even infinite) script does not lock up the mock. Once a script has been running longer than `lua-time-limit` milliseconds, other connections get the same `-BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.` reply as real Redis, and `SCRIPT KILL` aborts the running script (replying `-NOTBUSY` when nothing is running). The threshold defaults to 5000 ms and can be changed with `CONFIG SET lua-time-limit <ms>` (its alias `busy-reply-threshold` is also accepted); `0` disables it. This lets you test client behaviour around busy scripts and transactions interrupted by a script timeout.
 
+### Redis Functions: `FUNCTION` and `FCALL`
+
+JedisMock also supports Redis Functions: `FUNCTION LOAD [REPLACE]`, `DELETE`, `LIST`, `FLUSH`, `STATS`, `KILL`, and `FCALL`, the successor to `EVAL`/`EVALSHA` for persistently registered Lua libraries.
+
+```java
+jedis.functionLoad(
+        "#!lua name=mylib\n" +
+        "redis.register_function('fib', function(keys, args)\n" +
+        "  local a, b = 0, 1\n" +
+        "  for i = 2, tonumber(args[1]) do\n" +
+        "    a, b = b, a + b\n" +
+        "  end\n" +
+        "  return b\n" +
+        "end)");
+jedis.fcall("fib", List.of(), List.of("10"));
+//Yields the 10th Fibonacci number
+```
+
+:warning: `FCALL_RO`, `FUNCTION DUMP`/`RESTORE`, and the `flags` argument to `redis.register_function` are not yet supported.
+
+A busy `FCALL` behaves the same way as a busy `EVAL` (see above), except a client must use `FUNCTION KILL` instead of `SCRIPT KILL` to abort it — real Redis rejects `SCRIPT KILL` on a running function (and `FUNCTION KILL` on a running script) with the same `-BUSY` reply, and JedisMock matches that.
+
 Feel free to report an issue if you have any problems with Lua scripting in Jedis-Mock.
 
 ## <a name="clockinjection">Clock injection</a>

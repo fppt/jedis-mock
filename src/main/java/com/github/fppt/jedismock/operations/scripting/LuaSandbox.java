@@ -35,7 +35,7 @@ import java.util.Map;
  *       {@code os.clock} backed by the injected server clock.</li>
  * </ul>
  */
-final class LuaSandbox {
+public final class LuaSandbox {
 
     private static final String READONLY_MSG = "Attempt to modify a readonly table";
     //Marks a protected table's metatable so setmetatable() can refuse to replace it.
@@ -48,20 +48,17 @@ final class LuaSandbox {
     }
 
     /**
-     * Locks down {@code globals} and returns the read-only environment table the
-     * user script must be loaded with.
+     * Locks down {@code globals} for a full {@code EVAL}/{@code FCALL} script and
+     * returns the read-only environment table it must be loaded with: the standard
+     * library set is kept but write-protected, {@code os} is reduced to {@code
+     * os.clock}, dangerous builtins are removed, and {@code getmetatable}/{@code
+     * setmetatable} are guarded.
      */
-    static LuaTable install(Globals globals, OperationExecutorState state) {
+    public static LuaTable install(Globals globals, OperationExecutorState state) {
         //os reduced to a single, deterministic clock backed by the server clock.
         Map<LuaValue, LuaValue> osEntries = new HashMap<>();
         osEntries.put(LuaValue.valueOf("clock"), osClock(state));
         globals.set("os", new ImmutableLuaTable(osEntries));
-
-        //Removed globals read back as nil, so the global-access guard reports them
-        //as "nonexistent" exactly like real Redis.
-        for (String name : DANGEROUS_GLOBALS) {
-            globals.set(name, LuaValue.NIL);
-        }
 
         globals.set("redis", asImmutable(globals.get("redis")));
 
@@ -73,6 +70,37 @@ final class LuaSandbox {
 
         final LuaValue originalSetmetatable = globals.get("setmetatable");
         globals.set("getmetatable", guardedGetmetatable());
+        globals.set("setmetatable", guardedSetmetatable(originalSetmetatable));
+
+        return buildSandbox(globals);
+    }
+
+    /**
+     * Locks down {@code globals} the way real Redis does specifically for a
+     * FUNCTION library's top-level load script: that environment exposes nothing
+     * but a limited {@code redis} table (just {@code register_function} and
+     * friends &mdash; not {@code redis.call}, since executing commands here would
+     * run at LOAD time rather than per-invocation). Also, the {@code redis} table
+     * itself raises "nonexistent global variable" for a missing key (real Redis
+     * explicitly guards that one table), rather than being an ordinary read-only
+     * table.
+     */
+    public static LuaTable installForLibraryLoad(Globals globals) {
+        LuaTable redisTable = asImmutable(globals.get("redis"));
+        LuaTable redisMetatable = new LuaTable();
+        redisMetatable.rawset(LuaValue.INDEX, missingKeyGuard());
+        redisTable.setmetatable(redisMetatable);
+        globals.set("redis", redisTable);
+
+        return buildSandbox(globals);
+    }
+
+    private static LuaTable buildSandbox(Globals globals) {
+        //Removed globals read back as nil, so the global-access guard reports them
+        //as "nonexistent" exactly like real Redis.
+        for (String name : DANGEROUS_GLOBALS) {
+            globals.set(name, LuaValue.NIL);
+        }
 
         final LuaTable sandbox = new LuaTable();
         Map<LuaValue, LuaValue> mt = new HashMap<>();
@@ -80,8 +108,6 @@ final class LuaSandbox {
         mt.put(LuaValue.NEWINDEX, readonlyGuard());
         mt.put(READONLY_MARKER, LuaValue.TRUE);
         sandbox.setmetatable(new ImmutableLuaTable(mt));
-
-        globals.set("setmetatable", guardedSetmetatable(originalSetmetatable));
         return sandbox;
     }
 
@@ -138,16 +164,36 @@ final class LuaSandbox {
                 }
                 LuaValue value = globals.rawget(key);
                 if (value.isnil()) {
-                    //Use a LuaValue message object (not a String): when caught by
-                    //pcall, luaj returns getMessageObject(), which for a String-
-                    //constructed LuaError falls back to the message-with-traceback.
-                    throw new LuaError(LuaValue.valueOf(
-                            "Script attempted to access nonexistent global variable '"
-                                    + key.tojstring() + "'"));
+                    throw nonexistentGlobalError(key);
                 }
                 return value;
             }
         };
+    }
+
+    /**
+     * {@code __index} handler that unconditionally raises the "nonexistent global
+     * variable" error for any missing key. Installed directly on a protected
+     * table's metatable (see {@link #installForLibraryLoad(Globals)}), as opposed
+     * to {@link #indexGuard}, which additionally special-cases {@code _G} for the
+     * sandbox's own environment table.
+     */
+    private static LuaValue missingKeyGuard() {
+        return new TwoArgFunction() {
+            @Override
+            public LuaValue call(LuaValue table, LuaValue key) {
+                throw nonexistentGlobalError(key);
+            }
+        };
+    }
+
+    private static LuaError nonexistentGlobalError(LuaValue key) {
+        //Use a LuaValue message object (not a String): when caught by pcall, luaj
+        //returns getMessageObject(), which for a String-constructed LuaError falls
+        //back to the message-with-traceback.
+        return new LuaError(LuaValue.valueOf(
+                "Script attempted to access nonexistent global variable '" +
+                        key.tojstring() + "'"));
     }
 
     private static LuaValue readonlyGuard() {

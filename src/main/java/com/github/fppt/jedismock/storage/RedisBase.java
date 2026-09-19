@@ -10,6 +10,10 @@ import com.github.fppt.jedismock.datastructures.streams.RMStream;
 import com.github.fppt.jedismock.datastructures.RMString;
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.exception.ArgumentException;
+import com.github.fppt.jedismock.operations.functions.FunctionInfo;
+import com.github.fppt.jedismock.operations.functions.LibraryInfo;
+import org.luaj.vm2.UpValue;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -19,7 +23,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Created by Xiaolu on 2015/4/20.
@@ -31,6 +37,9 @@ public class RedisBase {
     private final int dbIndex;
     private final Map<Slice, Set<OperationExecutorState>> watchedKeys = new HashMap<>();
     private final Map<String, String> cachedLuaScripts = new HashMap<>();
+    // Is read by FUNCTION STATS outside the global data lock, so must be thread-safe.
+    private final Map<String, LibraryInfo> luaLibraries = new ConcurrentHashMap<>();
+    private final Map<String, FunctionInfo> luaFunctions = new HashMap<>();
     private final ExpiringKeyValueStorage keyValueStorage;
 
     public RedisBase(Supplier<Clock> clockSupplier) {
@@ -284,5 +293,57 @@ public class RedisBase {
 
     public String addCachedLuaScript(String sha1, String script) {
         return cachedLuaScripts.put(sha1, script);
+    }
+
+    public void registerLuaLibrary(String libraryName, String libraryCode, UpValue sharedEnvironment,
+                                   Map<String, FunctionInfo> functions, boolean replace) {
+        LibraryInfo existingLibrary = luaLibraries.get(libraryName);
+        if (!replace && existingLibrary != null) {
+            throw new ArgumentException(String.format("ERR Library '%s' already exists", libraryName));
+        }
+        for (Map.Entry<String, FunctionInfo> entry : functions.entrySet()) {
+            String functionName = entry.getKey();
+            FunctionInfo existingFunction = getLuaFunctionInfo(functionName);
+            if (existingFunction != null && !(replace && existingFunction.getLibraryName().equals(libraryName))) {
+                throw new ArgumentException(String.format("ERR Function %s already exists", functionName));
+            }
+        }
+        luaLibraries.put(libraryName, new LibraryInfo(functions.keySet(), libraryCode, sharedEnvironment));
+        functions.forEach((functionName, functionInfo) -> luaFunctions.put(functionName.toLowerCase(), functionInfo));
+        if (existingLibrary != null) {
+            Set<String> oldLibraryFunctions = existingLibrary.getFunctionNames().stream()
+                    .map(String::toLowerCase).collect(Collectors.toSet());
+            oldLibraryFunctions.removeAll(functions.keySet().stream().map(String::toLowerCase).collect(Collectors.toSet()));
+            for (String removedFunction : oldLibraryFunctions) {
+                luaFunctions.remove(removedFunction.toLowerCase());
+            }
+        }
+    }
+
+    public UpValue getLuaFunctionEnvironment(FunctionInfo functionInfo) {
+        return luaLibraries.get(functionInfo.getLibraryName()).getEnvironment();
+    }
+
+    public FunctionInfo getLuaFunctionInfo(String functionName) {
+        return luaFunctions.get(functionName.toLowerCase());
+    }
+
+    public void flushLuaLibraries() {
+        luaLibraries.clear();
+        luaFunctions.clear();
+    }
+
+    public void deleteLuaLibrary(String libraryName) {
+        LibraryInfo functions = luaLibraries.remove(libraryName);
+        if (functions == null) {
+            throw new ArgumentException("ERR Library not found");
+        }
+        for (String functionName : functions.getFunctionNames()) {
+            luaFunctions.remove(functionName.toLowerCase());
+        }
+    }
+
+    public Map<String, LibraryInfo> getLuaLibraries() {
+        return luaLibraries;
     }
 }

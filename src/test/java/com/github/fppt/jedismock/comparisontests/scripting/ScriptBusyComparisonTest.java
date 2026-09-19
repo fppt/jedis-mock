@@ -57,7 +57,7 @@ public class ScriptBusyComparisonTest {
                 // BUSY rather than blocking on the lock held by the script.
                 assertThatThrownBy(() -> jedis.get("anykey"))
                         .isInstanceOf(JedisDataException.class)
-                        .hasMessageContaining("BUSY");
+                        .hasMessage("BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.");
                 // SCRIPT KILL is still accepted and restores normal operation.
                 jedis.scriptKill();
                 assertThat(jedis.ping()).isEqualTo("PONG");
