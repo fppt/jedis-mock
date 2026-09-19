@@ -1,5 +1,10 @@
 package com.github.fppt.jedismock.storage;
 
+import com.github.fppt.jedismock.datastructures.Slice;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Server-wide coordination for Lua script execution. It serves two purposes:
  * letting a {@code SCRIPT KILL} on one connection abort a script running on
@@ -26,25 +31,50 @@ public final class ScriptingManager {
     private static final long DEFAULT_LUA_TIME_LIMIT_MILLIS = 5000L;
 
     private volatile boolean running = false;
+    private volatile ScriptType scriptType = null;
+    private volatile RunningFunctionInfo functionInfo = null;
     private volatile long startNanos = 0L;
     private volatile boolean killRequested = false;
     private volatile long luaTimeLimitMillis = DEFAULT_LUA_TIME_LIMIT_MILLIS;
 
     /**
      * Mark the start of a script run, recording the start time and clearing any
-     * stale kill request left over from a previous script.
+     * stale kill request left over from a previous script/function.
      */
     public void start() {
+        start(System.nanoTime(), ScriptType.SCRIPT, null);
+    }
+
+    /**
+     * Mark the start of a function run, recording the start time and clearing any
+     * stale kill request left over from a previous script/function.
+     *
+     * @param invokingFunction the name of the library function being invoked
+     * @param invokingOperation the name of the Redis operation that invoked the function (e.g. "FCALL")
+     * @param invokingParams the parameters passed to the Redis operation
+     */
+    public void startFunction(String invokingFunction, String invokingOperation, List<Slice> invokingParams) {
+        long startNanos = System.nanoTime();
+        RunningFunctionInfo functionInfo = new RunningFunctionInfo(invokingFunction, invokingOperation, invokingParams, startNanos);
+        start(startNanos, ScriptType.FUNCTION, functionInfo);
+    }
+
+    private void start(long startNanos, ScriptType scriptType, RunningFunctionInfo functionInfo) {
         killRequested = false;
-        startNanos = System.nanoTime();
+        this.startNanos = startNanos;
         running = true;
+        this.scriptType = scriptType;
+        this.functionInfo = functionInfo;
     }
 
     /**
      * Mark the end of a script run (normal completion, error, or kill).
      */
     public void stop() {
+        killRequested = false;
         running = false;
+        scriptType = null;
+        functionInfo = null;
     }
 
     /**
@@ -63,9 +93,9 @@ public final class ScriptingManager {
     }
 
     /**
-     * @return whether a {@code SCRIPT KILL} has been requested for the running
-     * script. Polled from the LuaJ instruction hook
-     * ({@code InterruptibleDebugLib}) so the script aborts promptly.
+     * @return whether a {@code SCRIPT/FUNCTION KILL} has been requested for the running
+     * script/function. Polled from the LuaJ instruction hook
+     * ({@code InterruptibleDebugLib}) so the script/function aborts promptly.
      */
     public boolean isKillRequested() {
         return killRequested;
@@ -116,5 +146,47 @@ public final class ScriptingManager {
 
     public void setLuaTimeLimitMillis(long luaTimeLimitMillis) {
         this.luaTimeLimitMillis = luaTimeLimitMillis;
+    }
+
+    public ScriptType getRunningScriptType() {
+        return scriptType;
+    }
+
+    public RunningFunctionInfo getRunningFunctionInfo() {
+        return functionInfo;
+    }
+
+    public static class RunningFunctionInfo {
+        private final String invokingFunction;
+        private final String invokingOperation;
+        private final List<Slice> invokingParams;
+        private final long startNanos;
+
+        public RunningFunctionInfo(String invokingFunction, String invokingOperation, List<Slice> invokingParams, long startNanos) {
+            this.invokingFunction = invokingFunction;
+            this.invokingOperation = invokingOperation;
+            this.invokingParams = invokingParams;
+            this.startNanos = startNanos;
+        }
+
+        public String getInvokingFunction() {
+            return invokingFunction;
+        }
+
+        public List<Slice> getInvokingCommand() {
+            List<Slice> command = new ArrayList<>(invokingParams.size() + 1);
+            command.add(Slice.create(invokingOperation));
+            command.addAll(invokingParams);
+            return command;
+        }
+
+        public long getStartNanos() {
+            return startNanos;
+        }
+    }
+
+    public enum ScriptType {
+        SCRIPT,
+        FUNCTION,
     }
 }

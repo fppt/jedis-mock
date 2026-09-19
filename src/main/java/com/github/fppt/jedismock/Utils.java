@@ -118,4 +118,50 @@ public class Utils {
     public static long toNanoTimeout(String value) {
         return (long) (convertToDouble(value) * 1_000_000_000L);
     }
+
+    /**
+     * Returns {@code null} if a quote is left unterminated, or if any characters follow the closing quote.
+     */
+    public static String parseQuotedString(String string) {
+        if (string.isEmpty()) {
+            return string;
+        }
+
+        StringBuilder result = new StringBuilder();
+        Character currentQuote = null;
+
+        for (int i = 0; i < string.length(); i++) {
+            char currentChar = string.charAt(i);
+            if (currentQuote != null) {
+                if (currentChar == '\\' && string.length() > i + 1 && string.charAt(i + 1) == currentQuote) {
+                    result.append(string.charAt(++i));
+                } else if (currentChar == currentQuote) {
+                    if (i != string.length() - 1) {
+                        // characters must not follow closing quote.
+                        return null;
+                    }
+                    currentQuote = null;
+                } else {
+                    result.append(currentChar);
+                }
+            } else {
+                switch (currentChar) {
+                    case '"':
+                    case '\'':
+                        currentQuote = currentChar;
+                        break;
+                    default:
+                        result.append(currentChar);
+                        break;
+                }
+            }
+        }
+
+        if (currentQuote != null) {
+            // unterminated quotes
+            return null;
+        }
+
+        return result.toString();
+    }
 }

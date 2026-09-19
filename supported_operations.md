@@ -78,7 +78,7 @@
 
 |     |     |     |     |     |     |
 | --- | --- | --- | --- | --- | --- |
-| :heavy_check_mark: [eval](https://valkey.io/commands/eval/) | :heavy_check_mark: [evalsha](https://valkey.io/commands/evalsha/) | :x: [fcall](https://valkey.io/commands/fcall/) | :x: [fcall_ro](https://valkey.io/commands/fcall_ro/) | :x: [function](https://valkey.io/commands/function/) | :heavy_check_mark: [script](https://valkey.io/commands/script/) |
+| :heavy_check_mark: [eval](https://valkey.io/commands/eval/) | :heavy_check_mark: [evalsha](https://valkey.io/commands/evalsha/) | :heavy_check_mark: [fcall](https://valkey.io/commands/fcall/) | :x: [fcall_ro](https://valkey.io/commands/fcall_ro/) | :heavy_check_mark: [function](https://valkey.io/commands/function/) | :heavy_check_mark: [script](https://valkey.io/commands/script/) |
 | :x: [eval_ro](https://valkey.io/commands/eval_ro/) | :x: [evalsha_ro](https://valkey.io/commands/evalsha_ro/) |  |  |  |  |
 
 ## Sets

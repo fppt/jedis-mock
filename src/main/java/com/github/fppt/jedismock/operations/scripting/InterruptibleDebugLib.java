@@ -2,12 +2,13 @@ package com.github.fppt.jedismock.operations.scripting;
 
 import com.github.fppt.jedismock.storage.ScriptingManager;
 import org.luaj.vm2.LuaError;
+import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.DebugLib;
 
 /**
  * A {@link DebugLib} whose per-instruction hook aborts the running script as
- * soon as a {@code SCRIPT KILL} has been requested.
+ * soon as a {@code SCRIPT/FUNCTION KILL} has been requested.
  * <p>
  * LuaJ's interpreter invokes {@link #onInstruction} before every VM instruction
  * (see {@code LuaClosure.execute}), so this fires even inside a tight
@@ -18,7 +19,7 @@ import org.luaj.vm2.lib.DebugLib;
  * default already incurs the per-instruction callback, checking a single
  * {@code volatile} flag adds no measurable overhead.
  */
-public final class InterruptibleDebugLib extends DebugLib {
+public class InterruptibleDebugLib extends DebugLib {
     private final ScriptingManager scriptingManager;
 
     public InterruptibleDebugLib(ScriptingManager scriptingManager) {
@@ -28,7 +29,7 @@ public final class InterruptibleDebugLib extends DebugLib {
     @Override
     public void onInstruction(int pc, Varargs v, int top) {
         if (scriptingManager.isKillRequested()) {
-            throw new LuaError("Script killed by user with SCRIPT KILL...");
+            throw new LuaError(LuaValue.tableOf(new LuaValue[]{LuaValue.valueOf("err"), LuaValue.valueOf("Script killed by user with SCRIPT KILL...")}));
         }
         super.onInstruction(pc, v, top);
     }
