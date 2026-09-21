@@ -124,6 +124,37 @@ public class TestWatchUnwatch {
     }
 
     @TestTemplate
+    public void testWatchWithTTLChangingByExpireAt(Jedis jedis) {
+        jedis.set(FIRST_KEY, FIRST_VALUE);
+        jedis.watch(FIRST_KEY);
+        jedis.pexpireAt(FIRST_KEY, System.currentTimeMillis() + 1000);
+        Transaction transaction = jedis.multi();
+        transaction.set(FIRST_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithPersist(Jedis jedis) {
+        jedis.set(FIRST_KEY, FIRST_VALUE, SetParams.setParams().ex(1));
+        jedis.watch(FIRST_KEY);
+        jedis.persist(FIRST_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.set(FIRST_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithPersistForKeyWithNoExpiry(Jedis jedis) {
+        jedis.set(FIRST_KEY, FIRST_VALUE);
+        assertThat(jedis.expireTime(FIRST_KEY)).isEqualTo(-1);
+        jedis.watch(FIRST_KEY);
+        jedis.persist(FIRST_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.set(FIRST_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).containsExactly("OK");
+    }
+
+    @TestTemplate
     public void testWatchWithUnwatch(Jedis jedis) throws ExecutionException, InterruptedException {
         jedis.set(FIRST_KEY, FIRST_VALUE);
         jedis.watch(FIRST_KEY);
