@@ -60,7 +60,7 @@
         <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
         <extra.enforcer.rules.version>1.12.1</extra.enforcer.rules.version>
         <archunit.version>1.5.0</archunit.version>
-        <javapoet.version>0.19.0</javapoet.version>
+        <javapoet.version>0.20.0</javapoet.version>
         <processor.package>com/github/fppt/jedismock/processor/*.java</processor.package>
         <processor.classes>${project.build.directory}/processor-classes</processor.classes>
         <processor.lib>${project.build.directory}/processor-lib</processor.lib>
