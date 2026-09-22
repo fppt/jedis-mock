@@ -212,24 +212,25 @@ public class RedisBase {
         keyValueStorage.clear();
     }
 
+    /**
+     * @param ttl The TTL to set on the key. Pass null to leave an existing TTL as is. Pass -1L to remove TTL.
+     */
     public void putSlice(Slice key, Slice value, Long ttl) {
         keyValueStorage.put(key, value, ttl);
     }
 
+    /**
+     * @param ttl The TTL to set on key2. Pass null to leave an existing TTL as is. Pass -1L to remove TTL.
+     */
     public void putSlice(Slice key1, Slice key2, Slice value, Long ttl) {
         keyValueStorage.put(key1, key2, value, ttl);
     }
 
-    public void putValueWithoutClearingTtl(Slice key, RMDataStructure value) {
-        putValue(key, value, null);
-    }
-
+    /**
+     * @param ttl The TTL to set on the key. Pass null to leave an existing TTL as is. Pass -1L to remove TTL.
+     */
     public void putValue(Slice key, RMDataStructure value, Long ttl) {
         keyValueStorage.put(key, value, ttl);
-    }
-
-    public void putValue(Slice key, RMDataStructure value) {
-        keyValueStorage.put(key, value, -1L);
     }
 
     public void deleteValue(Slice key) {

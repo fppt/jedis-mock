@@ -27,7 +27,7 @@ class GetSet extends AbstractRedisOperation {
 
     protected Slice response() {
         Slice value = base().getSlice(params().get(0));
-        base().putValue(params().get(0), params().get(1).extract());
+        base().putValue(params().get(0), params().get(1).extract(), -1L);
         base().notifyKeyspaceEvent(KeyspaceEvent.SET, params().get(0));
         return Response.bulkString(value);
     }

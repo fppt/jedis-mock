@@ -17,7 +17,7 @@ class SetNX extends AbstractRedisOperation {
 
     protected Slice response(){
         if (base().getValue(params().get(0)) == null) {
-            base().putValue(params().get(0), params().get(1).extract());
+            base().putValue(params().get(0), params().get(1).extract(), null);
             base().notifyKeyspaceEvent(KeyspaceEvent.SET, params().get(0));
             return Response.integer(1);
         }

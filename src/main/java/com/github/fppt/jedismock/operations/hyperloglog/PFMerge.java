@@ -28,7 +28,7 @@ class PFMerge extends AbstractRedisOperation {
             }
         }
 
-        base().putValue(key, set);
+        base().putValue(key, set, null);
         return Response.OK;
     }
 }

@@ -77,4 +77,15 @@ public class TestZincrBy {
         jedis.zadd(key, plusInfScore, value4);
         assertThat(jedis.zincrby(key, 10d, value4)).isEqualTo(plusInfIncrement);
     }
+
+    @TestTemplate
+    public void zincrbyDoesNotClearTtl(Jedis jedis) {
+        String key = "mykey";
+        jedis.zadd(key, 10d, "myvalue");
+        jedis.expire(key, 100L);
+
+        jedis.zincrby(key, 5d, "myvalue");
+
+        assertThat(jedis.ttl(key)).isGreaterThan(0);
+    }
 }

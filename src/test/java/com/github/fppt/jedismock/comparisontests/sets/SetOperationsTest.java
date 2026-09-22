@@ -159,6 +159,17 @@ public class SetOperationsTest {
     }
 
     @TestTemplate
+    public void saddOnExistingKeyDoesNotClearTtl(Jedis jedis) {
+        String key = "myset";
+        jedis.sadd(key, "a");
+        jedis.expire(key, 100L);
+
+        jedis.sadd(key, "b");
+
+        assertThat(jedis.ttl(key)).isGreaterThan(0);
+    }
+
+    @TestTemplate
     public void testSMoveWrongTypesSrcDest(Jedis jedis) {
 
         String key1 = "key1";

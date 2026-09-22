@@ -60,4 +60,14 @@ public class TestZDiffStore {
         assertThat(jedis.zdiffStore(ZSET_KEY_3, ZSET_KEY_1, "aaa", "bbb", "ddd")).isEqualTo(1);
         assertThat(jedis.zrange(ZSET_KEY_3, 0, -1)).containsExactly("c");
     }
+
+    @TestTemplate
+    public void zdiffStoreClearsTtlOnDestination(Jedis jedis) {
+        jedis.zadd(ZSET_KEY_3, 10, "old");
+        jedis.expire(ZSET_KEY_3, 100L);
+
+        jedis.zdiffStore(ZSET_KEY_3, ZSET_KEY_1, ZSET_KEY_2);
+
+        assertThat(jedis.ttl(ZSET_KEY_3)).isEqualTo(-1);
+    }
 }

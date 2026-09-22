@@ -57,6 +57,16 @@ public class SortTest {
     }
 
     @TestTemplate
+    public void sortStoreClearsTtlOnDestination(Jedis jedis) {
+        jedis.rpush(store_sort_key, "old");
+        jedis.expire(store_sort_key, 100L);
+
+        jedis.sort(numerical_sort_key, new SortingParams().sortingOrder(DESC), store_sort_key);
+
+        assertThat(jedis.ttl(store_sort_key)).isEqualTo(-1);
+    }
+
+    @TestTemplate
     public void whenUsingSort_EnsureThrowsOnInvalidType(Jedis jedis) {
         assertThatThrownBy(() -> jedis.sort(key))
                 .isInstanceOf(JedisDataException.class)

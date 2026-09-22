@@ -68,4 +68,15 @@ public class HLLOperationsTest {
         jedis.set("another".getBytes(), jedis.get("my_hll".getBytes()));
         assertThat(jedis.pfcount("another")).isEqualTo(6);
     }
+
+    @TestTemplate
+    public void pfmergeIntoExistingKeyDoesNotClearTtl(Jedis jedis) {
+        jedis.pfadd("dest", "a", "b");
+        jedis.expire("dest", 100L);
+        jedis.pfadd("src", "c", "d");
+
+        jedis.pfmerge("dest", "src");
+
+        assertThat(jedis.ttl("dest")).isGreaterThan(0);
+    }
 }

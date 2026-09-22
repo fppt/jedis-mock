@@ -35,7 +35,7 @@ class SAdd extends AbstractRedisOperation {
             }
         }
 
-        base().putValue(key, setDBObj);
+        base().putValue(key, setDBObj, null);
         if (count > 0) {
             base().notifyKeyspaceEvent(KeyspaceEvent.SADD, key);
         }

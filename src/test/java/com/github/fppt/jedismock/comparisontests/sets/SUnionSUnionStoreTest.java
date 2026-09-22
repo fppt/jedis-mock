@@ -67,4 +67,15 @@ public class SUnionSUnionStoreTest {
         jedis.sinterstore("dest", "src", "other");
         assertThat(jedis.exists("dest")).isFalse();
     }
+
+    @TestTemplate
+    public void sunionstoreClearsTtlOnDestination(Jedis jedis) {
+        jedis.sadd("set1", "a", "b");
+        jedis.sadd("dest", "old");
+        jedis.expire("dest", 100L);
+
+        jedis.sunionstore("dest", "set1");
+
+        assertThat(jedis.ttl("dest")).isEqualTo(-1);
+    }
 }

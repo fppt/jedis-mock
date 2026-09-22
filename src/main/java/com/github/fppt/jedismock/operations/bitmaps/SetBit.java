@@ -27,14 +27,14 @@ class SetBit extends AbstractRedisOperation {
         if (value == null) {
             RMBitMap bitMap = new RMBitMap();
             bitMap.setBit(bit, pos);
-            base().putValue(key, bitMap);
+            base().putValue(key, bitMap, null);
 
             return Response.integer(0);
         }
 
         boolean res = value.getBit(pos);
         value.setBit(bit, pos);
-        base().putValue(key, value);
+        base().putValue(key, value, null);
         return Response.integer(res ? 1 : 0);
     }
 }

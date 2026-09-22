@@ -43,7 +43,7 @@ public class Move implements RedisOperation {
             //Destination already existed
             return Response.integer(0);
         }
-        destinationBase.putValue(key, value);
+        destinationBase.putValue(key, value, null);
         Long deadline = state.base().getDeadline(key);
         if (deadline != null) {
             destinationBase.setDeadline(key, deadline);

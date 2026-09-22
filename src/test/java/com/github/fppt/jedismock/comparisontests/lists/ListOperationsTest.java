@@ -108,4 +108,26 @@ public class ListOperationsTest {
         assertThatThrownBy(() -> jedis.get("Another key"))
                 .isInstanceOf(JedisDataException.class);
     }
+
+    @TestTemplate
+    public void lpushOnExistingKeyDoesNotClearTtl(Jedis jedis) {
+        String key = "mylist";
+        jedis.rpush(key, "a");
+        jedis.expire(key, 100L);
+
+        jedis.lpush(key, "b");
+
+        assertThat(jedis.ttl(key)).isGreaterThan(0);
+    }
+
+    @TestTemplate
+    public void rpushOnExistingKeyDoesNotClearTtl(Jedis jedis) {
+        String key = "mylist";
+        jedis.rpush(key, "a");
+        jedis.expire(key, 100L);
+
+        jedis.rpush(key, "b");
+
+        assertThat(jedis.ttl(key)).isGreaterThan(0);
+    }
 }

@@ -113,7 +113,7 @@ class ZRangeStore extends AbstractZRangeByIndex {
         boolean destinationExisted = base().exists(keyDest);
         base().deleteValue(keyDest);
         if (!resultZSet.isEmpty()) {
-            base().putValue(keyDest, resultZSet);
+            base().putValue(keyDest, resultZSet, null);
             base().notifyKeyspaceEvent(KeyspaceEvent.ZRANGESTORE, keyDest);
             lock.notifyAll();
         } else if (destinationExisted) {

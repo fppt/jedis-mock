@@ -27,13 +27,13 @@ class Append extends AbstractRedisOperation {
         }
 
         if (s == null) {
-            base().putValue(key, value.extract());
+            base().putValue(key, value.extract(), null);
             base().notifyKeyspaceEvent(KeyspaceEvent.APPEND, key);
             return Response.integer(value.length());
         }
 
         s.add(value.data());
-        base().putValue(key, s);
+        base().putValue(key, s, null);
         base().notifyKeyspaceEvent(KeyspaceEvent.APPEND, key);
         return Response.integer(s.size());
     }

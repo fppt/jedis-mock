@@ -85,4 +85,16 @@ public class SDiffSDiffStoreTest {
         jedis.sdiffstore("dest", "src", "other");
         assertThat(jedis.exists("dest")).isFalse();
     }
+
+    @TestTemplate
+    public void sdiffstoreClearsTtlOnDestination(Jedis jedis) {
+        jedis.sadd("set1", "a", "b");
+        jedis.sadd("set2", "b");
+        jedis.sadd("dest", "old");
+        jedis.expire("dest", 100L);
+
+        jedis.sdiffstore("dest", "set1", "set2");
+
+        assertThat(jedis.ttl("dest")).isEqualTo(-1);
+    }
 }

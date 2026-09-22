@@ -63,4 +63,13 @@ public class TestZRemRangeByRank {
         assertThat(jedis.zremrangeByRank(ZSET_KEY, 0, 4)).isEqualTo(5);
         assertThat(jedis.exists(ZSET_KEY)).isFalse();
     }
+
+    @TestTemplate
+    public void zremrangeByRankDoesNotClearTtl(Jedis jedis) {
+        jedis.expire(ZSET_KEY, 100L);
+
+        jedis.zremrangeByRank(ZSET_KEY, 1, 3);
+
+        assertThat(jedis.ttl(ZSET_KEY)).isGreaterThan(0);
+    }
 }

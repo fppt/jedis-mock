@@ -113,6 +113,18 @@ public class StringOperationsTest {
     }
 
     @TestTemplate
+    public void incrByFloatDoesNotClearTtl(Jedis jedis) {
+        String key = "mykey";
+        jedis.set(key, "0");
+        jedis.expire(key, 100L);
+
+        jedis.incrByFloat(key, 1.5);
+        long ttl = jedis.ttl(key);
+
+        assertThat(ttl).isGreaterThan(0);
+    }
+
+    @TestTemplate
     public void whenIncrementingWithIncrBy_ensureValuesAreCorrect(Jedis jedis) {
         jedis.set("key", "0");
         jedis.incrBy("key", 1);
@@ -227,6 +239,28 @@ public class StringOperationsTest {
     public void testGetSetEmptyString(Jedis jedis) {
         jedis.getSet("foo", "");
         assertThat(jedis.get("foo")).isEqualTo("");
+    }
+
+    @TestTemplate
+    public void getSetClearsTtl(Jedis jedis) {
+        String key = "mykey";
+        jedis.set(key, "old");
+        jedis.expire(key, 100L);
+
+        jedis.getSet(key, "new");
+
+        assertThat(jedis.ttl(key)).isEqualTo(-1);
+    }
+
+    @TestTemplate
+    public void msetClearsTtl(Jedis jedis) {
+        String key = "mykey";
+        jedis.set(key, "old");
+        jedis.expire(key, 100L);
+
+        jedis.mset(key, "new");
+
+        assertThat(jedis.ttl(key)).isEqualTo(-1);
     }
 
 }

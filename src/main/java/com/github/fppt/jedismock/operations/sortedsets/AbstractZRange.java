@@ -160,7 +160,7 @@ abstract class AbstractZRange extends AbstractByScoreOperation {
         if (emptied) {
             base().deleteValue(key);
         } else {
-            base().putValue(key, mapDBObj);
+            base().putValue(key, mapDBObj, null);
         }
         if (count > 0) {
             base().notifyKeyspaceEvent(removalEvent, key);

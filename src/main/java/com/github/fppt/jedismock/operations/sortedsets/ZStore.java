@@ -182,7 +182,7 @@ abstract class ZStore extends AbstractByScoreOperation {
         startKeysIndex = 1;
         RMZSet mapDBObj = getFinishedZSet();
         if (!mapDBObj.isEmpty()) {
-            base().putValue(keyDest, mapDBObj);
+            base().putValue(keyDest, mapDBObj, null);
             base().notifyKeyspaceEvent(storeEvent, keyDest);
             lock.notifyAll();
         } else if (destinationExisted) {
