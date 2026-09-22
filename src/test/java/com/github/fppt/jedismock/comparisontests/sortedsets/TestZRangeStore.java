@@ -147,6 +147,16 @@ public class TestZRangeStore {
         assertThat(jedis.zrangestore(ZSET_KEY_OUT, "noKey", new ZRangeParams(0, -1))).isEqualTo(0);
         assertThat(jedis.exists(ZSET_KEY_OUT)).isFalse();
     }
+
+    @TestTemplate
+    public void zrangestoreClearsTtlOnDestination(Jedis jedis) {
+        jedis.zadd(ZSET_KEY_OUT, 2, "old");
+        jedis.expire(ZSET_KEY_OUT, 100L);
+
+        jedis.zrangestore(ZSET_KEY_OUT, ZSET_KEY, new ZRangeParams(0, -1));
+
+        assertThat(jedis.ttl(ZSET_KEY_OUT)).isEqualTo(-1);
+    }
 }
 
 

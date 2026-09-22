@@ -254,4 +254,24 @@ public class TestZadd {
         assertThat(jedis.zscore(ZSET_KEY, "x")).isEqualTo(28);
     }
 
+    @TestTemplate
+    public void zaddDoesNotClearTtl(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1, "x");
+        jedis.expire(ZSET_KEY, 100L);
+
+        jedis.zadd(ZSET_KEY, 2, "y");
+
+        assertThat(jedis.ttl(ZSET_KEY)).isGreaterThan(0);
+    }
+
+    @TestTemplate
+    public void zaddIncrDoesNotClearTtl(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1, "x");
+        jedis.expire(ZSET_KEY, 100L);
+
+        jedis.zaddIncr(ZSET_KEY, 5, "x", new ZAddParams());
+
+        assertThat(jedis.ttl(ZSET_KEY)).isGreaterThan(0);
+    }
+
 }

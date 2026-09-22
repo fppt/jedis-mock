@@ -138,4 +138,16 @@ public class TestZInterStore {
                 new ZParams().weights(NaN, NaN), ZSET_KEY_1, ZSET_KEY_2))
                 .isInstanceOf(RuntimeException.class);
     }
+
+    @TestTemplate
+    public void zinterstoreClearsTtlOnDestination(Jedis jedis) {
+        jedis.zadd(ZSET_KEY_1, 1, "a");
+        jedis.zadd(ZSET_KEY_2, 1, "a");
+        jedis.zadd(ZSET_KEY_OUT, 1, "old");
+        jedis.expire(ZSET_KEY_OUT, 100L);
+
+        jedis.zinterstore(ZSET_KEY_OUT, ZSET_KEY_1, ZSET_KEY_2);
+
+        assertThat(jedis.ttl(ZSET_KEY_OUT)).isEqualTo(-1);
+    }
 }

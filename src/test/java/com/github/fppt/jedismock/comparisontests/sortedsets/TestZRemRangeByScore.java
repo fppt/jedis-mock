@@ -131,4 +131,15 @@ public class TestZRemRangeByScore {
         assertThat(jedis.zrange("foo", 0, -1)).containsExactly("bar2");
         assertThat(jedis.zcard("foo")).isEqualTo(1);
     }
+
+    @TestTemplate
+    public void zremrangeByScoreDoesNotClearTtl(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1, "one");
+        jedis.zadd(ZSET_KEY, 2, "two");
+        jedis.expire(ZSET_KEY, 100L);
+
+        jedis.zremrangeByScore(ZSET_KEY, "-inf", "1");
+
+        assertThat(jedis.ttl(ZSET_KEY)).isGreaterThan(0);
+    }
 }

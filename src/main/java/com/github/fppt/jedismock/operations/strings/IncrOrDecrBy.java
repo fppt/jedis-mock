@@ -29,13 +29,13 @@ abstract class IncrOrDecrBy extends AbstractRedisOperation {
         RMString v = base().getRMString(key);
 
         if (v == null) {
-            base().putValue(key, RMString.create(String.valueOf(d)));
+            base().putValue(key, RMString.create(String.valueOf(d)), null);
             base().notifyKeyspaceEvent(KeyspaceEvent.INCRBY, key);
             return Response.integer(d);
         }
 
         long r = convertToLong(v.getStoredDataAsString()) + d;
-        base().putValueWithoutClearingTtl(key, RMString.create(String.valueOf(r)));
+        base().putValue(key, RMString.create(String.valueOf(r)), null);
         //Reported as 'incrby' whichever of INCR/INCRBY/DECR/DECRBY was issued
         base().notifyKeyspaceEvent(KeyspaceEvent.INCRBY, key);
         return Response.integer(r);

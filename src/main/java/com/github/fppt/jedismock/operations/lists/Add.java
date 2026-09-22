@@ -30,7 +30,7 @@ abstract class Add extends AbstractRedisOperation {
             addSliceToList(list, params().get(i));
         }
 
-        base().putValue(key, listDBObj);
+        base().putValue(key, listDBObj, null);
         //One event per command, however many elements were pushed
         base().notifyKeyspaceEvent(pushEvent(), key);
 

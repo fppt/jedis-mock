@@ -61,7 +61,7 @@ public class Sort extends AbstractRedisOperation {
                 .collect(Collectors.toList());
 
         if (storeTo != null) {
-            base().putValue(storeTo, new RMList(sorted));
+            base().putValue(storeTo, new RMList(sorted), -1L);
             base().notifyKeyspaceEvent(KeyspaceEvent.SORTSTORE, storeTo);
             lock.notifyAll();
             return Response.integer(sorted.size());

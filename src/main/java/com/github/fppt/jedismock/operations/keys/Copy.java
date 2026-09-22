@@ -67,7 +67,7 @@ public class Copy implements RedisOperation {
                 return Response.integer(0);
             }
         }
-        destinationBase.putValue(destination, value);
+        destinationBase.putValue(destination, value, null);
         Long deadline = sourceBase.getDeadline(source);
         if (deadline != null) {
             destinationBase.setDeadline(destination, deadline);

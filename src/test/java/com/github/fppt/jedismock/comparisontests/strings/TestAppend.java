@@ -29,4 +29,15 @@ public class TestAppend {
         jedis.append("baz".getBytes(), new byte[]{(byte) 0x03, (byte) 0x04});
         assertThat(jedis.get("baz".getBytes())).containsExactly((byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04);
     }
+
+    @TestTemplate
+    public void appendToExistingKeyDoesNotClearTtl(Jedis jedis) {
+        String key = "mykey";
+        jedis.set(key, "foo");
+        jedis.expire(key, 100L);
+
+        jedis.append(key, "bar");
+
+        assertThat(jedis.ttl(key)).isGreaterThan(0);
+    }
 }

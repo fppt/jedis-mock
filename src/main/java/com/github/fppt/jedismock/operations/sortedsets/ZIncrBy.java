@@ -41,7 +41,7 @@ public class ZIncrBy extends AbstractByScoreOperation {
         double newScore = getSum(score, increment);
 
         mapDBObj.put(member, newScore);
-        base().putValue(key, mapDBObj);
+        base().putValue(key, mapDBObj, null);
         //ZINCRBY reports 'zincr'
         base().notifyKeyspaceEvent(KeyspaceEvent.ZINCR, key);
         return newScore;

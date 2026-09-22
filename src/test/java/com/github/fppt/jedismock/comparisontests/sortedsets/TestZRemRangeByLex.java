@@ -92,4 +92,13 @@ public class TestZRemRangeByLex {
         assertThat(jedis.zcard(key)).isEqualTo(0);
         assertThat(jedis.exists(key)).isFalse();
     }
+
+    @TestTemplate
+    public void zremrangeByLexDoesNotClearTtl(Jedis jedis) {
+        jedis.expire(key, 100L);
+
+        jedis.zremrangeByLex(key, "-", "[cool");
+
+        assertThat(jedis.ttl(key)).isGreaterThan(0);
+    }
 }

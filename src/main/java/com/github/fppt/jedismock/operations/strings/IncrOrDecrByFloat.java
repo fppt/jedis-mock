@@ -49,7 +49,7 @@ abstract class IncrOrDecrByFloat extends AbstractRedisOperation {
                 ? numericValue.intValue() : numericValue);
 
         RMString res = RMString.create(data);
-        base().putValue(key, res);
+        base().putValue(key, res, null);
         base().notifyKeyspaceEvent(KeyspaceEvent.INCRBYFLOAT, key);
 
         return Response.bulkString(res.getAsSlice());

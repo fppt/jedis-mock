@@ -144,14 +144,14 @@ class Set extends AbstractRedisOperation {
     private void store(Slice key, RMDataStructure value, Option expiration, long millis) {
         if (expiration == Option.KEEPTTL) {
             Long deadline = base().getDeadline(key);
-            base().putValue(key, value);
+            base().putValue(key, value, null);
             if (deadline != null) {
                 base().setDeadline(key, deadline);
             }
         } else if (expiration == null) {
-            base().putValue(key, value);
+            base().putValue(key, value, -1L);
         } else if (expiration.absolute) {
-            base().putValue(key, value);
+            base().putValue(key, value, null);
             base().setDeadline(key, millis);
         } else {
             base().putValue(key, value, millis);

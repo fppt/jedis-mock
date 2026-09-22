@@ -24,7 +24,7 @@ public class MSetNX extends AbstractRedisOperation {
             }
         }
         for (int i = 0; i < params().size(); i += 2) {
-            base.putValue(params().get(i), params().get(i + 1).extract());
+            base.putValue(params().get(i), params().get(i + 1).extract(), null);
             base.notifyKeyspaceEvent(KeyspaceEvent.SET, params().get(i));
         }
         return Response.integer(1);

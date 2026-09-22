@@ -160,4 +160,14 @@ public class XAddTests {
                 .isInstanceOf(JedisDataException.class)
                 .hasMessage("ERR The ID specified in XADD must be greater than 0-0");
     }
+
+    @TestTemplate
+    void xaddToExistingStreamDoesNotClearTtl(Jedis jedis) {
+        jedis.xadd("s", XAddParams.xAddParams().id(1), HASH);
+        jedis.expire("s", 100L);
+
+        jedis.xadd("s", XAddParams.xAddParams().id(2), HASH);
+
+        assertThat(jedis.ttl("s")).isGreaterThan(0);
+    }
 }

@@ -124,4 +124,15 @@ public class BitMapsOperationsTest {
         jedis.setbit("zeroes", 0L, true);
         assertThat(jedis.get("zeroes".getBytes())).hasSize(17);
     }
+
+    @TestTemplate
+    public void setbitOnExistingKeyDoesNotClearTtl(Jedis jedis) {
+        String key = "mykey";
+        jedis.set(key, "0");
+        jedis.expire(key, 100L);
+
+        jedis.setbit(key, 5, true);
+
+        assertThat(jedis.ttl(key)).isGreaterThan(0);
+    }
 }

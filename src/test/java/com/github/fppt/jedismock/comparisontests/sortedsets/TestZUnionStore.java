@@ -169,4 +169,15 @@ public class TestZUnionStore {
         results = jedis.zrangeWithScores(ZSET_KEY_OUT, 0, -1);
         assertThat(results.get(0)).isEqualTo(new Tuple("a", POSITIVE_INFINITY));
     }
+
+    @TestTemplate
+    public void zunionstoreClearsTtlOnDestination(Jedis jedis) {
+        jedis.zadd(ZSET_KEY_1, 1, "a");
+        jedis.zadd(ZSET_KEY_OUT, 1, "old");
+        jedis.expire(ZSET_KEY_OUT, 100L);
+
+        jedis.zunionstore(ZSET_KEY_OUT, ZSET_KEY_1);
+
+        assertThat(jedis.ttl(ZSET_KEY_OUT)).isEqualTo(-1);
+    }
 }

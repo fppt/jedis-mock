@@ -119,7 +119,7 @@ public class XAdd extends AbstractRedisOperation {
         map.append(nodeId, entryValues);
         stream.updateLastId(nodeId);
 
-        base().putValue(key, stream);
+        base().putValue(key, stream, null);
         base().notifyKeyspaceEvent(KeyspaceEvent.XADD, key);
 
         int trimmed = 0;

@@ -70,4 +70,16 @@ public class SInterSInterStoreTest {
         assertThat(jedis.exists("dest")).isFalse();
     }
 
+    @TestTemplate
+    public void sinterstoreClearsTtlOnDestination(Jedis jedis) {
+        jedis.sadd("set1", "a", "b");
+        jedis.sadd("set2", "a", "c");
+        jedis.sadd("dest", "old");
+        jedis.expire("dest", 100L);
+
+        jedis.sinterstore("dest", "set1", "set2");
+
+        assertThat(jedis.ttl("dest")).isEqualTo(-1);
+    }
+
 }

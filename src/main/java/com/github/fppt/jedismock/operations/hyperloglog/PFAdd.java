@@ -18,23 +18,17 @@ class PFAdd extends AbstractRedisOperation {
     protected Slice response(){
         Slice key = params().get(0);
         RMHyperLogLog dataSet = base().getHLL(key);
-        boolean first = true;
 
         int prev = 0;
         if (dataSet == null) {
             dataSet = new RMHyperLogLog();
         } else {
-            first = false;
             prev = dataSet.size();
         }
 
         dataSet.addAll(params().subList(1, params().size()));
 
-        if (first) {
-            base().putValue(key, dataSet);
-        } else {
-            base().putValue(key, dataSet, null);
-        }
+        base().putValue(key, dataSet, null);
 
         return Response.integer((prev != dataSet.size()) ? 1 : 0);
     }

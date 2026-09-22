@@ -41,7 +41,7 @@ public abstract class SStore extends AbstractRedisOperation {
                 base().notifyKeyspaceEvent(KeyspaceEvent.DEL, key);
             }
         } else {
-            base().putValue(key, new RMSet(result));
+            base().putValue(key, new RMSet(result), -1L);
             base().notifyKeyspaceEvent(storeEvent(), key);
         }
         return Response.integer(result.size());
