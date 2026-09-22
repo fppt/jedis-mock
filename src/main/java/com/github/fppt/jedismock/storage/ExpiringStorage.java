@@ -57,7 +57,6 @@ public abstract class ExpiringStorage {
     }
 
     public long setTTL(Slice key, long ttl) {
-        keyChangeNotifier.accept(key);
         return setDeadline(key, ttl + getMillis());
     }
 
@@ -87,8 +86,13 @@ public abstract class ExpiringStorage {
             Long oldValue = ttls.put(key, deadline);
             //It is considered to be an unsuccessful operation if we
             //reset deadline for the key which does not have one
-            return (deadline < 0 && (oldValue == null || oldValue < 0)) ?
-                    0L : 1L;
+            boolean unsuccessful = deadline < 0 && (oldValue == null || oldValue < 0);
+            if (unsuccessful) {
+                return 0L;
+            } else {
+                keyChangeNotifier.accept(key);
+                return 1L;
+            }
         }
         return 0L;
     }
