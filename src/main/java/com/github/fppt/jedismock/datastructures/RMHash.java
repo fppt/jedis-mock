@@ -14,9 +14,8 @@ import java.util.function.Supplier;
 public class RMHash extends ExpiringStorage implements RMDataStructure {
     private final LinkedHashMap<Slice, Slice> storedData = new LinkedHashMap<>();
 
-    public RMHash(Supplier<Clock> clockSupplier) {
-        super(clockSupplier, s -> {
-        });
+    public RMHash(Supplier<Clock> clockSupplier, Runnable keyChangeNotifier) {
+        super(clockSupplier, ignored -> keyChangeNotifier.run());
     }
 
     public Map<Slice, Slice> getStoredDataReadOnly() {

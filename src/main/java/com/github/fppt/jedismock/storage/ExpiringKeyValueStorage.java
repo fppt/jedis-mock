@@ -167,7 +167,7 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
         expireIfOutdated(key1);
         if (!values.containsKey(key1)) {
             eventPublisher.accept(KeyspaceEvent.NEW, key1);
-            mapByKey = new RMHash(getClockSupplier());
+            mapByKey = new RMHash(getClockSupplier(), () -> keyChangeNotifier.accept(key1));
             values.put(key1, mapByKey);
         } else {
             mapByKey = getRMHash(key1);

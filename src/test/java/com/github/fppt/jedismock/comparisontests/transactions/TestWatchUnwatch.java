@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static org.assertj.core.api.Assertions.assertThat;
+import static redis.clients.jedis.params.HSetExParams.hSetExParams;
 
 @ExtendWith(ComparisonBase.class)
 public class TestWatchUnwatch {
@@ -65,6 +66,79 @@ public class TestWatchUnwatch {
         transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
         List<Object> result = transaction.exec();
         assertThat(result).isNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHExpire(Jedis jedis) {
+        jedis.hset(FIRST_KEY, SECOND_KEY, FIRST_VALUE);
+        jedis.watch(FIRST_KEY);
+        jedis.hpexpire(FIRST_KEY, 1000, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHExpireForNonExistentField(Jedis jedis) {
+        jedis.hset(FIRST_KEY, ANOTHER_KEY, FIRST_VALUE);
+        assertThat(jedis.hpttl(FIRST_KEY, ANOTHER_KEY, SECOND_KEY)).containsExactly(-1L, -2L);
+        jedis.watch(FIRST_KEY);
+        jedis.hpexpire(FIRST_KEY, 1000, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, ANOTHER_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNotNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHExpireAt(Jedis jedis) {
+        jedis.hset(FIRST_KEY, SECOND_KEY, FIRST_VALUE);
+        jedis.watch(FIRST_KEY);
+        jedis.hpexpireAt(FIRST_KEY, System.currentTimeMillis() + 1000, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHExpireAtForNonExistentField(Jedis jedis) {
+        jedis.hset(FIRST_KEY, ANOTHER_KEY, FIRST_VALUE);
+        assertThat(jedis.hpttl(FIRST_KEY, ANOTHER_KEY, SECOND_KEY)).containsExactly(-1L, -2L);
+        jedis.watch(FIRST_KEY);
+        jedis.hpexpireAt(FIRST_KEY, System.currentTimeMillis() + 1000, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, ANOTHER_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNotNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHPersist(Jedis jedis) {
+        jedis.hsetex(FIRST_KEY, hSetExParams().ex(1), SECOND_KEY, FIRST_VALUE);
+        jedis.watch(FIRST_KEY);
+        jedis.hpersist(FIRST_KEY, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHPersistForFieldWithNoExpiry(Jedis jedis) {
+        jedis.hset(FIRST_KEY, SECOND_KEY, FIRST_VALUE);
+        assertThat(jedis.httl(FIRST_KEY, SECOND_KEY)).containsExactly(-1L);
+        jedis.watch(FIRST_KEY);
+        jedis.hpersist(FIRST_KEY, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNotNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHPersistForNonExistentField(Jedis jedis) {
+        assertThat(jedis.httl(FIRST_KEY, SECOND_KEY)).containsExactly(-2L);
+        jedis.watch(FIRST_KEY);
+        jedis.hpersist(FIRST_KEY, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNotNull();
     }
 
     @TestTemplate
