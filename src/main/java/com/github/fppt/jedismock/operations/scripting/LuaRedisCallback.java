@@ -17,6 +17,7 @@ import redis.clients.jedis.util.RedisInputStream;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class LuaRedisCallback {
             "Wrong number of args calling command from script";
     //Commands real Redis flags as not-callable from a script and which jedis-mock
     //does not (fully) model. Kept lower-case for case-insensitive lookup.
-    private static final Set<String> SCRIPT_DISALLOWED_COMMANDS = Collections.singleton("cluster");
+    private static final Set<String> SCRIPT_DISALLOWED_COMMANDS = buildDisallowedCommandsSet();
 
     private final OperationExecutorState state;
 
@@ -100,7 +101,6 @@ public class LuaRedisCallback {
         if (operation == null) {
             throw new IllegalStateException("Unknown command called from script");
         }
-        throwOnUnsupported(operation);
         final Slice result;
         try {
             result = operation.execute();
@@ -128,12 +128,6 @@ public class LuaRedisCallback {
 
     private static boolean isArityError(String message) {
         return message != null && message.contains("wrong number of arguments");
-    }
-
-    private static void throwOnUnsupported(RedisOperation operation) {
-        if (operation.getClass().equals(Eval.class)) {
-            throw new IllegalStateException("This command is not allowed from scripts");
-        }
     }
 
     private static LuaValue toLuaValue(final RedisInputStream is) {
@@ -209,5 +203,14 @@ public class LuaRedisCallback {
             }
             return ret;
         }
+    }
+
+    private static Set<String> buildDisallowedCommandsSet() {
+        Set<String> commands = new HashSet<>();
+        commands.add("cluster");
+        commands.add("eval");
+        commands.add("fcall");
+        commands.add("function");
+        return commands;
     }
 }

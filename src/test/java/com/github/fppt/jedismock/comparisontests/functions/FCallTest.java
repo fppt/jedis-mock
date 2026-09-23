@@ -156,4 +156,29 @@ public class FCallTest {
                 .isInstanceOf(JedisDataException.class)
                 .hasMessageStartingWith("ERR Please specify at least one argument for this redis lib call script: test");
     }
+
+    @TestTemplate
+    void fcallIsDisallowedWithinFunction(Jedis jedis) {
+        jedis.functionLoad(getSingleFunctionLibraryCode("LUA", "lib1", "hi1", "return 'hello'"));
+        jedis.functionLoad(getSingleFunctionLibraryCode("LUA", "lib2", "hi2", "return redis.call('FCALL', 'hi1', 0)"));
+        assertThatThrownBy(() -> jedis.fcall("hi2", List.of(), List.of()))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageMatching("ERR This (Redis )?command is not allowed from script script: hi2, on .*");
+    }
+
+    @TestTemplate
+    void evalIsDisallowedWithinFunction(Jedis jedis) {
+        jedis.functionLoad(getSingleFunctionLibraryCode("LUA", "lib", "hi", "return redis.call('EVAL', 'return \\'hello\\'', 0)"));
+        assertThatThrownBy(() -> jedis.fcall("hi", List.of(), List.of()))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageMatching("ERR This (Redis )?command is not allowed from script script: hi, on .*");
+    }
+
+    @TestTemplate
+    void functionIsDisallowedWithinFunction(Jedis jedis) {
+        jedis.functionLoad(getSingleFunctionLibraryCode("LUA", "lib", "hi", "return redis.call('FUNCTION', 'LIST')"));
+        assertThatThrownBy(() -> jedis.fcall("hi", List.of(), List.of()))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageMatching("ERR This (Redis )?command is not allowed from script script: hi, on .*");
+    }
 }
