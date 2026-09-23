@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.github.fppt.jedismock.server.Response.array;
+import static com.github.fppt.jedismock.server.Response.bulkString;
+import static com.github.fppt.jedismock.server.Response.integer;
+
 public class MockExecutor {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(MockExecutor.class);
@@ -200,27 +204,27 @@ public class MockExecutor {
     private static Slice functionStats(RedisBase base, ScriptingManager scripting) {
         Map<String, LibraryInfo> libraries = base.getLuaLibraries();
         ScriptingManager.RunningFunctionInfo functionInfo = scripting.getRunningFunctionInfo();
-        return Response.array(
-                Response.bulkString(Slice.create("running_script")),
+        return array(
+                bulkString(Slice.create("running_script")),
                 functionInfo != null ?
-                        Response.array(
-                                Response.bulkString(Slice.create("name")),
-                                Response.bulkString(Slice.create(functionInfo.getInvokingFunction())),
-                                Response.bulkString(Slice.create("command")),
-                                Response.array(functionInfo.getInvokingCommand().stream().map(Response::bulkString).collect(Collectors.toList())),
-                                Response.bulkString(Slice.create("duration_ms")),
-                                Response.integer(Duration.ofNanos(System.nanoTime() - functionInfo.getStartNanos()).toMillis())
+                        array(
+                                bulkString(Slice.create("name")),
+                                bulkString(Slice.create(functionInfo.getInvokingFunction())),
+                                bulkString(Slice.create("command")),
+                                array(functionInfo.getInvokingCommand().stream().map(Response::bulkString).collect(Collectors.toList())),
+                                bulkString(Slice.create("duration_ms")),
+                                integer(Duration.ofNanos(System.nanoTime() - functionInfo.getStartNanos()).toMillis())
                         )
                         : Response.NULL,
 
-                Response.bulkString(Slice.create("engines")),
-                Response.array(
-                        Response.bulkString(Slice.create("LUA")),
-                        Response.array(
-                                Response.bulkString(Slice.create("libraries_count")),
-                                Response.integer(libraries.size()),
-                                Response.bulkString(Slice.create("functions_count")),
-                                Response.integer(libraries.values().stream().mapToLong(libraryInfo -> libraryInfo.getFunctionNames().size()).sum())
+                bulkString(Slice.create("engines")),
+                array(
+                        bulkString(Slice.create("LUA")),
+                        array(
+                                bulkString(Slice.create("libraries_count")),
+                                integer(libraries.size()),
+                                bulkString(Slice.create("functions_count")),
+                                integer(libraries.values().stream().mapToLong(libraryInfo -> libraryInfo.getFunctionNames().size()).sum())
                         )
                 )
         );
