@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.github.fppt.jedismock.operations.scripting.Eval.embedLuaListToValue;
+import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.embedLuaListToValue;
 
 public class LuaRedisCallback {
 

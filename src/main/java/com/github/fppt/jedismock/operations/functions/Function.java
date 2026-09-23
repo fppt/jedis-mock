@@ -5,7 +5,6 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
-import com.github.fppt.jedismock.operations.scripting.Eval;
 import com.github.fppt.jedismock.operations.scripting.InterruptibleDebugLib;
 import com.github.fppt.jedismock.operations.scripting.LuaSandbox;
 import com.github.fppt.jedismock.server.Response;
@@ -32,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.github.fppt.jedismock.Utils.parseQuotedString;
+import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.libraryLoadErrorMessage;
 
 @RedisCommand("function")
 public class Function extends AbstractRedisOperation {
@@ -246,7 +246,7 @@ public class Function extends AbstractRedisOperation {
         try {
             script.call();
         } catch (LuaError e) {
-            String message = Eval.libraryLoadErrorMessage(e);
+            String message = libraryLoadErrorMessage(e);
             throw new ArgumentException("ERR Error registering functions: " + message);
         }
         registerFunction.completed = true;

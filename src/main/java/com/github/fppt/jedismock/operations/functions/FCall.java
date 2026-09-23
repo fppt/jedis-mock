@@ -4,13 +4,11 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
-import com.github.fppt.jedismock.operations.scripting.Eval;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.RedisBase;
 import com.github.fppt.jedismock.storage.ScriptingManager;
 import org.luaj.vm2.LuaError;
-import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.UpValue;
@@ -18,7 +16,10 @@ import org.luaj.vm2.lib.jse.JsePlatform;
 
 import java.util.List;
 
-import static com.github.fppt.jedismock.operations.scripting.Eval.createLuaSandbox;
+import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.createLuaSandbox;
+import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.resolveResult;
+import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.scriptErrorReply;
+import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.slicesToLuaValues;
 
 @RedisCommand("fcall")
 public class FCall extends AbstractRedisOperation {
@@ -76,13 +77,13 @@ public class FCall extends AbstractRedisOperation {
             try {
                 result = functionInfo.getFunction().call(luaKeys, luaArgs);
             } catch (LuaError e) {
-                return Response.error(Eval.scriptErrorReply(e, functionName));
+                return Response.error(scriptErrorReply(e, functionName));
             }
         } finally {
             scripting.stop();
         }
 
-        return Eval.resolveResult(result);
+        return resolveResult(result);
     }
 
     private int parseNumKeys() {
@@ -99,9 +100,5 @@ public class FCall extends AbstractRedisOperation {
             throw new ArgumentException("ERR Number of keys can't be greater than number of args");
         }
         return numKeys;
-    }
-
-    private static LuaTable slicesToLuaValues(List<Slice> args) {
-        return LuaValue.listOf(args.stream().map(arg -> LuaValue.valueOf(arg.data())).toArray(LuaString[]::new));
     }
 }
