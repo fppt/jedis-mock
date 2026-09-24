@@ -351,15 +351,19 @@ public class FunctionTest {
                 jedis.functionKill();
                 assertThat(jedis.ping()).isEqualTo("PONG");
             }, TestErrorMessages.DEADLOCK_ERROR_MESSAGE);
+
+            //The killed FCALL has to read the server's error reply off the socket
+            //before the teardown below closes it, otherwise the blocked call fails
+            //with "Socket closed" instead of the error the server actually sent.
+            assertThat(exceptionGate.await(5, TimeUnit.SECONDS))
+                    .withFailMessage("fcall did not throw an exception").isTrue();
+            assertThat(caughtException.get())
+                    .isInstanceOf(JedisDataException.class)
+                    .hasMessage("ERR Script killed by user with SCRIPT KILL... script: test, on @user_function:3.");
         } finally {
             pool.shutdownNow();
             busyClient.close();
         }
-
-        assertThat(exceptionGate.await(5, TimeUnit.SECONDS)).withFailMessage("fcall did not throw an exception").isTrue();
-        assertThat(caughtException.get())
-                .isInstanceOf(JedisDataException.class)
-                .hasMessage("ERR Script killed by user with SCRIPT KILL... script: test, on @user_function:3.");
     }
 
     @TestTemplate

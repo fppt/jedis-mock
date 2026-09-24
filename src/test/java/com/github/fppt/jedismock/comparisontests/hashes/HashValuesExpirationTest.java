@@ -281,12 +281,16 @@ public class HashValuesExpirationTest {
     @TestTemplate
     public void activeExpire(Jedis jedis) throws InterruptedException {
         /*Eventually, hash with all the expired fields disappears */
-        jedis.hset("myhash", "f1", "v1");
-        jedis.hset("myhash", "f2", "v2");
-        jedis.hset("myhash", "f3", "v3");
-        jedis.hpexpire("myhash", 1, "f1", "f2", "f3");
-        Thread.sleep(2);
-        assertThat(jedis.exists("myhash")).isTrue();
+        do {
+            jedis.del("myhash");
+            jedis.hset("myhash", "f1", "v1");
+            jedis.hset("myhash", "f2", "v2");
+            jedis.hset("myhash", "f3", "v3");
+            jedis.hpexpire("myhash", 1, "f1", "f2", "f3");
+            Thread.sleep(2);
+            //Sometimes "real" Redis is too fast with active expire, so
+            //we wait for a convenient chance to observe the hash still there
+        } while (!jedis.exists("myhash"));
         Awaitility.await().until(() -> !jedis.exists("myhash"));
     }
 
