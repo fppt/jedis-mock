@@ -10,8 +10,11 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -54,18 +57,21 @@ public class ScriptKillComparisonTest {
      * deadlock) into a clean failure instead of a hung suite.
      */
     @TestTemplate
-    public void scriptKillTerminatesRunawayScript(Jedis jedis, HostAndPort hostAndPort) {
+    public void scriptKillTerminatesRunawayScript(Jedis jedis, HostAndPort hostAndPort) throws InterruptedException {
         // Lower the busy threshold so SCRIPT KILL is permitted quickly.
         jedis.configSet("lua-time-limit", "100");
 
+        AtomicReference<Exception> caughtException = new AtomicReference<>();
+        CountDownLatch exceptionGate = new CountDownLatch(1);
         Jedis busyClient = new Jedis(hostAndPort.getHost(), hostAndPort.getPort(), 1_000_000);
         ExecutorService pool = Executors.newSingleThreadExecutor();
         try {
             pool.submit(() -> {
                 try {
                     busyClient.eval("while true do end", 0);
-                } catch (Exception ignored) {
-                    // the script is aborted by SCRIPT KILL -> error here
+                } catch (Exception e) {
+                    caughtException.set(e);
+                    exceptionGate.countDown();
                 }
             });
 
@@ -81,5 +87,10 @@ public class ScriptKillComparisonTest {
             pool.shutdownNow();
             busyClient.close();
         }
+
+        assertThat(exceptionGate.await(5, TimeUnit.SECONDS)).withFailMessage("eval did not throw an exception").isTrue();
+        assertThat(caughtException.get())
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR Script killed by user with SCRIPT KILL... script: 694a5fe1ddb97a4c6a1bf299d9537c7d3d0f84e7, on @user_script:1.");
     }
 }

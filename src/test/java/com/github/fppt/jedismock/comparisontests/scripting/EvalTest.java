@@ -287,4 +287,33 @@ public class EvalTest {
         assertThat(jedis.smembers("myset"))
                 .containsExactly("the", "quick", "brown", "fox");
     }
+
+    @TestTemplate
+    void fcallIsDisallowedWithinEval(Jedis jedis) {
+        jedis.functionLoad(
+                """
+                        #!lua name=lib
+                        redis.register_function('hi', function(KEYS, ARGV)
+                          return 'hello'
+                        end)
+                        """
+        );
+        assertThatThrownBy(() -> jedis.eval("return redis.call('FCALL', 'hi', 0)"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageMatching("ERR This (Redis )?command is not allowed from script script: 568d8a3146d3d5a681ae253943c39e85992988cd, on @user_script:1\\.");
+    }
+
+    @TestTemplate
+    void evalIsDisallowedWithinEval(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.eval("return redis.call('EVAL', 'return \\'hello\\'', 0)"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageMatching("ERR This (Redis )?command is not allowed from script script: c08c71e86d62945318beb66b1d3a6fff237c2906, on @user_script:1\\.");
+    }
+
+    @TestTemplate
+    void functionIsDisallowedWithinEval(Jedis jedis) {
+        assertThatThrownBy(() -> jedis.eval("return redis.call('FUNCTION', 'LIST')"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageMatching("ERR This (Redis )?command is not allowed from script script: 716b79376633ef2b497d914a260f58c36a4b915e, on @user_script:1\\.");
+    }
 }

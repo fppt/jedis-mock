@@ -1,5 +1,6 @@
 package com.github.fppt.jedismock.operations.scripting;
 
+import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 
@@ -22,31 +23,31 @@ public class ImmutableLuaTable extends LuaTable {
 
     @Override
     public void set(String key, LuaValue value) {
-        throw new UnsupportedOperationException(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
+        throw new LuaError(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
     }
 
     @Override
     public void set(int key, LuaValue value) {
-        throw new UnsupportedOperationException(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
+        throw new LuaError(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
     }
 
     @Override
     public void set(LuaValue key, LuaValue value) {
-        throw new UnsupportedOperationException(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
+        throw new LuaError(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
     }
 
     @Override
     public void hashset(LuaValue key, LuaValue value) {
-        throw new UnsupportedOperationException(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
+        throw new LuaError(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
     }
 
     @Override
     public void rawset(LuaValue key, LuaValue value) {
-        throw new UnsupportedOperationException(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
+        throw new LuaError(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
     }
 
     @Override
     public void rawset(int key, LuaValue value) {
-        throw new UnsupportedOperationException(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
+        throw new LuaError(ATTEMPT_TO_MODIFY_A_READONLY_TABLE);
     }
 }
