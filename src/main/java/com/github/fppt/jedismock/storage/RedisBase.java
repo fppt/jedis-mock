@@ -204,6 +204,14 @@ public class RedisBase {
         return keyValueStorage.setDeadline(key, deadline);
     }
 
+    public long setHashFieldTTL(Slice key, Slice field, long ttl) {
+        return keyValueStorage.setHashFieldTTL(key, field, ttl);
+    }
+
+    public long setHashFieldDeadline(Slice key, Slice field, long deadline) {
+        return keyValueStorage.setHashFieldDeadline(key, field, deadline);
+    }
+
     public Long getDeadline(Slice key) {
         return keyValueStorage.getDeadline(key);
     }

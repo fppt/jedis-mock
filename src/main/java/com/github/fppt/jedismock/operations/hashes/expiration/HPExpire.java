@@ -48,7 +48,7 @@ public class HPExpire extends AbstractRedisOperation {
                         response.add(Response.integer(-2L));
                     } else if (extraParam.checkTiming(
                             hash.getTTL(field), newTTL)) {
-                        long result = hash.setTTL(field, newTTL);
+                        long result = base().setHashFieldTTL(key, field, newTTL);
                         response.add(Response.integer(newTTL == 0 ? 2 : result));
                     } else {
                         response.add(Response.integer(0));

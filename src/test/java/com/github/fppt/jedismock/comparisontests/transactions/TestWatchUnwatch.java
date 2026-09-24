@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
+import redis.clients.jedis.args.ExpiryOption;
 import redis.clients.jedis.params.SetParams;
 
 import java.util.List;
@@ -111,6 +112,38 @@ public class TestWatchUnwatch {
     }
 
     @TestTemplate
+    public void testWatchWithHExpireNotSatisfyingNxCondition(Jedis jedis) {
+        jedis.hset(FIRST_KEY, SECOND_KEY, FIRST_VALUE);
+        jedis.hpexpire(FIRST_KEY, 1000, SECOND_KEY);
+        jedis.watch(FIRST_KEY);
+        assertThat(jedis.hpexpire(FIRST_KEY, 5000, ExpiryOption.NX, SECOND_KEY)).containsExactly(0L);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNotNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHExpireNotSatisfyingGtCondition(Jedis jedis) {
+        jedis.hset(FIRST_KEY, SECOND_KEY, FIRST_VALUE);
+        jedis.hpexpire(FIRST_KEY, 5000, SECOND_KEY);
+        jedis.watch(FIRST_KEY);
+        assertThat(jedis.hpexpire(FIRST_KEY, 1000, ExpiryOption.GT, SECOND_KEY)).containsExactly(0L);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNotNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHExpireDeletingField(Jedis jedis) {
+        jedis.hset(FIRST_KEY, SECOND_KEY, FIRST_VALUE);
+        jedis.watch(FIRST_KEY);
+        assertThat(jedis.hpexpire(FIRST_KEY, 0, SECOND_KEY)).containsExactly(2L);
+        Transaction transaction = jedis.multi();
+        transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNull();
+    }
+
+    @TestTemplate
     public void testWatchWithHPersist(Jedis jedis) {
         jedis.hsetex(FIRST_KEY, hSetExParams().ex(1), SECOND_KEY, FIRST_VALUE);
         jedis.watch(FIRST_KEY);
@@ -138,6 +171,28 @@ public class TestWatchUnwatch {
         jedis.hpersist(FIRST_KEY, SECOND_KEY);
         Transaction transaction = jedis.multi();
         transaction.hset(FIRST_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNotNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHExpireForRenamedHash(Jedis jedis) {
+        jedis.hset(FIRST_KEY, SECOND_KEY, FIRST_VALUE);
+        jedis.rename(FIRST_KEY, ANOTHER_KEY);
+        jedis.watch(ANOTHER_KEY);
+        jedis.hpexpire(ANOTHER_KEY, 1000, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.hset(ANOTHER_KEY, SECOND_KEY, SECOND_VALUE);
+        assertThat(transaction.exec()).isNull();
+    }
+
+    @TestTemplate
+    public void testWatchWithHExpireForRenamedHashDoesNotTouchOldKey(Jedis jedis) {
+        jedis.hset(FIRST_KEY, SECOND_KEY, FIRST_VALUE);
+        jedis.rename(FIRST_KEY, ANOTHER_KEY);
+        jedis.watch(FIRST_KEY);
+        jedis.hpexpire(ANOTHER_KEY, 1000, SECOND_KEY);
+        Transaction transaction = jedis.multi();
+        transaction.set(FIRST_KEY, FIRST_VALUE);
         assertThat(transaction.exec()).isNotNull();
     }
 
