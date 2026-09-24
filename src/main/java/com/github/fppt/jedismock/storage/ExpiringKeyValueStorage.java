@@ -177,6 +177,40 @@ public class ExpiringKeyValueStorage extends ExpiringStorage {
         mapByKey.configureTTL(key2, ttl);
     }
 
+    /**
+     * Sets the TTL of a field of the hash stored at {@code key}, flagging
+     * WATCHers of {@code key} when the TTL actually changes.
+     *
+     * @see #notifyIfChanged
+     */
+    public long setHashFieldTTL(Slice key, Slice field, long ttl) {
+        return notifyIfChanged(key, getRMHash(key).setTTL(field, ttl));
+    }
+
+    /**
+     * Sets the deadline of a field of the hash stored at {@code key}, flagging
+     * WATCHers of {@code key} when the deadline actually changes.
+     *
+     * @see #notifyIfChanged
+     */
+    public long setHashFieldDeadline(Slice key, Slice field, long deadline) {
+        return notifyIfChanged(key, getRMHash(key).setDeadline(field, deadline));
+    }
+
+    /**
+     * Reports a hash field TTL change against the key the caller addressed,
+     * rather than against a key remembered by the {@link RMHash}: RENAME and
+     * MOVE store the very same instance under a different key, so a key
+     * captured when the hash was created goes stale. Only an effective change
+     * counts, matching the top-level TTL commands.
+     */
+    private long notifyIfChanged(Slice key, long result) {
+        if (result == 1) {
+            keyChangeNotifier.accept(key);
+        }
+        return result;
+    }
+
     private RMHash getRMHash(Slice key) {
         RMDataStructure valueByKey = values.get(key);
         if (!isHashValue(valueByKey)) {

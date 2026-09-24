@@ -14,8 +14,16 @@ import java.util.function.Supplier;
 public class RMHash extends ExpiringStorage implements RMDataStructure {
     private final LinkedHashMap<Slice, Slice> storedData = new LinkedHashMap<>();
 
+    /**
+     * The inherited key-change notifier is a no-op: its argument is a hash
+     * <em>field</em>, while a WATCH is registered against the hash's key, and
+     * a hash does not know that key — RENAME and MOVE re-home the very same
+     * instance under a different name. Field TTL changes are therefore
+     * notified by {@link com.github.fppt.jedismock.storage.ExpiringKeyValueStorage},
+     * which is told the key by the caller.
+     */
     public RMHash(Supplier<Clock> clockSupplier) {
-        super(clockSupplier, s -> {
+        super(clockSupplier, field -> {
         });
     }
 

@@ -34,7 +34,7 @@ public class HPersist extends AbstractRedisOperation {
                     } else {
                         Long oldDeadline = hash.getDeadline(field);
                         if (oldDeadline != null && oldDeadline > 0) {
-                            response.add(Response.integer(hash.setDeadline(field, -1)));
+                            response.add(Response.integer(base().setHashFieldDeadline(key, field, -1)));
                         } else {
                             response.add(Response.integer(-1L));
                         }
