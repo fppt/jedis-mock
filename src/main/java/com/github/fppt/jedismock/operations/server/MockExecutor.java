@@ -122,6 +122,7 @@ public class MockExecutor {
                 operation = CommandFactory.buildOperation(name, true, state, commandParams);
                 if (operation != null) {
                     if (state.isTransactionModeOn()) {
+                        operation.validateArity();
                         state.tx().add(operation);
                         return Response.clientResponse(name, Response.QUEUED);
                     } else {

@@ -5,7 +5,6 @@ import com.github.fppt.jedismock.datastructures.streams.RMStream;
 import com.github.fppt.jedismock.datastructures.RMZSet;
 import com.github.fppt.jedismock.datastructures.RMSet;
 import com.github.fppt.jedismock.datastructures.Slice;
-import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
@@ -84,18 +83,21 @@ public abstract class AbstractRedisOperation implements RedisOperation {
     }
 
     @Override
+    public void validateArity() {
+        if (params().size() < minArgs() || params().size() > maxArgs()) {
+            throw new IllegalArgumentException(String.format("ERR wrong number of arguments for '%s' command", self().value()));
+        }
+    }
+
+    @Override
     public Slice execute() {
-        RedisCommand self = self();
         try {
-            //Validate the number of arguments
-            if (params().size() < minArgs() || params().size() > maxArgs()) {
-                return Response.error(String.format("ERR wrong number of arguments for '%s' command", self.value()));
-            }
+            validateArity();
             doOptionalWork();
             return response();
         } catch (IndexOutOfBoundsException e) {
             throw new IllegalArgumentException(
-                    String.format("Received wrong number of arguments when executing command [%s]", self.value()), e);
+                    String.format("Received wrong number of arguments when executing command [%s]", self().value()), e);
         }
     }
 }
