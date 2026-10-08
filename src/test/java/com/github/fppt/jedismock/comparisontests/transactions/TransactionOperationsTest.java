@@ -3,6 +3,7 @@ package com.github.fppt.jedismock.comparisontests.transactions;
 import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
+import redis.clients.jedis.CommandArguments;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.Transaction;
@@ -10,6 +11,7 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.util.SafeEncoder;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -110,5 +112,26 @@ public class TransactionOperationsTest {
         assertThatThrownBy(() -> jedis.get("oobity-oobity-boo"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Cannot use Jedis when in Multi. Please use Transaction or reset jedis state.");
+    }
+
+    @TestTemplate
+    public void commandWithInvalidArgArityIsRejected(Jedis jedis) {
+        assertThat(
+                List.of(
+                        new CommandArguments(Protocol.Command.GET),
+                        new CommandArguments(Protocol.Command.GET).addObjects("foo", "bar"),
+                        new CommandArguments(Protocol.Command.SET),
+                        new CommandArguments(Protocol.Command.SET).add("foo"),
+                        new CommandArguments(Protocol.Command.HSETEX).add("hash key")
+                )
+        ).allSatisfy(args -> {
+            try (Transaction transaction = jedis.multi()) {
+                transaction.sendCommand(args);
+                assertThatThrownBy(transaction::exec)
+                        .isInstanceOf(JedisDataException.class)
+                        .hasMessage("EXECABORT Transaction discarded because of previous errors.")
+                        .hasSuppressedException(new JedisDataException(String.format("ERR wrong number of arguments for '%s' command", args.getCommand().toString().toLowerCase())));
+            }
+        });
     }
 }
