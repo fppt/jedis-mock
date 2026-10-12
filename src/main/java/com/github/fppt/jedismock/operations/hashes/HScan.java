@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@RedisCommand("hscan")
+@RedisCommand(value = "hscan", arity = -3)
 public class HScan extends com.github.fppt.jedismock.operations.keys.Scan {
     private Slice keySlice;
 

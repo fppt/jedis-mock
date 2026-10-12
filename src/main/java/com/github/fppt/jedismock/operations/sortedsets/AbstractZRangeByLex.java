@@ -15,7 +15,6 @@ abstract class AbstractZRangeByLex extends AbstractZRange {
     static final String INCLUSIVE_PREFIX = "[";
     static final String EXCLUSIVE_PREFIX = "(";
 
-
     AbstractZRangeByLex(RedisBase base, List<Slice> params) {
         super(base, params);
     }

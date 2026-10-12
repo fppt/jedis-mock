@@ -9,20 +9,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("getset")
+@RedisCommand(value = "getset", arity = 3, readOnly = false)
 class GetSet extends AbstractRedisOperation {
     GetSet(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 2;
     }
 
     protected Slice response() {

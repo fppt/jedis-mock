@@ -11,17 +11,11 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Set;
 
-@RedisCommand("srem")
+@RedisCommand(value = "srem", arity = -3, readOnly = false)
 class SRem extends AbstractRedisOperation {
-
 
     SRem(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     final int remove() {

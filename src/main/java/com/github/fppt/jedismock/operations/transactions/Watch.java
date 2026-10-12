@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand(value = "watch", transactional = false)
+@RedisCommand(value = "watch", transactional = false, arity = -2)
 public class Watch implements RedisOperation {
     private final OperationExecutorState state;
     private final List<Slice> keys;

@@ -18,7 +18,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import static java.lang.Math.abs;
 
-@RedisCommand("lpos")
+@RedisCommand(value = "lpos", arity = -3)
 public class LPos extends AbstractRedisOperation {
 
     private static final String RANK = "rank";
@@ -92,7 +92,6 @@ public class LPos extends AbstractRedisOperation {
         maxLen = Optional.ofNullable(args.get(MAXLEN)).map(slice -> Integer.parseInt(slice.toString())).orElse(0);
         maxLen = maxLen == 0 ? listSize : maxLen;
     }
-
 
     private static Map<String, Slice> getArgsWithValues(List<Slice> params, Set<String> argNames) {
         Map<String, Slice> argMap = new HashMap<>();

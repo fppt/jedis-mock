@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@RedisCommand("pfcount")
+@RedisCommand(value = "pfcount", arity = -2)
 class PFCount extends AbstractRedisOperation {
     PFCount(RedisBase base, List<Slice> params) {
         super(base, params);

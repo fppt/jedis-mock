@@ -14,15 +14,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("hpexpireat")
+@RedisCommand(value = "hpexpireat", arity = -6, readOnly = false)
 public class HPExpireAt extends AbstractRedisOperation {
     public HPExpireAt(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 5;
     }
 
     protected boolean useMillis() {

@@ -21,18 +21,13 @@ import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.reso
 import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.scriptErrorReply;
 import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.slicesToLuaValues;
 
-@RedisCommand("fcall")
+@RedisCommand(value = "fcall", arity = -3)
 public class FCall extends AbstractRedisOperation {
     private final OperationExecutorState state;
 
     public FCall(RedisBase base, List<Slice> params, OperationExecutorState state) {
         super(base, params);
         this.state = state;
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     @Override

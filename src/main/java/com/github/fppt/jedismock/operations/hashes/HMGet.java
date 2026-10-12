@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("hmget")
+@RedisCommand(value = "hmget", arity = -3)
 public class HMGet extends AbstractRedisOperation {
     public HMGet(RedisBase base, List<Slice> params) {
         super(base, params);

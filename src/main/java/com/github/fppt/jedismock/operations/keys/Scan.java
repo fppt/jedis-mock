@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
-@RedisCommand("scan")
+@RedisCommand(value = "scan", arity = -2)
 public class Scan extends AbstractRedisOperation {
 
     private static final long CURSOR_START = 0;

@@ -26,17 +26,12 @@ import java.util.List;
  * it even when NX or XX then declines to write. Reading the old value is also
  * what makes WRONGTYPE possible: without GET, SET overwrites a key of any type.
  */
-@RedisCommand("set")
+@RedisCommand(value = "set", arity = -3, readOnly = false)
 class Set extends AbstractRedisOperation {
     private static final String SYNTAX_ERROR = "ERR syntax error";
 
     Set(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     /**

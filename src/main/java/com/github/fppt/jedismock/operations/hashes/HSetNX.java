@@ -6,7 +6,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("hsetnx")
+@RedisCommand(value = "hsetnx", arity = 4, readOnly = false)
 class HSetNX extends HSet {
     HSetNX(RedisBase base, List<Slice> params) {
         super(base, params);

@@ -11,20 +11,10 @@ import java.util.List;
 /**
  * XLEN key
  */
-@RedisCommand("xlen")
+@RedisCommand(value = "xlen", arity = 2)
 public class XLen extends AbstractRedisOperation {
     XLen(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 1;
     }
 
     @Override

@@ -10,7 +10,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
-@RedisCommand("setex")
+@RedisCommand(value = "setex", arity = 4, readOnly = false)
 class SetEx extends Set {
     SetEx(RedisBase base, List<Slice> params) {
         super(base, params);

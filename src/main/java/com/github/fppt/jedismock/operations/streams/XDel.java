@@ -16,15 +16,10 @@ import java.util.List;
 /**
  * XDEL key id [id ...]<br>
  */
-@RedisCommand("xdel")
+@RedisCommand(value = "xdel", arity = -3, readOnly = false)
 public class XDel extends AbstractRedisOperation {
     XDel(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     @Override

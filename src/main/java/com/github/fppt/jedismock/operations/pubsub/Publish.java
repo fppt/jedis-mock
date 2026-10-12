@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 
 import java.util.List;
 
-@RedisCommand("publish")
+@RedisCommand(value = "publish", arity = 3)
 class Publish extends AbstractRedisOperation {
     private final SubscriptionRegistry registry;
 

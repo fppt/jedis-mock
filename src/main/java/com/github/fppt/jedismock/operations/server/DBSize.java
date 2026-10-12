@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("dbsize")
+@RedisCommand(value = "dbsize", arity = 1)
 class DBSize extends AbstractRedisOperation {
     DBSize(RedisBase base, List<Slice> params) {
         super(base, params);

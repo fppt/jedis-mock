@@ -22,7 +22,7 @@ import static com.github.fppt.jedismock.datastructures.streams.StreamErrors.SYNT
  * Supported options: MINID, MAXLEN, LIMIT, =<br>
  * Unsupported options: "~" - due to the fact that our implementation works as = option
  */
-@RedisCommand("xtrim")
+@RedisCommand(value = "xtrim", arity = -4, readOnly = false)
 public class XTrim extends AbstractRedisOperation {
     public XTrim(RedisBase base, List<Slice> params) {
         super(base, params);
@@ -53,11 +53,6 @@ public class XTrim extends AbstractRedisOperation {
         }
 
         return numberOfEvictedNodes;
-    }
-
-    @Override
-    protected int minArgs() {
-        return 3;
     }
 
     /** Reports {@code xtrim} only if entries were actually removed. */

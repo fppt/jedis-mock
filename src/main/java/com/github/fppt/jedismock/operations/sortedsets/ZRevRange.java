@@ -15,7 +15,7 @@ import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Opt
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.LIMIT;
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.REV;
 
-@RedisCommand("zrevrange")
+@RedisCommand(value = "zrevrange", arity = -4)
 class ZRevRange extends AbstractZRangeByIndex {
 
     ZRevRange(RedisBase base, List<Slice> params) {

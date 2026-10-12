@@ -10,7 +10,7 @@ import java.util.List;
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.BYLEX;
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.REV;
 
-@RedisCommand("zrevrangebyscore")
+@RedisCommand(value = "zrevrangebyscore", arity = -4)
 public class ZRevRangeByScore extends AbstractZRangeByScore {
 
     ZRevRangeByScore(RedisBase base, List<Slice> params) {

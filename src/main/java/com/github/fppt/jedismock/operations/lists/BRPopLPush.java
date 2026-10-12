@@ -13,7 +13,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.toNanoTimeout;
 
-@RedisCommand("brpoplpush")
+@RedisCommand(value = "brpoplpush", arity = 4, readOnly = false)
 class BRPopLPush extends RPopLPush {
     /**
      * Upper bound on a single {@code wait()} so the loop wakes up periodically

@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("persist")
+@RedisCommand(value = "persist", arity = 2, readOnly = false)
 class Persist extends AbstractRedisOperation {
     Persist(RedisBase base, List<Slice> params) {
         super(base, params);

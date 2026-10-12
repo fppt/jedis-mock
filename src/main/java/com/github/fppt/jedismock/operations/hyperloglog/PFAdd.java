@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("pfadd")
+@RedisCommand(value = "pfadd", arity = -2, readOnly = false)
 class PFAdd extends AbstractRedisOperation {
     PFAdd(RedisBase base, List<Slice> params) {
         super(base, params);

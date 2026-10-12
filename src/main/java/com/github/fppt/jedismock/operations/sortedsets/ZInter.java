@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand("zinter")
+@RedisCommand(value = "zinter", arity = -3)
 class ZInter extends AbstractZInter {
 
     ZInter(OperationExecutorState state, List<Slice> params) {

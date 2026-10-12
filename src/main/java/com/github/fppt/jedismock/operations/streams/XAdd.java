@@ -27,7 +27,7 @@ import static com.github.fppt.jedismock.operations.streams.XTrim.trimLen;
  * Supported options: all, except '~'<br>
  * About trim options see {@link XTrim}
  */
-@RedisCommand("xadd")
+@RedisCommand(value = "xadd", arity = -5, readOnly = false)
 public class XAdd extends AbstractRedisOperation {
     public XAdd(RedisBase base, List<Slice> params) {
         super(base, params);
@@ -42,11 +42,6 @@ public class XAdd extends AbstractRedisOperation {
         if (key.compareTo(lastId) <= 0) {
             throw new WrongStreamKeyException(TOP_ERROR);
         }
-    }
-
-    @Override
-    protected int minArgs() {
-        return 4;
     }
 
     @Override
@@ -101,7 +96,6 @@ public class XAdd extends AbstractRedisOperation {
         /*  End trim options parsing */
 
         Slice id = params().get(idInd++);
-
 
         StreamId nodeId;
         try {

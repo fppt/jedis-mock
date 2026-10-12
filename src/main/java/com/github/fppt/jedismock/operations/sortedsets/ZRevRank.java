@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("zrevrank")
+@RedisCommand(value = "zrevrank", arity = -3)
 public class ZRevRank extends AbstractByScoreOperation {
     private static final String IS_REV = "REV";
     private final ZRank zRank;

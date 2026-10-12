@@ -10,7 +10,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("lset")
+@RedisCommand(value = "lset", arity = 4, readOnly = false)
 public class LSet extends AbstractRedisOperation {
     public LSet(RedisBase base, List<Slice> params) {
         super(base, params);

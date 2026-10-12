@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("rpop")
+@RedisCommand(value = "rpop", arity = -2, readOnly = false)
 class RPop extends ListPopper {
     RPop(RedisBase base, List<Slice> params) {
         super(base, params);

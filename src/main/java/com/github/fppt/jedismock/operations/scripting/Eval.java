@@ -24,7 +24,7 @@ import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.getL
 import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.resolveResult;
 import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.scriptErrorReply;
 
-@RedisCommand("eval")
+@RedisCommand(value = "eval", arity = -3)
 public class Eval extends AbstractRedisOperation {
 
     private final Globals globals = JsePlatform.standardGlobals();
@@ -33,11 +33,6 @@ public class Eval extends AbstractRedisOperation {
     public Eval(final RedisBase base, final List<Slice> params, final OperationExecutorState state) {
         super(base, params);
         this.state = state;
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     @Override

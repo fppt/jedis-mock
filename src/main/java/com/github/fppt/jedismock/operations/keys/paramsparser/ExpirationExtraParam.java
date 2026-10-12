@@ -1,6 +1,5 @@
 package com.github.fppt.jedismock.operations.keys.paramsparser;
 
-
 import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.EnumSet;

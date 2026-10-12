@@ -3,8 +3,8 @@ package com.github.fppt.jedismock.operations.server;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.exception.ArgumentException;
 import com.github.fppt.jedismock.exception.WrongValueTypeException;
+import com.github.fppt.jedismock.operations.CommandDescriptor;
 import com.github.fppt.jedismock.operations.CommandFactory;
-import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.operations.functions.LibraryInfo;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
@@ -87,7 +87,13 @@ public class MockExecutor {
         //command queued in that transaction could never get the BUSY error that
         //must dirty it (so EXEC would not abort, as real Redis requires).
         if ("multi".equals(name)) {
-            return CommandFactory.buildOperation(name, false, state, commandParams).execute();
+            CommandDescriptor multi = CommandFactory.lookup(name);
+            try {
+                multi.validateArity(commandParams.size());
+            } catch (IllegalArgumentException e) {
+                return Response.error(e.getMessage());
+            }
+            return multi.instantiate(state, commandParams).execute();
         }
 
         //BUSY gate. While another connection runs a Lua script we must not block
@@ -111,27 +117,23 @@ public class MockExecutor {
 
         synchronized (state.lock()) {
             try {
-                //Checking if we are affecting the server or client state.
-                //This is done outside the context of a transaction which is why it's a separate check
-                RedisOperation operation = CommandFactory.buildOperation(name, false, state, commandParams);
-                if (operation != null) {
-                    return operation.execute();
-                }
-
-                //Checking if we are mutating the transaction or the redisBases
-                operation = CommandFactory.buildOperation(name, true, state, commandParams);
-                if (operation != null) {
-                    if (state.isTransactionModeOn()) {
-                        operation.validateArity();
-                        state.tx().add(operation);
-                        return Response.clientResponse(name, Response.QUEUED);
-                    } else {
-                        return Response.clientResponse(name, operation.execute());
-                    }
-                } else {
+                CommandDescriptor command = CommandFactory.lookup(name);
+                if (command == null) {
                     state.errorTransaction();
                     return Response.error(String.format("Unsupported operation: %s", name));
                 }
+                //Like Redis, a bad argument count is rejected before the operation
+                //is even built, let alone run or queued (which then dirties the MULTI).
+                command.validateArity(commandParams.size());
+                if (!command.transactional()) {
+                    //Affects the server or client state, outside the context of a transaction.
+                    return command.instantiate(state, commandParams).execute();
+                }
+                if (state.isTransactionModeOn()) {
+                    state.tx().add(command.instantiate(state, commandParams));
+                    return Response.clientResponse(name, Response.QUEUED);
+                }
+                return Response.clientResponse(name, command.instantiate(state, commandParams).execute());
             } catch (ArgumentException | IllegalArgumentException | WrongValueTypeException e) {
                 // Expected guards, so we can just return the error message.
                 state.errorTransaction();

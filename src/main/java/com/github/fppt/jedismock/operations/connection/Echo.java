@@ -8,20 +8,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("echo")
+@RedisCommand(value = "echo", arity = 2)
 class Echo extends AbstractRedisOperation {
     Echo(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 1;
     }
 
     protected Slice response() {

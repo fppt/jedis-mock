@@ -6,14 +6,10 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
-@RedisCommand("incrbyfloat")
+@RedisCommand(value = "incrbyfloat", arity = 3, readOnly = false)
 class IncrByFloat extends IncrOrDecrByFloat {
     IncrByFloat(RedisBase base, List<Slice> params) {
         super(base, params);
     }
 
-    @Override
-    protected int maxArgs() {
-        return 2;
-    }
 }

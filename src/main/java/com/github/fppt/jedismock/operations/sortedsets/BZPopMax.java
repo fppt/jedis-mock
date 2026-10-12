@@ -9,7 +9,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.toNanoTimeout;
 
-@RedisCommand("bzpopmax")
+@RedisCommand(value = "bzpopmax", arity = -3, readOnly = false)
 public class BZPopMax extends BZPop {
 
     BZPopMax(OperationExecutorState state, List<Slice> params) {

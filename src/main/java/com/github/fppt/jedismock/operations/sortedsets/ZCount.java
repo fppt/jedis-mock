@@ -7,8 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-
-@RedisCommand("zcount")
+@RedisCommand(value = "zcount", arity = 4)
 public class ZCount extends AbstractZRangeByScore {
     public ZCount(RedisBase base, List<Slice> params) {
         super(base, params);

@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.List;
 
-@RedisCommand("zscan")
+@RedisCommand(value = "zscan", arity = -3)
 class ZScan extends Scan {
     private Slice keySlice;
     ZScan(RedisBase base, List<Slice> params) {

@@ -12,15 +12,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("hpexpiretime")
+@RedisCommand(value = "hpexpiretime", arity = -5)
 public class HPExpireTime extends AbstractRedisOperation {
     public HPExpireTime(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 4;
     }
 
     protected Slice wrap(long deadline) {

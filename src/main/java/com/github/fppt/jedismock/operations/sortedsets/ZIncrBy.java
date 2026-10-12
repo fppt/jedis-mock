@@ -9,20 +9,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zincrby")
+@RedisCommand(value = "zincrby", arity = 4, readOnly = false)
 public class ZIncrBy extends AbstractByScoreOperation {
     public ZIncrBy(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 3;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 3;
     }
 
     @Override

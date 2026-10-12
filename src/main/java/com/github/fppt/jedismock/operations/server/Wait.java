@@ -17,20 +17,10 @@ import java.util.List;
  * replicas, and in particular lets it be called from a Lua script, which must
  * never block.
  */
-@RedisCommand("wait")
+@RedisCommand(value = "wait", arity = 3)
 class Wait extends AbstractRedisOperation {
     Wait(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 2;
     }
 
     @Override

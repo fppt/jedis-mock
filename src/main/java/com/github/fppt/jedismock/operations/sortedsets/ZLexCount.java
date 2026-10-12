@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zlexcount")
+@RedisCommand(value = "zlexcount", arity = 4)
 class ZLexCount extends AbstractZRangeByLex {
 
     ZLexCount(RedisBase base, List<Slice> params) {

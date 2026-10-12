@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("hexpiretime")
+@RedisCommand(value = "hexpiretime", arity = -5)
 public class HExpireTime extends HPExpireTime {
     public HExpireTime(RedisBase base, List<Slice> params) {
         super(base, params);

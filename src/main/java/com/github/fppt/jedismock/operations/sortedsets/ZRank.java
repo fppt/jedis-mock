@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@RedisCommand("zrank")
+@RedisCommand(value = "zrank", arity = -3)
 public class ZRank extends AbstractByScoreOperation {
     private static final String WITH_SCORES = "WITHSCORE";
     private static final String IS_REV = "REV";

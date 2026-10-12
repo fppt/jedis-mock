@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
-@RedisCommand("rpush")
+@RedisCommand(value = "rpush", arity = -3, readOnly = false)
 class RPush extends Add {
     RPush(OperationExecutorState state, List<Slice> params) {
         super(state, params);

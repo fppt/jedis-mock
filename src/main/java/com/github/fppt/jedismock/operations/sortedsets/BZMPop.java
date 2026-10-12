@@ -9,17 +9,12 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.toNanoTimeout;
 
-@RedisCommand("bzmpop")
+@RedisCommand(value = "bzmpop", arity = -5, readOnly = false)
 public class BZMPop extends BZPop {
     private Slice numKeys;
 
     BZMPop(OperationExecutorState state, List<Slice> params) {
         super(state, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 4;
     }
 
     @Override

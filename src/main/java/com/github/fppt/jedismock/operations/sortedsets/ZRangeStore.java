@@ -19,7 +19,7 @@ import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Opt
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.REV;
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.WITHSCORES;
 
-@RedisCommand("zrangestore")
+@RedisCommand(value = "zrangestore", arity = -5, readOnly = false)
 class ZRangeStore extends AbstractZRangeByIndex {
     private final Object lock;
 

@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("hmset")
+@RedisCommand(value = "hmset", arity = -4, readOnly = false)
 public class HMSet extends HSet {
     public HMSet(RedisBase base, List<Slice> params) {
         super(base, params);

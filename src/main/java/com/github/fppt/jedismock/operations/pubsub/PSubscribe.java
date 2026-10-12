@@ -10,7 +10,7 @@ import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 
 import java.util.List;
 
-@RedisCommand(value = "psubscribe", transactional = false)
+@RedisCommand(value = "psubscribe", transactional = false, arity = -2)
 public class PSubscribe extends AbstractRedisOperation {
     private final SubscriptionRegistry registry;
     private final RedisClient client;

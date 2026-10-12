@@ -12,7 +12,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
-@RedisCommand("lrange")
+@RedisCommand(value = "lrange", arity = 4)
 class LRange extends AbstractRedisOperation {
     LRange(RedisBase base, List<Slice> params) {
         super(base, params);

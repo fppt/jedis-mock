@@ -10,7 +10,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand("rename")
+@RedisCommand(value = "rename", arity = 3, readOnly = false)
 class Rename extends AbstractRedisOperation {
 
     private final Object lock;

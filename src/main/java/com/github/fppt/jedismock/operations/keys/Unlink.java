@@ -6,10 +6,11 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("unlink")
+@RedisCommand(value = "unlink", arity = -2, readOnly = false)
 public class Unlink extends Del {
     Unlink(RedisBase base, List<Slice> params) {
         super(base, params);
     }
+
     /*Note: this command behaves exactly like 'DEL'*/
 }

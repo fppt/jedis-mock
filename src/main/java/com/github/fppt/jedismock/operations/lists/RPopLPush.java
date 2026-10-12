@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.server.Response.NULL;
 
-@RedisCommand("rpoplpush")
+@RedisCommand(value = "rpoplpush", arity = 3, readOnly = false)
 class RPopLPush extends AbstractRedisOperation {
     private final OperationExecutorState state;
     RPopLPush(OperationExecutorState state, List<Slice> params) {

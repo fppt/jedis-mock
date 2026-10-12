@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand("brpop")
+@RedisCommand(value = "brpop", arity = -3, readOnly = false)
 class BRPop extends BPop {
 
     BRPop(OperationExecutorState state, List<Slice> params) {

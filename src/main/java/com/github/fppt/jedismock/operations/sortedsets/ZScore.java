@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zscore")
+@RedisCommand(value = "zscore", arity = 3)
 class ZScore extends AbstractRedisOperation {
 
     private static final double DELTA = 1e-6;

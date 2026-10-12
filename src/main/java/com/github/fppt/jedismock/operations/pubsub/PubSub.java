@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RedisCommand(value = "pubsub", transactional = false)
+@RedisCommand(value = "pubsub", transactional = false, arity = -2)
 public class PubSub extends AbstractRedisOperation {
     private final SubscriptionRegistry registry;
 

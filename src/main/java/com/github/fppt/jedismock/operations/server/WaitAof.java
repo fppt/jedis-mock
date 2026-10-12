@@ -16,20 +16,10 @@ import java.util.List;
  * immediately, without blocking. Like {@link Wait}, this lets the command be
  * called from a Lua script, which must never block.
  */
-@RedisCommand("waitaof")
+@RedisCommand(value = "waitaof", arity = 4)
 class WaitAof extends AbstractRedisOperation {
     WaitAof(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 3;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 3;
     }
 
     @Override

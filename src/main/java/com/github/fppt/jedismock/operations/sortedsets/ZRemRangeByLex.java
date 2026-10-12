@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zremrangebylex")
+@RedisCommand(value = "zremrangebylex", arity = 4, readOnly = false)
 class ZRemRangeByLex extends AbstractZRangeByLex {
 
     ZRemRangeByLex(RedisBase base, List<Slice> params) {

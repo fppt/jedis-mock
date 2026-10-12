@@ -10,16 +10,11 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("zmscore")
+@RedisCommand(value = "zmscore", arity = -3)
 class ZMScore extends AbstractRedisOperation {
 
     ZMScore(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     @Override

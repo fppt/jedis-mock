@@ -64,35 +64,13 @@ public abstract class AbstractRedisOperation implements RedisOperation {
         return data;
     }
 
-    /***
-     * Minimum number of arguments (inclusive)
-     */
-    protected int minArgs() {
-        return 0;
-    }
-
-    /***
-     * Maximum number of arguments (inclusive)
-     */
-    protected int maxArgs() {
-        return Integer.MAX_VALUE;
-    }
-
     protected RedisCommand self() {
         return Objects.requireNonNull(getClass().getAnnotation(RedisCommand.class));
     }
 
     @Override
-    public void validateArity() {
-        if (params().size() < minArgs() || params().size() > maxArgs()) {
-            throw new IllegalArgumentException(String.format("ERR wrong number of arguments for '%s' command", self().value()));
-        }
-    }
-
-    @Override
     public Slice execute() {
         try {
-            validateArity();
             doOptionalWork();
             return response();
         } catch (IndexOutOfBoundsException e) {

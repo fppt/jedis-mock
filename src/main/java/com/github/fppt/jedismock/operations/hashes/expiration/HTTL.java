@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("httl")
+@RedisCommand(value = "httl", arity = -5)
 public class HTTL extends HPTTL {
     public HTTL(RedisBase base, List<Slice> params) {
         super(base, params);

@@ -11,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("script")
+@RedisCommand(value = "script", arity = -2)
 public class Script extends AbstractRedisOperation {
     private static final String SCRIPT_PARAM_ERROR = "Wrong number of arguments for SCRIPT";
 

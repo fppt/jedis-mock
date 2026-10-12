@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand(value = "select", transactional = false)
+@RedisCommand(value = "select", transactional = false, arity = 2)
 public class Select implements RedisOperation {
     private final OperationExecutorState state;
     private final List<Slice> params;

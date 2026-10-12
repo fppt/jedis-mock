@@ -11,7 +11,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
-@RedisCommand("lindex")
+@RedisCommand(value = "lindex", arity = 3)
 class LIndex extends AbstractRedisOperation {
     LIndex(RedisBase base, List<Slice> params) {
         super(base, params);

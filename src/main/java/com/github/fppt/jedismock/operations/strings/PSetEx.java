@@ -8,7 +8,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
-@RedisCommand("psetex")
+@RedisCommand(value = "psetex", arity = 4, readOnly = false)
 class PSetEx extends SetEx {
     PSetEx(RedisBase base, List<Slice> params) {
         super(base, params);

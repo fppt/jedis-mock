@@ -14,15 +14,10 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-@RedisCommand("srandmember")
+@RedisCommand(value = "srandmember", arity = -2)
 public class SRandMember extends AbstractRedisOperation {
     public SRandMember(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     @Override
