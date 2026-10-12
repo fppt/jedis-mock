@@ -7,5 +7,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
  * Represents a Redis Operation which can be executed against {@link RedisBase}
  */
 public interface RedisOperation {
+    default void validateArity() {}
+
     Slice execute();
 }
