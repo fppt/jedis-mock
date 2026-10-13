@@ -41,6 +41,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class ShutdownTest {
 
+    /**
+     * How long a paused client task is held while {@code stop()} is in
+     * progress. {@code stop()} must neither return nor publish the server as
+     * stopped during that time, however long it is: there is no timeout on
+     * the wait for client tasks, only periodic warnings.
+     */
+    private static final long PAUSED_TASK_WAIT_MILLIS = 1_500L;
+
     private RedisServer server;
     private String host;
     private int port;
@@ -276,8 +284,10 @@ class ShutdownTest {
         stopper.setDaemon(true);
         stopper.start();
         try {
-            assertThat(stopped.await(500, TimeUnit.MILLISECONDS))
+            assertThat(stopped.await(PAUSED_TASK_WAIT_MILLIS, TimeUnit.MILLISECONDS))
                     .withFailMessage("stop() returned while a client task was still paused").isFalse();
+            // Nor is the server published as stopped while the task lives.
+            assertThat(server.isRunning()).withFailMessage("server published as stopped with a client task alive").isTrue();
         } finally {
             releasePing.countDown();
         }

@@ -37,10 +37,13 @@ public class RedisServer {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisServer.class);
     private static final String NOT_RUNNING = "JedisMock is not running";
     /**
-     * How long {@link #stop()} waits for the last client task to terminate.
-     * Only a client task that is stuck, which none should be, can exhaust it.
+     * How often {@link #stop()}, while waiting for the last client task to
+     * terminate, warns that it is still waiting. The wait itself has no limit:
+     * a server that reports itself stopped with a client task still alive
+     * would be worse than one that visibly hangs, and only a client task that
+     * is stuck (say in a user interceptor) can keep it waiting.
      */
-    private static final long CLIENT_TERMINATION_TIMEOUT_MILLIS = 10_000L;
+    private static final long CLIENT_TERMINATION_WARN_INTERVAL_MILLIS = 10_000L;
 
     private final int bindPort;
     private final InetAddress bindAddress;
@@ -283,27 +286,30 @@ public class RedisServer {
         }
 
         /**
-         * Wait, without being interruptible, until every client task has
-         * terminated: their sockets are closed and their threads interrupted,
-         * so the only ones left are mid-command, and those finish on their own
-         * (a script dies at its next instruction once the manager is armed, a
-         * command waiting for the data lock is dropped as soon as it gets it).
-         * Gives up, with a warning, after {@link #CLIENT_TERMINATION_TIMEOUT_MILLIS}.
+         * Wait, without being interruptible and without a limit, until every
+         * client task has terminated: their sockets are closed and their
+         * threads interrupted, so the only ones left are mid-command, and those
+         * finish on their own (a script dies at its next instruction once the
+         * manager is armed, a command waiting for the data lock is dropped as
+         * soon as it gets it). The server is published as stopped only once
+         * this returns, so no task of it can ever resume against a restarted
+         * one. Warns every {@link #CLIENT_TERMINATION_WARN_INTERVAL_MILLIS}
+         * while still waiting, which only a stuck task can cause.
          */
         public void awaitClientsTerminated() {
-            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(CLIENT_TERMINATION_TIMEOUT_MILLIS);
+            long waitedMillis = 0L;
             boolean interrupted = false;
             boolean terminated = false;
             try {
                 while (!terminated) {
-                    long remaining = deadline - System.nanoTime();
-                    if (remaining <= 0) {
-                        LOG.warn("Jedis-mock stopped with a client task still running after {} ms",
-                                CLIENT_TERMINATION_TIMEOUT_MILLIS);
-                        return;
-                    }
                     try {
-                        terminated = threadPool.awaitTermination(remaining, TimeUnit.NANOSECONDS);
+                        terminated = threadPool.awaitTermination(
+                                CLIENT_TERMINATION_WARN_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+                        if (!terminated) {
+                            waitedMillis += CLIENT_TERMINATION_WARN_INTERVAL_MILLIS;
+                            LOG.warn("Jedis-mock stop is still waiting for a client task to terminate after {} ms",
+                                    waitedMillis);
+                        }
                     } catch (InterruptedException e) {
                         interrupted = true;
                     }
