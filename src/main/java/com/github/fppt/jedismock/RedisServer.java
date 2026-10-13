@@ -8,6 +8,8 @@ import com.github.fppt.jedismock.storage.RedisConfiguration;
 import com.github.fppt.jedismock.storage.ScriptingManager;
 import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -24,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -31,7 +34,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class RedisServer {
 
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisServer.class);
     private static final String NOT_RUNNING = "JedisMock is not running";
+    /**
+     * How long {@link #stop()} waits for the last client task to terminate.
+     * Only a client task that is stuck, which none should be, can exhaust it.
+     */
+    private static final long CLIENT_TERMINATION_TIMEOUT_MILLIS = 10_000L;
 
     private final int bindPort;
     private final InetAddress bindAddress;
@@ -97,32 +106,41 @@ public class RedisServer {
     }
 
     public void stop() throws IOException {
-        Objects.requireNonNull(service, NOT_RUNNING);
-        service.stop();
+        //Work on locals: once the stopped state is published below, start() may
+        //run concurrently (SHUTDOWN stops asynchronously, and its callers poll
+        //isRunning() before restarting) and replace these fields with the new
+        //server's, which this stop must neither wait on nor shut down.
+        RedisServiceJob job = Objects.requireNonNull(service, NOT_RUNNING);
+        Future<Void> acceptLoop = serviceFinalization;
+        ExecutorService acceptor = singleThreadPool;
+        job.stop();
         //A stopped server must be quiescent: the scripting manager and the data
         //are shared by every start of this instance, so a script outliving the
         //stop would make a restarted server reply BUSY, and a command outliving
-        //it could start one. Kill the running script (its connection is already
+        //it could start one or, if it is a stale SHUTDOWN or KILL, act on the
+        //restarted server. Kill the running script (its connection is already
         //closed, so the "killed" error is never sent), and arm the manager so
         //that any script starting from now on dies at its first instruction.
         //Then take the data lock once: that returns only after the script has
         //aborted and every command that was already waiting for the lock has
-        //run its course (those of closed clients are dropped at the lock, see
-        //MockExecutor). Unlike a wait on the manager, this cannot be cut short
-        //by an interrupt.
+        //run its course (those of closed clients are dropped, see MockExecutor).
+        //Finally wait for the client tasks themselves to terminate, so that not
+        //even a task merely paused mid-dispatch outlives the server; neither
+        //wait can be cut short by an interrupt.
         scriptingManager.beginShutdown();
         synchronized (redisBases) {
-            service = null;
+            job.awaitClientsTerminated();
         }
+        service = null;
         try {
-            serviceFinalization.get();
+            acceptLoop.get();
         } catch (ExecutionException e) {
             //Do nothing: it's a normal behaviour when the service was stopped
         } catch (InterruptedException e) {
-            System.err.println("Jedis-mock interrupted while stopping");
+            LOG.warn("Jedis-mock interrupted while stopping");
             Thread.currentThread().interrupt();
         } finally {
-            singleThreadPool.shutdownNow();
+            acceptor.shutdownNow();
         }
     }
 
@@ -217,6 +235,39 @@ public class RedisServer {
             server.close();
             clients.forEach(RedisClient::close);
             threadPool.shutdownNow();
+        }
+
+        /**
+         * Wait, without being interruptible, until every client task has
+         * terminated: their sockets are closed and their threads interrupted,
+         * so the only ones left are mid-command, and those finish on their own
+         * (a script dies at its next instruction once the manager is armed, a
+         * command waiting for the data lock is dropped as soon as it gets it).
+         * Gives up, with a warning, after {@link #CLIENT_TERMINATION_TIMEOUT_MILLIS}.
+         */
+        public void awaitClientsTerminated() {
+            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(CLIENT_TERMINATION_TIMEOUT_MILLIS);
+            boolean interrupted = false;
+            boolean terminated = false;
+            try {
+                while (!terminated) {
+                    long remaining = deadline - System.nanoTime();
+                    if (remaining <= 0) {
+                        LOG.warn("Jedis-mock stopped with a client task still running after {} ms",
+                                CLIENT_TERMINATION_TIMEOUT_MILLIS);
+                        return;
+                    }
+                    try {
+                        terminated = threadPool.awaitTermination(remaining, TimeUnit.NANOSECONDS);
+                    } catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
+            } finally {
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
     }
 

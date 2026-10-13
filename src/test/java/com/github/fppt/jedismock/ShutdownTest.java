@@ -4,8 +4,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import com.github.fppt.jedismock.commands.RedisCommandParser;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.operations.server.MockExecutor;
 import com.github.fppt.jedismock.server.RedisOperationExecutor;
 import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.server.ServiceOptions;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.ScriptingManager;
 import org.junit.jupiter.api.Test;
@@ -100,6 +102,15 @@ class ShutdownTest {
         server.start();
         try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort())) {
             assertThat(jedis.ping()).isEqualTo("PONG");
+            // The asynchronous shutdown must have run its course on the old
+            // server only: it ends, and the restarted one keeps accepting.
+            for (int i = 0; i < 40 && shutdownThreadAlive(); i++) {
+                Thread.sleep(50);
+            }
+            assertThat(shutdownThreadAlive()).withFailMessage("shutdown thread still alive").isFalse();
+            try (Jedis again = new Jedis(server.getHost(), server.getBindPort())) {
+                assertThat(again.ping()).isEqualTo("PONG");
+            }
         }
     }
 
@@ -205,6 +216,82 @@ class ShutdownTest {
         client.close();
         assertThat(executor.execCommand(RedisCommandParser.parse(array("SET", "k", "w")))).isEqualTo(Response.SKIP);
         assertThat(server.getRedisBases().get(0).getRMString(Slice.create("k")).getStoredDataAsString()).isEqualTo("v");
+        // The same goes for the commands served without the data lock: a stale
+        // SHUTDOWN or KILL of a dead client must not hit a (restarted) server.
+        assertThat(executor.execCommand(RedisCommandParser.parse(array("SCRIPT", "KILL")))).isEqualTo(Response.SKIP);
+        assertThat(executor.execCommand(RedisCommandParser.parse(array("SHUTDOWN", "NOSAVE")))).isEqualTo(Response.SKIP);
+        Thread.sleep(200);
+        assertThat(server.isRunning()).isTrue();
+    }
+
+    /**
+     * A client task that is merely paused (descheduled) in the middle of
+     * dispatching a command survives the closing of its socket and the
+     * interrupt of its pool. If {@code stop()} returned while it is paused, it
+     * could resume against a restarted server, e.g. with a stale SHUTDOWN.
+     * {@code stop()} must therefore wait for every client task to terminate.
+     * The pause is simulated by an interceptor that parks the first PING.
+     */
+    @Test
+    void stopWaitsForPausedClientTasks() throws Exception {
+        server.stop();
+        CountDownLatch pingParked = new CountDownLatch(1);
+        CountDownLatch releasePing = new CountDownLatch(1);
+        server.setOptions(ServiceOptions.withInterceptor((state, name, params) -> {
+            if ("ping".equals(name) && pingParked.getCount() > 0) {
+                pingParked.countDown();
+                // A descheduled thread cannot be interrupted out of its pause,
+                // so neither can this simulation of one.
+                boolean released = false;
+                boolean interrupted = false;
+                while (!released) {
+                    try {
+                        releasePing.await();
+                        released = true;
+                    } catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            return MockExecutor.proceed(state, name, params);
+        }));
+        server.start();
+        Jedis parked = new Jedis(server.getHost(), server.getBindPort(), 1_000_000);
+        Future<?> ping = pool.submit(() -> parked.ping());
+        assertThat(pingParked.await(5, TimeUnit.SECONDS)).isTrue();
+
+        CountDownLatch stopped = new CountDownLatch(1);
+        Thread stopper = new Thread(() -> {
+            try {
+                server.stop();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+            stopped.countDown();
+        });
+        stopper.setDaemon(true);
+        stopper.start();
+        try {
+            assertThat(stopped.await(500, TimeUnit.MILLISECONDS))
+                    .withFailMessage("stop() returned while a client task was still paused").isFalse();
+        } finally {
+            releasePing.countDown();
+        }
+        assertThat(stopped.await(5, TimeUnit.SECONDS)).withFailMessage("stop() did not return").isTrue();
+        assertThat(clientThreadsAlive()).isZero();
+        assertThatThrownBy(() -> ping.get(5, TimeUnit.SECONDS)).cause().isInstanceOf(JedisConnectionException.class);
+        parked.close();
+    }
+
+    private static long clientThreadsAlive() {
+        return Thread.getAllStackTraces().entrySet().stream()
+                .filter(e -> e.getKey().isAlive())
+                .filter(e -> java.util.Arrays.stream(e.getValue())
+                        .anyMatch(f -> RedisClient.class.getName().equals(f.getClassName()) && "run".equals(f.getMethodName())))
+                .count();
     }
 
     private static String array(String... words) {
@@ -213,6 +300,11 @@ class ShutdownTest {
             sb.append('$').append(word.length()).append("\r\n").append(word).append("\r\n");
         }
         return sb.toString();
+    }
+
+    private static boolean shutdownThreadAlive() {
+        return Thread.getAllStackTraces().keySet().stream()
+                .anyMatch(t -> t.isAlive() && "jedis-mock-shutdown".equals(t.getName()));
     }
 
     private void awaitStopped() throws InterruptedException {

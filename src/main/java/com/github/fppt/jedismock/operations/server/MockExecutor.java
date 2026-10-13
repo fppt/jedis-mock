@@ -55,6 +55,15 @@ public class MockExecutor {
      */
     public static Slice proceed(OperationExecutorState state, String name, List<Slice> commandParams) {
 
+        //A command of a client that has gone away is dropped, like one left unread
+        //in a disconnected client's query buffer in real Redis. Checked here for
+        //the commands served without the data lock (KILL, SHUTDOWN, ...), and
+        //again under the lock below for the rest: a stale KILL or SHUTDOWN of a
+        //client closed by a server stop must not act on a restarted server.
+        if (state.owner().isClosed()) {
+            return Response.SKIP;
+        }
+
         //FUNCTION/SCRIPT KILL must take effect while a runaway script still holds the
         //global data lock, so it is handled here, before acquiring that lock.
         //Otherwise it would block behind the very script it is meant to abort.
