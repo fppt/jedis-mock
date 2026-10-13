@@ -34,10 +34,23 @@ public final class RedisClient implements Runnable {
     private final OutputStream out;
     private final Consumer<RedisClient> onClose;
     private final long clientId;
+    private final Object generation;
 
     RedisClient(RedisServer server,
                 Socket socket,
                 Consumer<RedisClient> onClose) throws IOException {
+        this(server, socket, onClose, null);
+    }
+
+    /**
+     * @param generation the generation of the server (its listening service)
+     *                   this connection was accepted by; a shutdown it
+     *                   requests applies to that generation only.
+     */
+    RedisClient(RedisServer server,
+                Socket socket,
+                Consumer<RedisClient> onClose,
+                Object generation) throws IOException {
         Objects.requireNonNull(server);
         Objects.requireNonNull(socket);
         Objects.requireNonNull(onClose);
@@ -52,6 +65,7 @@ public final class RedisClient implements Runnable {
         this.out = socket.getOutputStream();
         this.running = new AtomicBoolean(true);
         this.onClose = onClose;
+        this.generation = generation;
     }
 
     public void run() {
@@ -159,13 +173,13 @@ public final class RedisClient implements Runnable {
      * (whether or not it has written) before the server counts as stopped.
      * Done on a separate thread because stopping the server joins its client
      * threads, and the caller is one of them. A request that runs late, once
-     * the server it was sent to has already been stopped by another one, is
-     * ignored.
+     * the generation of the server it was sent to has already been stopped by
+     * another one, is ignored.
      */
     public void shutdownServer() {
         Thread shutdown = new Thread(() -> {
             try {
-                server.stopRequestedBy(this);
+                server.stopRequestedBy(generation);
             } catch (IOException e) {
                 LOG.error("Error while shutting the server down", e);
             }

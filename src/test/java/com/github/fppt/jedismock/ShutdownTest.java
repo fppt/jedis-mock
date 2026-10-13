@@ -299,10 +299,9 @@ class ShutdownTest {
      */
     @Test
     void staleShutdownRequestIsIgnored() throws Exception {
-        RedisClient staleRequester = new RedisClient(server, Mockito.mock(Socket.class), c -> { });
+        RedisClient staleRequester = new RedisClient(server, Mockito.mock(Socket.class), c -> { }, server.currentGeneration());
         server.stop();
         server.start();
-        staleRequester.close();
 
         staleRequester.shutdownServer();
         Thread.sleep(300);
@@ -314,6 +313,86 @@ class ShutdownTest {
         try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort())) {
             assertThat(jedis.ping()).isEqualTo("PONG");
         }
+    }
+
+    /**
+     * Whether a request is stale is decided by the generation it was sent to,
+     * not by the state of its connection: a peer may hang up right after
+     * sending SHUTDOWN, closing the requester before the shutdown thread gets
+     * going, and that must not cancel the only shutdown request there is.
+     */
+    @Test
+    void shutdownRequestedByAPeerThatHungUpStillStops() throws Exception {
+        RedisClient requester = new RedisClient(server, Mockito.mock(Socket.class), c -> { }, server.currentGeneration());
+        requester.close();
+
+        requester.shutdownServer();
+        awaitStopped();
+    }
+
+    /**
+     * A client task blocked on the data lock can only observe that its client
+     * is closed, and exit, once it gets that lock. {@code stop()} must
+     * therefore not hold the lock while it waits for the client tasks to
+     * terminate, or every such task would force the wait to its timeout and
+     * the server would be published as stopped with the task still alive.
+     * The task is parked by an interceptor until {@code stop()} is already
+     * waiting at the barrier, so that it queues on the lock behind it.
+     */
+    @Test
+    void stopDoesNotHoldTheDataLockWhileAwaitingClientTasks() throws Exception {
+        server.stop();
+        CountDownLatch setParked = new CountDownLatch(1);
+        CountDownLatch releaseSet = new CountDownLatch(1);
+        server.setOptions(ServiceOptions.withInterceptor((state, name, params) -> {
+            if ("set".equals(name) && setParked.getCount() > 0) {
+                setParked.countDown();
+                boolean released = false;
+                boolean interrupted = false;
+                while (!released) {
+                    try {
+                        releaseSet.await();
+                        released = true;
+                    } catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            return MockExecutor.proceed(state, name, params);
+        }));
+        server.start();
+        Jedis parked = new Jedis(server.getHost(), server.getBindPort(), 1_000_000);
+        Future<?> set = pool.submit(() -> parked.set("k", "v"));
+        assertThat(setParked.await(5, TimeUnit.SECONDS)).isTrue();
+
+        CountDownLatch stopped = new CountDownLatch(1);
+        Thread stopper = new Thread(() -> {
+            try {
+                server.stop();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+            stopped.countDown();
+        });
+        stopper.setDaemon(true);
+        long elapsedMillis;
+        synchronized (server.getRedisBases()) {
+            stopper.start();
+            // stop() is now blocked at the data-lock barrier behind this thread;
+            // let the parked SET queue on the same lock, behind stop().
+            releaseSet.countDown();
+            Thread.sleep(300);
+            elapsedMillis = System.currentTimeMillis();
+        }
+        assertThat(stopped.await(5, TimeUnit.SECONDS)).withFailMessage("stop() did not return promptly").isTrue();
+        elapsedMillis = System.currentTimeMillis() - elapsedMillis;
+        assertThat(elapsedMillis).isLessThan(5_000L);
+        assertThat(clientThreadsAlive()).isZero();
+        assertThatThrownBy(() -> set.get(5, TimeUnit.SECONDS)).cause().isInstanceOf(JedisConnectionException.class);
+        parked.close();
     }
 
     @Test

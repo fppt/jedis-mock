@@ -122,20 +122,30 @@ public class RedisServer {
     }
 
     /**
-     * Stop, as requested by a {@code SHUTDOWN} received on one of the
-     * connections. The request is stale, and ignored, when that connection has
-     * been closed: the generation of the server it was sent to has already
-     * stopped (closing its connections), and possibly been restarted, and a
-     * second concurrent SHUTDOWN must neither arm the kill-on-start flag against
-     * the new generation nor publish it as stopped.
+     * Stop, as requested by a {@code SHUTDOWN} received on a connection of the
+     * given generation of the server. The request is stale, and ignored, when
+     * that generation is no longer the running one: it has already been
+     * stopped, say by a concurrent SHUTDOWN, and possibly restarted, and the
+     * late request must neither arm the kill-on-start flag against the new
+     * generation nor publish it as stopped. The generation, not the state of
+     * the requesting connection, decides: a peer may hang up right after
+     * sending SHUTDOWN, and that must not cancel the request.
      */
-    void stopRequestedBy(RedisClient requester) throws IOException {
+    void stopRequestedBy(Object generation) throws IOException {
         synchronized (lifecycle) {
-            if (requester.isClosed() || service == null) {
+            if (service == null || service != generation) {
                 return;
             }
             doStop(service);
         }
+    }
+
+    /**
+     * @return an identity for the current generation of the server: changes
+     * with every {@link #start()}, {@code null} while stopped.
+     */
+    Object currentGeneration() {
+        return service;
     }
 
     private void doStop(RedisServiceJob job) throws IOException {
@@ -157,12 +167,15 @@ public class RedisServer {
         //aborted and every command that was already waiting for the lock has
         //run its course (those of closed clients are dropped, see MockExecutor).
         //Finally wait for the client tasks themselves to terminate, so that not
-        //even a task merely paused mid-dispatch outlives the server; neither
-        //wait can be cut short by an interrupt.
+        //even a task merely paused mid-dispatch outlives the server. That wait
+        //must not hold the data lock: a task still queued on it can only find
+        //out that its client is closed, and exit, once it gets the lock.
+        //Neither wait can be cut short by an interrupt.
         scriptingManager.beginShutdown();
         synchronized (redisBases) {
-            job.awaitClientsTerminated();
+            LOG.debug("Jedis-mock data lock drained for stop");
         }
+        job.awaitClientsTerminated();
         service = null;
         try {
             acceptLoop.get();
@@ -250,7 +263,7 @@ public class RedisServer {
         public Void call() throws IOException {
             while (!server.isClosed()) {
                 Socket socket = server.accept();
-                RedisClient rc = new RedisClient(RedisServer.this, socket, clients::remove);
+                RedisClient rc = new RedisClient(RedisServer.this, socket, clients::remove, this);
                 clients.add(rc);
                 threadPool.submit(rc);
             }
