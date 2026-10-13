@@ -19,6 +19,10 @@ public final class InterceptorMockServer {
     public static final int PORT = 39807;
     public static final Logger LOGGER = LoggerFactory.getLogger(InterceptorMockServer.class);
     public static final int SHARED_OBJECT_THRESHOLD = 10000;
+    /** How often to check whether a SHUTDOWN has stopped the server. */
+    private static final long SHUTDOWN_POLL_MILLIS = 100L;
+    /** Pause before restarting after a SHUTDOWN, so that tests observe the port being closed. */
+    private static final long RESTART_DELAY_MILLIS = 1000L;
 
     private InterceptorMockServer() {
 
@@ -26,7 +30,7 @@ public final class InterceptorMockServer {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         LOGGER.info("Service starting...");
-        RedisServer
+        RedisServer server = RedisServer
                 .newRedisServer(PORT)
                 .setOptions(ServiceOptions.withInterceptor((state, roName, params) -> {
                     if ("debug".equalsIgnoreCase(roName)
@@ -75,8 +79,19 @@ public final class InterceptorMockServer {
                         //Delegate execution to JedisMock which will mock the real Redis behaviour (when it can)
                         return MockExecutor.proceed(state, roName, params);
                     }
-                }))
-                .start();
-        LOGGER.info("Service started at port {}.", PORT);
+                }));
+        //A SHUTDOWN sent by a test stops the server, which is what that test
+        //expects to observe (connection refused). The following test stanzas
+        //expect the server back, so restart it after a pause long enough for
+        //the observation; the harness reconnects once the port is up again.
+        while (true) {
+            server.start();
+            LOGGER.info("Service started at port {}.", PORT);
+            while (server.isRunning()) {
+                Thread.sleep(SHUTDOWN_POLL_MILLIS);
+            }
+            LOGGER.info("Service stopped by SHUTDOWN, restarting in {} ms", RESTART_DELAY_MILLIS);
+            Thread.sleep(RESTART_DELAY_MILLIS);
+        }
     }
 }

@@ -197,8 +197,10 @@ public class RedisServer {
         }
 
         public void stop() throws IOException {
-            clients.forEach(RedisClient::close);
+            //Release the port first: a client that notices its connection being
+            //dropped (by SHUTDOWN) must not be able to reconnect in between.
             server.close();
+            clients.forEach(RedisClient::close);
             threadPool.shutdownNow();
         }
     }

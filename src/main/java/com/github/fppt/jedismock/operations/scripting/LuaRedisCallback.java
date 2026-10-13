@@ -65,6 +65,11 @@ public class LuaRedisCallback {
     public LuaValue pcall(LuaValue args) {
         try {
             return call(args);
+        } catch (final ScriptKilledError e) {
+            //The kill is not a command error the script may handle: let it
+            //propagate, or a script returning this pcall's result directly
+            //(with no further instruction for the kill hook) would finish.
+            throw e;
         } catch (final Exception e) {
             LuaTable errorTable = new LuaTable();
             //Some exceptions carry no message; String.valueOf avoids an NPE in valueOf.
@@ -103,6 +108,13 @@ public class LuaRedisCallback {
         final Slice result;
         try {
             command.validateArity(args.size());
+            if (!command.readOnly() && !state.scriptingManager().markWrite()) {
+                //A kill was granted before this write: abort now rather than
+                //execute a write the killer was promised would not happen.
+                //(When markWrite succeeds the script counts as having written,
+                //whether or not the command succeeds: KILL will say UNKILLABLE.)
+                throw InterruptibleDebugLib.killedError();
+            }
             final RedisOperation operation =
                     //Specific support for SELECT,
                     //see https://redis.io/docs/manual/programmability/lua-api/#using-selectcommandsselect-inside-scripts

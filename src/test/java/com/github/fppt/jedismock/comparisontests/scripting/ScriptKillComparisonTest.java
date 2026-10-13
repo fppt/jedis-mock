@@ -93,4 +93,45 @@ public class ScriptKillComparisonTest {
                 .isInstanceOf(JedisDataException.class)
                 .hasMessage("ERR Script killed by user with SCRIPT KILL... script: 694a5fe1ddb97a4c6a1bf299d9537c7d3d0f84e7, on @user_script:1.");
     }
+
+    /**
+     * A script cannot shield itself from {@code SCRIPT KILL} by wrapping its
+     * work in {@code pcall}: real Redis keeps raising the kill error after a
+     * {@code pcall} swallowed it, so the script still dies. (From Valkey's
+     * "Timedout read-only scripts can be killed by SCRIPT KILL even when use
+     * pcall".)
+     */
+    @TestTemplate
+    public void scriptKillCannotBeCaughtByPcall(Jedis jedis, HostAndPort hostAndPort) throws InterruptedException {
+        jedis.configSet("lua-time-limit", "100");
+
+        AtomicReference<Exception> caughtException = new AtomicReference<>();
+        CountDownLatch exceptionGate = new CountDownLatch(1);
+        Jedis busyClient = new Jedis(hostAndPort.getHost(), hostAndPort.getPort(), 1_000_000);
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        try {
+            pool.submit(() -> {
+                try {
+                    busyClient.eval("local f = function() while 1 do redis.call('ping') end end while 1 do pcall(f) end", 0);
+                } catch (Exception e) {
+                    caughtException.set(e);
+                    exceptionGate.countDown();
+                }
+            });
+
+            Assertions.assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+                Thread.sleep(500);
+                jedis.scriptKill();
+                assertThat(jedis.ping()).isEqualTo("PONG");
+            }, TestErrorMessages.DEADLOCK_ERROR_MESSAGE);
+        } finally {
+            pool.shutdownNow();
+            busyClient.close();
+        }
+
+        assertThat(exceptionGate.await(5, TimeUnit.SECONDS)).withFailMessage("eval did not throw an exception").isTrue();
+        assertThat(caughtException.get())
+                .isInstanceOf(JedisDataException.class)
+                .hasMessageContaining("killed by user");
+    }
 }

@@ -23,6 +23,16 @@ import static com.github.fppt.jedismock.server.Response.integer;
 
 public class MockExecutor {
 
+    /**
+     * The replies real Redis gives to a command issued while a script/function is timing
+     * out. Kept verbatim so harmonized tests (and clients matching on it) behave
+     * identically to a real server. Shared with {@link Shutdown}.
+     */
+    static final String BUSY_SCRIPT_MESSAGE =
+            "BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.";
+    static final String BUSY_FUNCTION_MESSAGE =
+            "BUSY Redis is busy running a script. You can only call FUNCTION KILL or SHUTDOWN NOSAVE.";
+
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(MockExecutor.class);
 
     /**
@@ -32,15 +42,10 @@ public class MockExecutor {
      */
     private static final long BUSY_POLL_MILLIS = 5L;
 
-    /**
-     * The replies real Redis gives to a command issued while a script/function is timing
-     * out. Kept verbatim so harmonized tests (and clients matching on it) behave
-     * identically to a real server.
-     */
-    private static final String BUSY_SCRIPT_MESSAGE =
-            "BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.";
-    private static final String BUSY_FUNCTION_MESSAGE =
-            "BUSY Redis is busy running a script. You can only call FUNCTION KILL or SHUTDOWN NOSAVE.";
+    private static final String UNKILLABLE_MESSAGE =
+            "UNKILLABLE Sorry the script already executed write commands against the dataset. "
+                    + "You can either wait the script termination or kill the server in a hard way "
+                    + "using the SHUTDOWN NOSAVE command.";
 
     /**
      * Proceed with execution, mocking the Redis behaviour.
@@ -58,16 +63,25 @@ public class MockExecutor {
             ScriptingManager scripting = state.scriptingManager();
             ScriptingManager.ScriptType expectedScriptType =
                     "function".equals(name) ? ScriptingManager.ScriptType.FUNCTION : ScriptingManager.ScriptType.SCRIPT;
-            ScriptingManager.ScriptType actualScriptType = scripting.getRunningScriptType();
-            // SCRIPT KILL cannot kill a running FUNCTION and vice versa.
-            if (actualScriptType == null || actualScriptType == expectedScriptType) {
-                if (!scripting.requestKill()) {
+            switch (scripting.requestKill(expectedScriptType)) {
+                case NOT_BUSY:
                     return Response.error("NOTBUSY No scripts in execution right now.");
-                }
-                //Reply OK only once the script has actually aborted, so a command
-                //issued right after SCRIPT KILL no longer sees the script as busy.
-                scripting.awaitStopped();
-                return Response.OK;
+                case UNKILLABLE:
+                    //A script that already wrote to the dataset cannot be killed,
+                    //so the server stays BUSY until it ends. Like Redis, this is
+                    //decided before the script-vs-function mismatch: both KILL
+                    //variants get UNKILLABLE.
+                    return Response.error(UNKILLABLE_MESSAGE);
+                case KILLED:
+                    //Reply OK only once the script has actually aborted, so a command
+                    //issued right after SCRIPT KILL no longer sees the script as busy.
+                    scripting.awaitStopped();
+                    return Response.OK;
+                case WRONG_TYPE:
+                default:
+                    //SCRIPT KILL cannot kill a running FUNCTION and vice versa:
+                    //fall through to the BUSY gate below, which names the right command.
+                    break;
             }
         }
 
@@ -97,6 +111,18 @@ public class MockExecutor {
                 return Response.error(e.getMessage());
             }
             return multi.instantiate(state, commandParams).execute();
+        }
+
+        //SHUTDOWN is the other command that must be served while a runaway script
+        //holds the data lock (SHUTDOWN NOSAVE is the documented way out of an
+        //unkillable script), so it is dispatched lock-free as well. Like Redis,
+        //it is rejected at dispatch inside MULTI (dirtying the transaction).
+        if ("shutdown".equals(name)) {
+            if (state.isTransactionModeOn()) {
+                state.errorTransaction();
+                return Response.error("ERR Command not allowed inside a transaction");
+            }
+            return CommandFactory.lookup(name).instantiate(state, commandParams).execute();
         }
 
         //BUSY gate. While another connection runs a Lua script we must not block
@@ -165,7 +191,7 @@ public class MockExecutor {
      *
      * @return the BUSY reply Slice, or {@code null} to proceed normally.
      */
-    private static Slice awaitScriptOrBusy(OperationExecutorState state, String name) {
+    static Slice awaitScriptOrBusy(OperationExecutorState state, String name) {
         ScriptingManager scripting = state.scriptingManager();
         while (scripting.isRunning()) {
             if (scripting.isBusy()) {

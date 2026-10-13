@@ -5,7 +5,12 @@
 #  - the server/redis dual-API loop is reduced to the redis EVAL path
 #    (foreach script_compatibility_api {redis}); jedis-mock models the redis.* API;
 #  - the function/eval loop is reduced to EVAL (foreach is_eval {1});
-#  - tests for features jedis-mock does not model are disabled with `if 0 { ... }`.
+#  - tests for features jedis-mock does not model are disabled with `if 0 { ... }`;
+#  - the external:skip tag is dropped from "Timedout scripts that modified data
+#    can't be killed by SCRIPT KILL" and "SHUTDOWN NOSAVE can kill a timedout
+#    script anyway" (its only purpose upstream is to skip the test against an
+#    external server, but here that tag is denied file-wide; jm-test-server
+#    restarts itself after SHUTDOWN and start_server reconnects).
 #
 
 # jedis-mock: only run the subset of tests the mock currently models. The
@@ -87,6 +92,9 @@ set ::only_tests {
     {Test loadfile are not available}
     {Test print are not available}
     {Timedout read-only scripts can be killed by SCRIPT KILL}
+    {Timedout read-only scripts can be killed by SCRIPT KILL even when use pcall}
+    {Timedout scripts that modified data can't be killed by SCRIPT KILL}
+    {SHUTDOWN NOSAVE can kill a timedout script anyway}
     {Timedout script link is still usable after Lua returns}
     {Try trick global protection 1}
     {Try trick global protection 2}
@@ -1594,7 +1602,7 @@ start_server {tags {"scripting"}} {
         assert_match {UNKILLABLE*} $e
         catch {r ping} e
         assert_match {BUSY*} $e
-    } {} {external:skip}
+    } {}
 
     # Note: keep this test at the end of this server stanza because it
     # kills the server.
@@ -1606,7 +1614,7 @@ start_server {tags {"scripting"}} {
         # Make sure the server was killed
         catch {set rd [valkey_deferring_client]} e
         assert_match {*connection refused*} $e
-    } {} {external:skip}
+    } {}
 }
 
     start_server {tags {"scripting repl needs:debug external:skip"}} {

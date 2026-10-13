@@ -88,6 +88,11 @@ public final class RedisClient implements Runnable {
      * @param respondingTo The reason for sending this response
      */
     public void sendResponse(Slice response, String respondingTo) {
+        if (!running.get()) {
+            //The connection was closed from the server side (SHUTDOWN, or
+            //stop()): nobody is listening, as with a killed script's error.
+            return;
+        }
         try {
             if (!response.equals(Response.SKIP)) {
                 out.write(response.data());
@@ -136,6 +141,29 @@ public final class RedisClient implements Runnable {
 
     public ServiceOptions options() {
         return server.options();
+    }
+
+    /**
+     * Stop the server this connection belongs to, as the {@code SHUTDOWN}
+     * command does: every connection, this one included, is closed without a
+     * reply and the port is released, and a running script is terminated
+     * (whether or not it has written). Done on a separate thread because
+     * stopping the server joins its client threads, and the caller is one of
+     * them. The connections are closed <em>before</em> the script is killed,
+     * so that its "killed" error is never sent: like a real server going
+     * away, the script's client only ever sees its connection dropped.
+     */
+    public void shutdownServer() {
+        Thread shutdown = new Thread(() -> {
+            try {
+                server.stop();
+            } catch (IOException e) {
+                LOG.error("Error while shutting the server down", e);
+            }
+            server.getScriptingManager().forceKill();
+        }, "jedis-mock-shutdown");
+        shutdown.setDaemon(true);
+        shutdown.start();
     }
 
     /**

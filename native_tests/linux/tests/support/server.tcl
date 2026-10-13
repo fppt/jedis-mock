@@ -290,6 +290,17 @@ proc start_server {options {code undefined}} {
             # append the server to the stack
             lappend ::servers $srv
         }
+        # jedis-mock: a SHUTDOWN in an earlier stanza closed our link, and the
+        # test server restarts itself shortly after. Wait for the port to come
+        # back and reconnect (which re-selects DB 9) before using the server.
+        if {[catch {r ping}]} {
+            wait_for_condition 100 100 {
+                [catch {reconnect}] == 0
+            } else {
+                fail "Server did not come back after SHUTDOWN"
+            }
+        }
+        r select 9
         r flushall
         if {[catch {set retval [uplevel 1 $code]} error]} {
             if {$::durable} {
