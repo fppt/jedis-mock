@@ -8,6 +8,8 @@ import com.github.fppt.jedismock.storage.RedisConfiguration;
 import com.github.fppt.jedismock.storage.ScriptingManager;
 import com.github.fppt.jedismock.storage.SubscriptionRegistry;
 
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -24,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -31,7 +34,14 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class RedisServer {
 
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisServer.class);
     private static final String NOT_RUNNING = "JedisMock is not running";
+    /**
+     * How often {@link #stop()} warns while still waiting for client tasks to
+     * terminate. The wait itself is unbounded: only a stuck client task (e.g.
+     * in a user interceptor) can prolong it.
+     */
+    private static final long CLIENT_TERMINATION_WARN_INTERVAL_MILLIS = 10_000L;
 
     private final int bindPort;
     private final InetAddress bindAddress;
@@ -41,6 +51,11 @@ public class RedisServer {
     private final RedisConfiguration configuration = new RedisConfiguration();
     private final SubscriptionRegistry subscriptionRegistry = new SubscriptionRegistry();
     private final AtomicLong clientIds = new AtomicLong();
+    /**
+     * Serializes {@link #start()}, {@link #stop()} and SHUTDOWN-requested stops.
+     * Never held while serving a command.
+     */
+    private final Object lifecycle = new Object();
     private volatile ExecutorService singleThreadPool;
     private volatile RedisServiceJob service;
     private volatile Clock clock = Clock.systemDefaultZone();
@@ -86,28 +101,108 @@ public class RedisServer {
     }
 
     public RedisServer start() throws IOException {
-        if (!(service == null)) {
-            throw new IllegalStateException();
+        rejectIfInsideCommandHandler("start");
+        synchronized (lifecycle) {
+            if (!(service == null)) {
+                throw new IllegalStateException();
+            }
+            scriptingManager.endShutdown();
+            this.service = new RedisServiceJob();
+            singleThreadPool = Executors.newSingleThreadExecutor();
+            serviceFinalization = singleThreadPool.submit(service);
+            return this;
         }
-        this.service = new RedisServiceJob();
-        singleThreadPool = Executors.newSingleThreadExecutor();
-        serviceFinalization = singleThreadPool.submit(service);
-        return this;
     }
 
     public void stop() throws IOException {
-        Objects.requireNonNull(service, NOT_RUNNING);
-        service.stop();
+        rejectIfInsideCommandHandler("stop");
+        synchronized (lifecycle) {
+            doStop(Objects.requireNonNull(service, NOT_RUNNING));
+        }
+    }
+
+    /**
+     * {@link #stop()} waits for all client tasks, so a client task calling it
+     * (e.g. a command interceptor) would wait for itself. Use
+     * {@link RedisClient#shutdownServer()} from inside a command handler.
+     */
+    private void rejectIfInsideCommandHandler(String method) {
+        if (RedisClient.isServing(this)) {
+            throw new IllegalStateException(method + "() must not be called from a command handler of this server,"
+                    + " which would wait for itself: use RedisClient.shutdownServer() (state.owner().shutdownServer())"
+                    + " to stop it from a separate thread instead");
+        }
+    }
+
+    /**
+     * Stop, as requested by {@code SHUTDOWN} on a connection of the given
+     * generation. Ignored if that generation is no longer the running one
+     * (e.g. a concurrent SHUTDOWN already stopped it, and it may have been
+     * restarted since).
+     */
+    void stopRequestedBy(Object generation) throws IOException {
+        synchronized (lifecycle) {
+            if (service == null || service != generation) {
+                return;
+            }
+            doStop(service);
+        }
+    }
+
+    /**
+     * @return the current generation of the server (a new one per
+     * {@link #start()}), {@code null} while stopped.
+     */
+    Object currentGeneration() {
+        return service;
+    }
+
+    private void doStop(RedisServiceJob job) throws IOException {
+        //Locals: once service is null, a concurrent start() may replace these fields.
+        Future<Void> acceptLoop = serviceFinalization;
+        ExecutorService acceptor = singleThreadPool;
+        //The accept loop registers a connection only after accept() returns,
+        //so it must be over before the set of clients is taken as final.
+        job.closeListener();
+        awaitUninterruptibly(acceptLoop);
+        job.closeClients();
+        //The stopped server must be quiescent (manager and data are shared by
+        //every start of this instance): kill the script, and any script that
+        //starts before the next start(); drain the data lock, which also lets
+        //queued commands of the closed clients be dropped (see MockExecutor);
+        //then, without holding that lock, wait for the client tasks to end.
+        scriptingManager.beginShutdown();
+        synchronized (redisBases) {
+            LOG.debug("Jedis-mock data lock drained for stop");
+        }
+        job.awaitClientsTerminated();
         service = null;
+        acceptor.shutdownNow();
+    }
+
+    /**
+     * Wait for the accept loop to end, uninterruptibly (the interrupt is
+     * restored afterwards). It ends with an exception once the listener is
+     * closed, which is normal.
+     */
+    private static void awaitUninterruptibly(Future<Void> acceptLoop) {
+        boolean interrupted = false;
         try {
-            serviceFinalization.get();
-        } catch (ExecutionException e) {
-            //Do nothing: it's a normal behaviour when the service was stopped
-        } catch (InterruptedException e) {
-            System.err.println("Jedis-mock interrupted while stopping");
-            Thread.currentThread().interrupt();
+            while (true) {
+                try {
+                    acceptLoop.get();
+                    return;
+                } catch (ExecutionException e) {
+                    //The listener was closed under accept(): the loop is over.
+                    return;
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                }
+            }
         } finally {
-            singleThreadPool.shutdownNow();
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -185,7 +280,7 @@ public class RedisServer {
         public Void call() throws IOException {
             while (!server.isClosed()) {
                 Socket socket = server.accept();
-                RedisClient rc = new RedisClient(RedisServer.this, socket, clients::remove);
+                RedisClient rc = new RedisClient(RedisServer.this, socket, clients::remove, this);
                 clients.add(rc);
                 threadPool.submit(rc);
             }
@@ -196,12 +291,53 @@ public class RedisServer {
             return server;
         }
 
-        public void stop() throws IOException {
-            //Release the port first: a client that notices its connection being
-            //dropped (by SHUTDOWN) must not be able to reconnect in between.
+        /**
+         * Release the port. Done first, so that a client whose connection is
+         * dropped by SHUTDOWN cannot reconnect in between.
+         */
+        public void closeListener() throws IOException {
             server.close();
+        }
+
+        /**
+         * Close every connection and interrupt their tasks. Only valid once
+         * the accept loop has ended, so that no connection is registered or
+         * submitted after this.
+         */
+        public void closeClients() {
             clients.forEach(RedisClient::close);
             threadPool.shutdownNow();
+        }
+
+        /**
+         * Wait, uninterruptibly and without a limit, until every client task
+         * has terminated, warning every
+         * {@link #CLIENT_TERMINATION_WARN_INTERVAL_MILLIS} meanwhile. The
+         * server counts as stopped only once this returns.
+         */
+        public void awaitClientsTerminated() {
+            long waitedMillis = 0L;
+            boolean interrupted = false;
+            boolean terminated = false;
+            try {
+                while (!terminated) {
+                    try {
+                        terminated = threadPool.awaitTermination(
+                                CLIENT_TERMINATION_WARN_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+                        if (!terminated) {
+                            waitedMillis += CLIENT_TERMINATION_WARN_INTERVAL_MILLIS;
+                            LOG.warn("Jedis-mock stop is still waiting for a client task to terminate after {} ms",
+                                    waitedMillis);
+                        }
+                    } catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
+            } finally {
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
     }
 

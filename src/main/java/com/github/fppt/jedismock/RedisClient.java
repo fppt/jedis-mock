@@ -26,6 +26,12 @@ import java.util.function.Consumer;
  */
 public final class RedisClient implements Runnable {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisClient.class);
+    /**
+     * The server whose connection the current thread is serving, while it is
+     * running {@link #run()}; lets that server reject lifecycle calls made
+     * from inside a command handler.
+     */
+    private static final ThreadLocal<RedisServer> SERVING = new ThreadLocal<>();
     private final RedisServer server;
     private final Socket socket;
     private final AtomicBoolean running;
@@ -34,10 +40,23 @@ public final class RedisClient implements Runnable {
     private final OutputStream out;
     private final Consumer<RedisClient> onClose;
     private final long clientId;
+    private final Object generation;
 
     RedisClient(RedisServer server,
                 Socket socket,
                 Consumer<RedisClient> onClose) throws IOException {
+        this(server, socket, onClose, null);
+    }
+
+    /**
+     * @param generation the generation of the server (its listening service)
+     *                   this connection was accepted by; a shutdown it
+     *                   requests applies to that generation only.
+     */
+    RedisClient(RedisServer server,
+                Socket socket,
+                Consumer<RedisClient> onClose,
+                Object generation) throws IOException {
         Objects.requireNonNull(server);
         Objects.requireNonNull(socket);
         Objects.requireNonNull(onClose);
@@ -52,17 +71,31 @@ public final class RedisClient implements Runnable {
         this.out = socket.getOutputStream();
         this.running = new AtomicBoolean(true);
         this.onClose = onClose;
+        this.generation = generation;
     }
 
     public void run() {
-        while (running.get() && !socket.isClosed() && !Thread.interrupted()) {
-            Optional<RedisCommand> command = nextCommand();
-            if (command.isPresent()) {
-                Slice response = executor.execCommand(command.get());
-                sendResponse(response, command.toString());
+        SERVING.set(server);
+        try {
+            while (running.get() && !socket.isClosed() && !Thread.interrupted()) {
+                Optional<RedisCommand> command = nextCommand();
+                if (command.isPresent()) {
+                    Slice response = executor.execCommand(command.get());
+                    sendResponse(response, command.toString());
+                }
             }
+        } finally {
+            SERVING.remove();
         }
         LOG.debug("Mock redis connection shut down.");
+    }
+
+    /**
+     * @return whether the current thread is serving a connection of the given
+     * server, i.e. is inside a command handler of it.
+     */
+    static boolean isServing(RedisServer server) {
+        return SERVING.get() == server;
     }
 
     /**
@@ -144,23 +177,31 @@ public final class RedisClient implements Runnable {
     }
 
     /**
+     * @return whether this connection has been closed (by the client going
+     * away, or by the server stopping), so that a command of its still waiting
+     * for the data lock should be dropped rather than executed.
+     */
+    public boolean isClosed() {
+        return !running.get();
+    }
+
+    /**
      * Stop the server this connection belongs to, as the {@code SHUTDOWN}
      * command does: every connection, this one included, is closed without a
      * reply and the port is released, and a running script is terminated
-     * (whether or not it has written). Done on a separate thread because
-     * stopping the server joins its client threads, and the caller is one of
-     * them. The connections are closed <em>before</em> the script is killed,
-     * so that its "killed" error is never sent: like a real server going
-     * away, the script's client only ever sees its connection dropped.
+     * (whether or not it has written) before the server counts as stopped.
+     * Done on a separate thread because stopping the server joins its client
+     * threads, and the caller is one of them. A request that runs late, once
+     * the generation of the server it was sent to has already been stopped by
+     * another one, is ignored.
      */
     public void shutdownServer() {
         Thread shutdown = new Thread(() -> {
             try {
-                server.stop();
+                server.stopRequestedBy(generation);
             } catch (IOException e) {
                 LOG.error("Error while shutting the server down", e);
             }
-            server.getScriptingManager().forceKill();
         }, "jedis-mock-shutdown");
         shutdown.setDaemon(true);
         shutdown.start();

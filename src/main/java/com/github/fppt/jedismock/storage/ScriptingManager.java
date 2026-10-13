@@ -41,6 +41,7 @@ public final class ScriptingManager {
     private volatile long startNanos = 0L;
     private volatile boolean killRequested = false;
     private volatile boolean writeDirty = false;
+    private volatile boolean shuttingDown = false;
     private volatile long luaTimeLimitMillis = DEFAULT_LUA_TIME_LIMIT_MILLIS;
 
     /**
@@ -66,7 +67,9 @@ public final class ScriptingManager {
     }
 
     private synchronized void start(long startNanos, ScriptType scriptType, RunningFunctionInfo functionInfo) {
-        killRequested = false;
+        //While the server is shutting down a script must not get going: it is
+        //killed at its very first instruction.
+        killRequested = shuttingDown;
         writeDirty = false;
         this.startNanos = startNanos;
         running = true;
@@ -112,15 +115,26 @@ public final class ScriptingManager {
 
     /**
      * Terminate the running script unconditionally, the way {@code SHUTDOWN
-     * NOSAVE} does: unlike {@link #requestKill(ScriptType)} this ignores
-     * whether the script has written. A write dispatched after this point is
-     * refused by {@link #markWrite()}, as after any granted kill. No-op when
-     * nothing is running.
+     * NOSAVE} does, and keep killing: until {@link #endShutdown()} any script
+     * that starts is killed at its first instruction, so a command that was
+     * already waiting for the data lock when the server stopped cannot leave a
+     * script running (its {@code start()} would otherwise clear the kill).
+     * Unlike {@link #requestKill(ScriptType)} this ignores whether the script
+     * has written; a write dispatched after this point is refused by
+     * {@link #markWrite()}, as after any granted kill.
      */
-    public synchronized void forceKill() {
+    public synchronized void beginShutdown() {
+        shuttingDown = true;
         if (running) {
             killRequested = true;
         }
+    }
+
+    /**
+     * Let scripts run again, once the server is (re)started.
+     */
+    public synchronized void endShutdown() {
+        shuttingDown = false;
     }
 
     /**
