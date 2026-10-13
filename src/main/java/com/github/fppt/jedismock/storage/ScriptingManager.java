@@ -111,6 +111,19 @@ public final class ScriptingManager {
     }
 
     /**
+     * Terminate the running script unconditionally, the way {@code SHUTDOWN
+     * NOSAVE} does: unlike {@link #requestKill(ScriptType)} this ignores
+     * whether the script has written. A write dispatched after this point is
+     * refused by {@link #markWrite()}, as after any granted kill. No-op when
+     * nothing is running.
+     */
+    public synchronized void forceKill() {
+        if (running) {
+            killRequested = true;
+        }
+    }
+
+    /**
      * Record that the running script is about to dispatch a write command.
      * Called by the script thread once the command passed its arity check and
      * is about to run, which is also when real Redis sets its write-dirty flag:

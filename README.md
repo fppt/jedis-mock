@@ -177,7 +177,7 @@ jedis.lrange("mylist", 0, -1));
 
 ### Script timeouts: `BUSY` and `SCRIPT KILL`
 
-A long-running (or even infinite) script does not lock up the mock. Once a script has been running longer than `lua-time-limit` milliseconds, other connections get the same `-BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.` reply as real Redis, and `SCRIPT KILL` aborts the running script (replying `-NOTBUSY` when nothing is running). The threshold defaults to 5000 ms and can be changed with `CONFIG SET lua-time-limit <ms>` (its alias `busy-reply-threshold` is also accepted); `0` disables it. This lets you test client behaviour around busy scripts and transactions interrupted by a script timeout.
+A long-running (or even infinite) script does not lock up the mock. Once a script has been running longer than `lua-time-limit` milliseconds, other connections get the same `-BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.` reply as real Redis, and `SCRIPT KILL` aborts the running script (replying `-NOTBUSY` when nothing is running, and `-UNKILLABLE` once the script has executed a write command, in which case the server stays busy until the script ends). `SHUTDOWN NOSAVE` terminates even such a script: as in real Redis it stops the whole server, closing every connection without a reply and releasing the port, after which `isRunning()` is `false` and `start()` may be called again. The threshold defaults to 5000 ms and can be changed with `CONFIG SET lua-time-limit <ms>` (its alias `busy-reply-threshold` is also accepted); `0` disables it. This lets you test client behaviour around busy scripts and transactions interrupted by a script timeout.
 
 ### Redis Functions: `FUNCTION` and `FCALL`
 
