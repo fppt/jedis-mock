@@ -42,6 +42,8 @@ public final class ScriptingManager {
     private volatile boolean killRequested = false;
     private volatile boolean writeDirty = false;
     private volatile boolean shuttingDown = false;
+    private volatile boolean readOnly = false;
+    private volatile UserLocationTracker userLocationTracker = null;
     private volatile long luaTimeLimitMillis = DEFAULT_LUA_TIME_LIMIT_MILLIS;
 
     /**
@@ -49,7 +51,17 @@ public final class ScriptingManager {
      * stale kill request left over from a previous script/function.
      */
     public void start() {
-        start(System.nanoTime(), ScriptType.SCRIPT, null);
+        start(false);
+    }
+
+    /**
+     * Mark the start of a script run.
+     *
+     * @param readOnly whether the script runs read-only ({@code EVAL_RO} /
+     * {@code EVALSHA_RO}): dispatching a write command is then refused
+     */
+    public void start(boolean readOnly) {
+        start(System.nanoTime(), ScriptType.SCRIPT, null, readOnly);
     }
 
     /**
@@ -61,16 +73,34 @@ public final class ScriptingManager {
      * @param invokingParams the parameters passed to the Redis operation
      */
     public void startFunction(String invokingFunction, String invokingOperation, List<Slice> invokingParams) {
-        long startNanos = System.nanoTime();
-        RunningFunctionInfo functionInfo = new RunningFunctionInfo(invokingFunction, invokingOperation, invokingParams, startNanos);
-        start(startNanos, ScriptType.FUNCTION, functionInfo);
+        startFunction(invokingFunction, invokingOperation, invokingParams, false);
     }
 
-    private synchronized void start(long startNanos, ScriptType scriptType, RunningFunctionInfo functionInfo) {
+    /**
+     * Mark the start of a function run.
+     *
+     * @param invokingFunction the name of the library function being invoked
+     * @param invokingOperation the name of the Redis operation that invoked the function (e.g. "FCALL_RO")
+     * @param invokingParams the parameters passed to the Redis operation
+     * @param readOnly whether the function runs read-only, because it is flagged
+     * {@code no-writes} or was invoked through {@code FCALL_RO}: dispatching a
+     * write command is then refused
+     */
+    public void startFunction(String invokingFunction, String invokingOperation, List<Slice> invokingParams,
+                              boolean readOnly) {
+        long startNanos = System.nanoTime();
+        RunningFunctionInfo functionInfo = new RunningFunctionInfo(invokingFunction, invokingOperation, invokingParams, startNanos);
+        start(startNanos, ScriptType.FUNCTION, functionInfo, readOnly);
+    }
+
+    private synchronized void start(long startNanos, ScriptType scriptType, RunningFunctionInfo functionInfo,
+                                    boolean readOnly) {
         //While the server is shutting down a script must not get going: it is
         //killed at its very first instruction.
         killRequested = shuttingDown;
         writeDirty = false;
+        this.readOnly = readOnly;
+        userLocationTracker = null;
         this.startNanos = startNanos;
         running = true;
         this.scriptType = scriptType;
@@ -83,6 +113,8 @@ public final class ScriptingManager {
     public synchronized void stop() {
         killRequested = false;
         writeDirty = false;
+        readOnly = false;
+        userLocationTracker = null;
         running = false;
         scriptType = null;
         functionInfo = null;
@@ -164,6 +196,38 @@ public final class ScriptingManager {
      */
     public boolean hasWritten() {
         return writeDirty;
+    }
+
+    /**
+     * @return whether the running script may not write: it was started by one
+     * of the {@code _RO} commands or is a {@code no-writes} function. The
+     * script-side command dispatch refuses write commands while this holds.
+     * Always {@code false} when nothing is running.
+     */
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    /**
+     * Register where the running script executes user code. Called by the Lua
+     * debug hook when it enters a user chunk, so the hook that actually runs
+     * the user code (there is one per Lua environment) is the one consulted.
+     */
+    public void setUserLocationTracker(UserLocationTracker tracker) {
+        userLocationTracker = tracker;
+    }
+
+    /**
+     * @return the {@code source:line} of the user-script instruction the
+     * running script executed most recently, e.g. {@code @user_function:3},
+     * or {@code null} if no user code has run. Error replies use it when the
+     * raised error carries no location of its own, which is the case when the
+     * failing {@code redis.call} was a Lua tail call: luaj has already dropped
+     * the user frame by the time the command runs.
+     */
+    public String lastUserLocation() {
+        UserLocationTracker tracker = userLocationTracker;
+        return tracker == null ? null : tracker.lastUserLocation();
     }
 
     /**
@@ -257,6 +321,12 @@ public final class ScriptingManager {
         public long getStartNanos() {
             return startNanos;
         }
+    }
+
+    /** See {@link #setUserLocationTracker(UserLocationTracker)}. */
+    public interface UserLocationTracker {
+        /** @return see {@link ScriptingManager#lastUserLocation()} */
+        String lastUserLocation();
     }
 
     public enum ScriptType {

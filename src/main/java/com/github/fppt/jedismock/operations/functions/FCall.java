@@ -15,6 +15,7 @@ import org.luaj.vm2.UpValue;
 import org.luaj.vm2.lib.jse.JsePlatform;
 
 import java.util.List;
+import java.util.Locale;
 
 import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.createLuaSandbox;
 import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.resolveResult;
@@ -23,6 +24,9 @@ import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.slic
 
 @RedisCommand(value = "fcall", arity = -3)
 public class FCall extends AbstractRedisOperation {
+    private static final String WRITE_FLAG_ERROR =
+            "ERR Can not execute a script with write flag using *_ro command.";
+
     private final OperationExecutorState state;
 
     public FCall(RedisBase base, List<Slice> params, OperationExecutorState state) {
@@ -30,19 +34,37 @@ public class FCall extends AbstractRedisOperation {
         this.state = state;
     }
 
+    /**
+     * @return whether this is the {@code FCALL_RO} variant: only a
+     * {@code no-writes} function may then be invoked
+     */
+    protected boolean readOnly() {
+        return false;
+    }
+
     @Override
     protected Slice response() {
-        int numKeys = parseNumKeys();
-        List<Slice> keys = params().subList(2, 2 + numKeys);
-        List<Slice> args = params().subList(2 + numKeys, params().size());
-
+        //Same order as real Redis: the function must exist before the key count
+        //is checked, and both come before the write-flag check.
         String functionName = params().get(0).toString();
         FunctionInfo functionInfo = base().getLuaFunctionInfo(functionName);
         if (functionInfo == null) {
             throw new ArgumentException("ERR Function not found");
         }
 
+        int numKeys = parseNumKeys();
+        List<Slice> keys = params().subList(2, 2 + numKeys);
+        List<Slice> args = params().subList(2 + numKeys, params().size());
+
+        boolean readOnly = readOnly();
+        boolean noWrites = functionInfo.getFlags().contains(FunctionFlag.NO_WRITES);
+        if (readOnly && !noWrites) {
+            return Response.error(WRITE_FLAG_ERROR);
+        }
+
         ScriptingManager scripting = state.scriptingManager();
+        //A SELECT inside the function must not leak into the calling connection.
+        int selected = state.getSelected();
         LuaValue result;
         try {
             //Mark the script as running *before* building the Lua environment, which
@@ -51,7 +73,9 @@ public class FCall extends AbstractRedisOperation {
             //connection meanwhile must not observe "no script running": it would then
             //block on that lock and could never be answered. Seeing a running script
             //instead makes it wait for lua-time-limit and reply -BUSY.
-            scripting.startFunction(functionName, "FCALL", params());
+            //A no-writes function runs read-only whichever command invoked it.
+            scripting.startFunction(functionName, self().value().toUpperCase(Locale.ROOT), params(),
+                    readOnly || noWrites);
 
             LuaTable luaKeys = slicesToLuaValues(keys);
             LuaTable luaArgs = slicesToLuaValues(args);
@@ -72,10 +96,11 @@ public class FCall extends AbstractRedisOperation {
             try {
                 result = functionInfo.getFunction().call(luaKeys, luaArgs);
             } catch (LuaError e) {
-                return Response.error(scriptErrorReply(e, functionName));
+                return Response.error(scriptErrorReply(e, functionName, scripting.lastUserLocation()));
             }
         } finally {
             scripting.stop();
+            state.changeActiveRedisBase(selected);
         }
 
         return resolveResult(result);

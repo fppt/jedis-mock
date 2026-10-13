@@ -88,4 +88,18 @@ class ScriptingManagerTest {
         assertThat(manager.isKillRequested()).isFalse();
         assertThat(manager.markWrite()).isTrue();
     }
+
+    @Test
+    void readOnlyModeIsRecordedPerRunAndClearedOnStop() {
+        assertThat(manager.isReadOnly()).isFalse();
+        manager.start(true);
+        assertThat(manager.isReadOnly()).isTrue();
+        manager.stop();
+        assertThat(manager.isReadOnly()).isFalse();
+        manager.startFunction("f", "FCALL_RO", Collections.emptyList(), true);
+        assertThat(manager.isReadOnly()).isTrue();
+        manager.stop();
+        manager.start();
+        assertThat(manager.isReadOnly()).isFalse();
+    }
 }

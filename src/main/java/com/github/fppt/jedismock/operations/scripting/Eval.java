@@ -37,6 +37,16 @@ public class Eval extends AbstractRedisOperation {
 
     @Override
     public Slice response() {
+        return response(false);
+    }
+
+    /**
+     * Run the script.
+     *
+     * @param readOnly whether to run it read-only, as {@code EVAL_RO} does: any
+     * write command it dispatches is then refused
+     */
+    Slice response(final boolean readOnly) {
         final String script = params().get(0).toString();
         final String sha = getScriptSHA(script);
 
@@ -58,7 +68,7 @@ public class Eval extends AbstractRedisOperation {
         //connection meanwhile must not observe "no script running": it would then
         //block on that lock and could never be answered. Seeing a running script
         //instead makes it wait for lua-time-limit and reply -BUSY.
-        scripting.start();
+        scripting.start(readOnly);
         try {
             globals.set("KEYS", embedLuaListToValue(args.subList(0, keysNum)));
             globals.set("ARGV", embedLuaListToValue(args.subList(keysNum, args.size())));
@@ -80,7 +90,7 @@ public class Eval extends AbstractRedisOperation {
             final LuaValue result = chunk.call();
             return resolveResult(result);
         } catch (LuaError e) {
-            return Response.error(scriptErrorReply(e, sha));
+            return Response.error(scriptErrorReply(e, sha, scripting.lastUserLocation()));
         } finally {
             scripting.stop();
             state.changeActiveRedisBase(selected);

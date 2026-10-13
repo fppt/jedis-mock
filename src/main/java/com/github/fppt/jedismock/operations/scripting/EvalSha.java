@@ -18,6 +18,14 @@ public class EvalSha extends AbstractRedisOperation {
         this.state = state;
     }
 
+    /**
+     * @return whether the cached script runs read-only, as {@code EVALSHA_RO}
+     * does: any write command it dispatches is then refused
+     */
+    protected boolean readOnly() {
+        return false;
+    }
+
     @Override
     protected Slice response() {
         final String sha = params().get(0).toString();
@@ -26,6 +34,6 @@ public class EvalSha extends AbstractRedisOperation {
             return Response.error("NOSCRIPT No matching script. Please use EVAL.");
         }
         params().set(0, Slice.create(script));
-        return new Eval(base(), params(), state).response();
+        return new Eval(base(), params(), state).response(readOnly());
     }
 }

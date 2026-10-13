@@ -223,8 +223,6 @@ start_server {tags {"scripting"}} {
     } {*unknown subcommand or wrong number of arguments for 'restore'. Try FUNCTION HELP.}
     }
 
-    # FCALL_RO is not implemented.
-    if 0 {
     test {FUNCTION - test fcall_ro with write command} {
        r function load REPLACE [get_no_writes_function_code lua test test {return redis.call('set', 'x', '1')}]
        catch { r fcall_ro test 1 x } e
@@ -236,7 +234,6 @@ start_server {tags {"scripting"}} {
        r set x 1
        r fcall_ro test 1 x
     } {1}
-    }
 
     test {FUNCTION - test keys and argv} {
         r function load REPLACE [get_function_code lua test test {return redis.call('set', KEYS[1], ARGV[1])}]
@@ -1059,7 +1056,7 @@ start_server {tags {"scripting"}} {
     } {OK} {needs:config-maxmemory}
     }
 
-    # redis.register_function's flags argument is a stub (always rejected, see Function.java) and maxmemory/OOM enforcement is not implemented.
+    # maxmemory/OOM enforcement is not implemented.
     if 0 {
     test {FUNCTION - verify allow-omm allows running any command} {
        r FUNCTION load replace {#!lua name=f1
@@ -1114,8 +1111,6 @@ start_server {tags {"scripting"}} {
         set _ $e
     } {*unknown flag given*}
 
-    # FCALL_RO is not implemented.
-    if 0 {
     test {FUNCTION - write script on fcall_ro} {
        r function load replace {#!lua name=test
            redis.register_function{
@@ -1126,10 +1121,7 @@ start_server {tags {"scripting"}} {
        catch {r fcall_ro f1 1 x} e
        set _ $e
     } {*Can not execute a script with write flag using \*_ro command*}
-    }
 
-    # redis.register_function's flags argument is a stub (always rejected, see Function.java), so no-writes enforcement can't be tested.
-    if 0 {
     test {FUNCTION - write script with no-writes flag} {
        r function load replace {#!lua name=test
            redis.register_function{
@@ -1141,7 +1133,6 @@ start_server {tags {"scripting"}} {
        catch {r fcall f1 1 x} e
        set _ $e
     } {*Write commands are not allowed from read-only scripts*}
-    }
 
     # maxmemory/OOM enforcement is not implemented.
     if 0 {
@@ -1159,7 +1150,7 @@ start_server {tags {"scripting"}} {
     } {OK} {needs:config-maxmemory}
     }
 
-    # Depends on maxmemory/OOM enforcement, the flags stub, and FCALL_RO, none of which is implemented.
+    # maxmemory/OOM enforcement is not implemented.
     if 0 {
     test {FUNCTION - deny oom on no-writes function} {
        r FUNCTION load replace {#!lua name=test
@@ -1175,7 +1166,7 @@ start_server {tags {"scripting"}} {
     } {OK} {needs:config-maxmemory}
     }
 
-    # Depends on REPLICAOF/replication (not implemented) and the flags stub.
+    # Depends on REPLICAOF/replication, which is not implemented.
     if 0 {
     test {FUNCTION - allow stale} {
        r FUNCTION load replace {#!lua name=test

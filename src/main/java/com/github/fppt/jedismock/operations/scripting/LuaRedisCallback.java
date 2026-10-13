@@ -30,6 +30,10 @@ public class LuaRedisCallback {
     private static final String NOSCRIPT_PREFIX = "NOSCRIPT ";
     private static final String WRONG_ARGS_FROM_SCRIPT =
             "Wrong number of args calling command from script";
+    //Carries its error code already, so that redis.pcall() hands the script
+    //exactly the reply real Redis gives: "ERR Write commands ...".
+    private static final String READ_ONLY_WRITE_REJECTED =
+            "ERR Write commands are not allowed from read-only scripts.";
     //Commands real Redis flags as not-callable from a script and which jedis-mock
     //does not (fully) model. Kept lower-case for case-insensitive lookup.
     private static final Set<String> SCRIPT_DISALLOWED_COMMANDS = buildDisallowedCommandsSet();
@@ -108,6 +112,12 @@ public class LuaRedisCallback {
         final Slice result;
         try {
             command.validateArity(args.size());
+            if (!command.readOnly() && state.scriptingManager().isReadOnly()) {
+                //A read-only run (EVAL_RO, EVALSHA_RO, FCALL_RO, or a no-writes
+                //function) refuses the write here, once the command passed the
+                //lookup and arity checks, in the same order as real Redis.
+                throw new IllegalStateException(READ_ONLY_WRITE_REJECTED);
+            }
             if (!command.readOnly() && !state.scriptingManager().markWrite()) {
                 //A kill was granted before this write: abort now rather than
                 //execute a write the killer was promised would not happen.
@@ -225,7 +235,11 @@ public class LuaRedisCallback {
         Set<String> commands = new HashSet<>();
         commands.add("cluster");
         commands.add("eval");
+        commands.add("evalsha");
+        commands.add("eval_ro");
+        commands.add("evalsha_ro");
         commands.add("fcall");
+        commands.add("fcall_ro");
         commands.add("function");
         return commands;
     }
