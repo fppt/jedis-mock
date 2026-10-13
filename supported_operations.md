@@ -4,7 +4,7 @@
 
 |     |     |     |     |     |     |
 | --- | --- | --- | --- | --- | --- |
-| :x: [FT.CONFIG](https://valkey.io/commands/FT.CONFIG/) | :x: [bgrewriteaof](https://valkey.io/commands/bgrewriteaof/) | :x: [debug](https://valkey.io/commands/debug/) | :x: [monitor](https://valkey.io/commands/monitor/) | :x: [replconf](https://valkey.io/commands/replconf/) | :x: [shutdown](https://valkey.io/commands/shutdown/) |
+| :x: [FT.CONFIG](https://valkey.io/commands/FT.CONFIG/) | :x: [bgrewriteaof](https://valkey.io/commands/bgrewriteaof/) | :x: [debug](https://valkey.io/commands/debug/) | :x: [monitor](https://valkey.io/commands/monitor/) | :x: [replconf](https://valkey.io/commands/replconf/) | :heavy_check_mark: [shutdown](https://valkey.io/commands/shutdown/) |
 | :x: [FT._LIST](https://valkey.io/commands/FT._LIST/) | :x: [bgsave](https://valkey.io/commands/bgsave/) | :x: [failover](https://valkey.io/commands/failover/) | :x: [pfdebug](https://valkey.io/commands/pfdebug/) | :x: [replicaof](https://valkey.io/commands/replicaof/) | :x: [slaveof](https://valkey.io/commands/slaveof/) |
 | :x: [_FT.CONFIG](https://valkey.io/commands/_FT.CONFIG/) | :heavy_check_mark: [client](https://valkey.io/commands/client/) | :x: [lastsave](https://valkey.io/commands/lastsave/) | :x: [pfselftest](https://valkey.io/commands/pfselftest/) | :x: [role](https://valkey.io/commands/role/) | :x: [slowlog](https://valkey.io/commands/slowlog/) |
 | :x: [_FT.DEBUG](https://valkey.io/commands/_FT.DEBUG/) | :heavy_check_mark: [cluster](https://valkey.io/commands/cluster/) | :x: [latency](https://valkey.io/commands/latency/) | :x: [psync](https://valkey.io/commands/psync/) | :x: [save](https://valkey.io/commands/save/) | :x: [sync](https://valkey.io/commands/sync/) |
