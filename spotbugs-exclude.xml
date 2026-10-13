@@ -16,6 +16,16 @@
         <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
     </Match>
     <Match>
+        <!--The map of databases doubles as the server-wide data lock: every
+            command runs under OperationExecutorState.lock(), which returns this
+            very map. RedisServer.stop() takes the same monitor once, as a barrier
+            that returns only after the running script and every command still
+            waiting for the lock have finished. The map is exposed to the
+            package-private connection plumbing only, not to user code.-->
+        <Class name="com.github.fppt.jedismock.RedisServer"/>
+        <Bug pattern="USO_UNSAFE_ACCESSIBLE_OBJECT_SYNCHRONIZATION"/>
+    </Match>
+    <Match>
         <!--False positive as of Spotbugs 4.8.4.0-->
         <Class name="com.github.fppt.jedismock.datastructures.RMHyperLogLog"/>
         <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_READ_OBJECT"/>

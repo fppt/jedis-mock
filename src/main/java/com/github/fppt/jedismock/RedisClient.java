@@ -144,6 +144,15 @@ public final class RedisClient implements Runnable {
     }
 
     /**
+     * @return whether this connection has been closed (by the client going
+     * away, or by the server stopping), so that a command of its still waiting
+     * for the data lock should be dropped rather than executed.
+     */
+    public boolean isClosed() {
+        return !running.get();
+    }
+
+    /**
      * Stop the server this connection belongs to, as the {@code SHUTDOWN}
      * command does: every connection, this one included, is closed without a
      * reply and the port is released, and a running script is terminated

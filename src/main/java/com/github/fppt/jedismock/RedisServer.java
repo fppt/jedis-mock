@@ -89,6 +89,7 @@ public class RedisServer {
         if (!(service == null)) {
             throw new IllegalStateException();
         }
+        scriptingManager.endShutdown();
         this.service = new RedisServiceJob();
         singleThreadPool = Executors.newSingleThreadExecutor();
         serviceFinalization = singleThreadPool.submit(service);
@@ -98,15 +99,21 @@ public class RedisServer {
     public void stop() throws IOException {
         Objects.requireNonNull(service, NOT_RUNNING);
         service.stop();
-        //A script still running on one of the connections just closed would keep
-        //going on its own, and the scripting manager is shared by every start of
-        //this server, so it would make a restarted server reply BUSY until the
-        //script ended. Terminate it (its connection is already closed, so the
-        //"killed" error is never sent) and wait until it is gone: a stopped
-        //server is fully quiescent.
-        scriptingManager.forceKill();
-        scriptingManager.awaitStopped();
-        service = null;
+        //A stopped server must be quiescent: the scripting manager and the data
+        //are shared by every start of this instance, so a script outliving the
+        //stop would make a restarted server reply BUSY, and a command outliving
+        //it could start one. Kill the running script (its connection is already
+        //closed, so the "killed" error is never sent), and arm the manager so
+        //that any script starting from now on dies at its first instruction.
+        //Then take the data lock once: that returns only after the script has
+        //aborted and every command that was already waiting for the lock has
+        //run its course (those of closed clients are dropped at the lock, see
+        //MockExecutor). Unlike a wait on the manager, this cannot be cut short
+        //by an interrupt.
+        scriptingManager.beginShutdown();
+        synchronized (redisBases) {
+            service = null;
+        }
         try {
             serviceFinalization.get();
         } catch (ExecutionException e) {

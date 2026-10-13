@@ -145,6 +145,13 @@ public class MockExecutor {
         }
 
         synchronized (state.lock()) {
+            //A command whose client went away while it waited for the lock is
+            //dropped, like one left unread in a disconnected client's query
+            //buffer in real Redis. This is also what lets a stopping server
+            //drain the lock: a queued EVAL of a closed client must not start.
+            if (state.owner().isClosed()) {
+                return Response.SKIP;
+            }
             try {
                 CommandDescriptor command = CommandFactory.lookup(name);
                 if (command == null) {

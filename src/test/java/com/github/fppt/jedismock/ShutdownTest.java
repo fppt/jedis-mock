@@ -2,8 +2,14 @@ package com.github.fppt.jedismock;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import com.github.fppt.jedismock.commands.RedisCommandParser;
+import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.server.RedisOperationExecutor;
+import com.github.fppt.jedismock.server.Response;
+import com.github.fppt.jedismock.storage.OperationExecutorState;
 import com.github.fppt.jedismock.storage.ScriptingManager;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.exceptions.JedisBusyException;
@@ -11,6 +17,9 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.io.IOException;
+import java.net.Socket;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -98,29 +107,112 @@ class ShutdownTest {
      * {@code stop()} must not return while a script is still running: the
      * scripting manager is shared by every start of the same server, so a
      * script outliving the stop would make the restarted server reply BUSY to
-     * its first commands (seen as a flaky failure on CI). A script here is
-     * simulated by a thread that terminates a while after the kill arrives.
+     * its first commands (seen as a flaky failure on CI). A script is
+     * simulated by a thread that, like a real script thread, holds the data
+     * lock for its whole run and only terminates a while after the kill arrives.
      */
     @Test
     void stopWaitsForARunningScriptToTerminate() throws Exception {
         ScriptingManager scripting = server.getScriptingManager();
-        scripting.start();
+        CountDownLatch started = new CountDownLatch(1);
         Thread scriptThread = new Thread(() -> {
-            while (!scripting.isKillRequested()) {
-                Thread.onSpinWait();
+            synchronized (server.getRedisBases()) {
+                scripting.start();
+                started.countDown();
+                while (!scripting.isKillRequested()) {
+                    Thread.onSpinWait();
+                }
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                scripting.stop();
             }
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            scripting.stop();
         });
+        scriptThread.setDaemon(true);
         scriptThread.start();
+        assertThat(started.await(5, TimeUnit.SECONDS)).isTrue();
+        try {
+            server.stop();
+            assertThat(scripting.isRunning()).isFalse();
+        } finally {
+            // Should the kill never arrive, do not leave the helper spinning.
+            scripting.beginShutdown();
+            scriptThread.join(5_000);
+        }
+    }
 
-        server.stop();
-        assertThat(scripting.isRunning()).isFalse();
-        scriptThread.join(5_000);
+    /**
+     * A command that already passed the busy gate when the server stops is
+     * blocked on the data lock behind the dying script and ignores the
+     * interrupt from the client pool; if it is an EVAL, it would start a fresh
+     * script whose {@code start()} clears the kill request, so it could run
+     * forever on the stopped (or restarted) server. {@code stop()} must
+     * therefore not return before every in-flight command has finished, and a
+     * script that starts while the server is stopping must be killed at once.
+     * Here the test thread plays the in-flight command by holding the data
+     * lock itself.
+     */
+    @Test
+    void stopWaitsForInFlightCommandsAndKillsScriptsStartedMeanwhile() throws Exception {
+        ScriptingManager scripting = server.getScriptingManager();
+        CountDownLatch stopped = new CountDownLatch(1);
+        AtomicReference<Throwable> stopFailure = new AtomicReference<>();
+        Thread stopper = new Thread(() -> {
+            try {
+                server.stop();
+            } catch (Throwable t) {
+                stopFailure.set(t);
+            }
+            stopped.countDown();
+        });
+        stopper.setDaemon(true);
+
+        synchronized (server.getRedisBases()) {
+            stopper.start();
+            assertThat(stopped.await(500, TimeUnit.MILLISECONDS))
+                    .withFailMessage("stop() returned while a command still held the data lock").isFalse();
+            // The in-flight command turns out to be an EVAL: it is killed before its first instruction.
+            scripting.start();
+            assertThat(scripting.isKillRequested()).isTrue();
+            scripting.stop();
+        }
+        assertThat(stopped.await(5, TimeUnit.SECONDS)).withFailMessage("stop() did not return").isTrue();
+        assertThat(stopFailure.get()).isNull();
+        assertThat(server.isRunning()).isFalse();
+
+        // Once restarted, scripts run normally again.
+        server.start();
+        scripting.start();
+        assertThat(scripting.isKillRequested()).isFalse();
+        scripting.stop();
+    }
+
+    /**
+     * A command still waiting for the data lock when its client is closed
+     * (by the server stopping, or the client going away) is dropped rather
+     * than executed, like a command left unprocessed in a disconnected
+     * client's query buffer in real Redis.
+     */
+    @Test
+    void commandsOfAClosedClientAreDropped() throws Exception {
+        RedisClient client = new RedisClient(server, Mockito.mock(Socket.class), c -> { });
+        OperationExecutorState state = new OperationExecutorState(client, server.getRedisBases());
+        RedisOperationExecutor executor = new RedisOperationExecutor(state);
+        assertThat(executor.execCommand(RedisCommandParser.parse(array("SET", "k", "v")))).isEqualTo(Response.OK);
+
+        client.close();
+        assertThat(executor.execCommand(RedisCommandParser.parse(array("SET", "k", "w")))).isEqualTo(Response.SKIP);
+        assertThat(server.getRedisBases().get(0).getRMString(Slice.create("k")).getStoredDataAsString()).isEqualTo("v");
+    }
+
+    private static String array(String... words) {
+        StringBuilder sb = new StringBuilder("*").append(words.length).append("\r\n");
+        for (String word : words) {
+            sb.append('$').append(word.length()).append("\r\n").append(word).append("\r\n");
+        }
+        return sb.toString();
     }
 
     private void awaitStopped() throws InterruptedException {
