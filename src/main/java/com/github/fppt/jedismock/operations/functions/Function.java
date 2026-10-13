@@ -23,9 +23,11 @@ import org.luaj.vm2.lib.PackageLib;
 import org.luaj.vm2.lib.VarArgFunction;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -289,7 +291,9 @@ public class Function extends AbstractRedisOperation {
                             Response.bulkString(Slice.create(functionInfo.getDescription())) :
                             Response.NULL,
                     Response.bulkString(Slice.create("flags")),
-                    Response.array()
+                    Response.array(functionInfo.getFlags().stream()
+                            .map(flag -> Response.bulkString(Slice.create(flag.flagName())))
+                            .collect(Collectors.toList()))
             );
         }).collect(Collectors.toList())));
         if (includeCode) {
@@ -353,6 +357,7 @@ public class Function extends AbstractRedisOperation {
             String functionName = null;
             String description = null;
             LuaClosure callback = null;
+            Set<FunctionFlag> flags = EnumSet.noneOf(FunctionFlag.class);
 
             LuaValue key = LuaValue.NIL;
             Varargs entry;
@@ -385,10 +390,7 @@ public class Function extends AbstractRedisOperation {
                         if (!value.istable()) {
                             throw new InvalidRegistrationException("ERR flags argument to redis.register_function must be a table representing function flags");
                         }
-                        if (value.length() != 0) {
-                            // No flags are supported yet.
-                            throw new InvalidRegistrationException("ERR unknown flag given");
-                        }
+                        flags = parseFlags(value.checktable());
                         break;
                     default:
                         throw new InvalidRegistrationException("ERR unknown argument given to redis.register_function");
@@ -402,7 +404,7 @@ public class Function extends AbstractRedisOperation {
                 throw new InvalidRegistrationException("ERR redis.register_function must get a callback argument");
             }
 
-            return register(functionName, new FunctionInfo(description, callback, libraryName));
+            return register(functionName, new FunctionInfo(description, callback, libraryName, flags));
         }
 
         @Override
@@ -414,6 +416,26 @@ public class Function extends AbstractRedisOperation {
                 throw new InvalidRegistrationException("ERR second argument to redis.register_function must be a function");
             }
             return register(functionName.checkjstring(), new FunctionInfo(null, function.checkclosure(), libraryName));
+        }
+
+        /**
+         * Read the flags from the array part of the table, as real Redis does
+         * (hash entries are ignored). Every entry must name a known flag,
+         * matched case-insensitively; anything else is an unknown flag.
+         */
+        private static Set<FunctionFlag> parseFlags(LuaTable table) {
+            Set<FunctionFlag> flags = EnumSet.noneOf(FunctionFlag.class);
+            for (int i = 1; ; i++) {
+                LuaValue entry = table.get(i);
+                if (entry.isnil()) {
+                    return flags;
+                }
+                FunctionFlag flag = entry.isstring() ? FunctionFlag.lookup(entry.tojstring()) : null;
+                if (flag == null) {
+                    throw new InvalidRegistrationException("ERR unknown flag given");
+                }
+                flags.add(flag);
+            }
         }
 
         private LuaValue register(String functionName, FunctionInfo functionInfo) {

@@ -66,9 +66,13 @@ public class ScriptingUtils {
      * failing source/line via {@code debug.getinfo} and attaches it to the error,
      * regardless of whether the raised value already carried a location of its
      * own. CR/LF in the message are collapsed to spaces by {@link Response#error}.
+     *
+     * @param lastUserLocation where the script last executed user code (see
+     * {@link com.github.fppt.jedismock.storage.ScriptingManager#lastUserLocation()}),
+     * used when the error itself carries no location; may be {@code null}
      */
-    public static String scriptErrorReply(LuaError e, String scriptName) {
-        return errorMessage(e, scriptName);
+    public static String scriptErrorReply(LuaError e, String scriptName, String lastUserLocation) {
+        return errorMessage(e, scriptName, lastUserLocation);
     }
 
     /**
@@ -82,16 +86,18 @@ public class ScriptingUtils {
      * baked into the message text itself survives.
      */
     public static String libraryLoadErrorMessage(LuaError e) {
-        return errorMessage(e, null);
+        return errorMessage(e, null, null);
     }
 
-    private static String errorMessage(LuaError e, String scriptName) {
+    private static String errorMessage(LuaError e, String scriptName, String lastUserLocation) {
         String raw = stripTraceback(e.getMessage());
         //Derive the script line from luaj's location before any stripping; it is
-        //present for runtime errors ("user_script:N: ..") and command/callback
-        //errors ("user_script:N vm error: .."). Only error({err=..})/error({})
-        //tables carry no location, in which case we fall back to line 1.
-        String line = lineOf(raw);
+        //present for runtime errors ("user_script:N: ..") and for command/callback
+        //errors raised inside a user frame ("user_script:N vm error: .."). It is
+        //absent for error({err=..})/error({}) tables and for a command/callback
+        //error raised from a tail call (luaj pops the user frame first): then use
+        //the last user instruction executed, as tracked by the debug hook.
+        String line = lineOf(raw, lastUserLocation);
         LuaValue obj = e.getMessageObject();
         String msg;
         if (obj != null && obj.istable()) {
@@ -122,10 +128,13 @@ public class ScriptingUtils {
         return (trace >= 0 ? message.substring(0, trace) : message).trim();
     }
 
-    private static String lineOf(String message) {
+    private static String lineOf(String message, String lastUserLocation) {
         Matcher m = USER_SCRIPT_LINE.matcher(message);
-        //Fall back to 1 only when luaj gives no location (e.g. an error() table).
-        return m.find() ? m.group(1) : "@user_script:1";
+        if (m.find()) {
+            return m.group(1);
+        }
+        //Fall back to line 1 only when no user code ran at all.
+        return lastUserLocation != null ? lastUserLocation : "@user_script:1";
     }
 
     private static String stripAtMarker(String msg) {
