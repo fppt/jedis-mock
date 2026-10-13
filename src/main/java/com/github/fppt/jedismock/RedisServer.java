@@ -98,6 +98,14 @@ public class RedisServer {
     public void stop() throws IOException {
         Objects.requireNonNull(service, NOT_RUNNING);
         service.stop();
+        //A script still running on one of the connections just closed would keep
+        //going on its own, and the scripting manager is shared by every start of
+        //this server, so it would make a restarted server reply BUSY until the
+        //script ended. Terminate it (its connection is already closed, so the
+        //"killed" error is never sent) and wait until it is gone: a stopped
+        //server is fully quiescent.
+        scriptingManager.forceKill();
+        scriptingManager.awaitStopped();
         service = null;
         try {
             serviceFinalization.get();
