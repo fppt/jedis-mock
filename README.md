@@ -197,7 +197,7 @@ jedis.fcall("fib", List.of(), List.of("10"));
 //Yields the 10th Fibonacci number
 ```
 
-:warning: `FCALL_RO`, `FUNCTION DUMP`/`RESTORE`, and the `flags` argument to `redis.register_function` are not yet supported.
+:warning: `FUNCTION DUMP`/`RESTORE`, and the `flags` argument to `redis.register_function` are not yet supported.
 
 A busy `FCALL` behaves the same way as a busy `EVAL` (see above), except a client must use `FUNCTION KILL` instead of `SCRIPT KILL` to abort it — real Redis rejects `SCRIPT KILL` on a running function (and `FUNCTION KILL` on a running script) with the same `-BUSY` reply, and JedisMock matches that.
 
