@@ -506,6 +506,72 @@ class ShutdownTest {
         awaitStopped();
     }
 
+    /**
+     * A connection accepted just as the server stops is registered, and its
+     * task submitted, only after {@code accept()} returned. {@code stop()}
+     * must therefore let the accept loop run its course before it closes the
+     * clients, or that connection is either never closed (its task then blocks
+     * reading forever, and so does the wait for client tasks) or submitted to
+     * a pool already shut down (its socket leaks). Connections are hammered
+     * at the server across repeated stop/start cycles; every stop must return
+     * promptly and leave no client task behind. The window is narrow, so this
+     * is a regression guard rather than a deterministic reproduction.
+     */
+    @Test
+    void stopRacingNewConnectionsNeitherHangsNorLeaks() throws Exception {
+        AtomicReference<Throwable> connectorFailure = new AtomicReference<>();
+        AtomicReference<HostAndPortHolder> target = new AtomicReference<>(new HostAndPortHolder(host, port));
+        CountDownLatch done = new CountDownLatch(1);
+        Thread connector = new Thread(() -> {
+            while (done.getCount() > 0) {
+                HostAndPortHolder t = target.get();
+                try (java.net.Socket s = new java.net.Socket(t.host, t.port)) {
+                    s.setSoTimeout(50);
+                    s.getOutputStream().write("PING\r\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+                    s.getInputStream().read();
+                } catch (IOException e) {
+                    //Refused or dropped while the server is down: expected.
+                }
+            }
+        });
+        connector.setDaemon(true);
+        connector.start();
+        try {
+            for (int cycle = 0; cycle < 40; cycle++) {
+                CountDownLatch stopped = new CountDownLatch(1);
+                Thread stopper = new Thread(() -> {
+                    try {
+                        server.stop();
+                    } catch (Throwable t) {
+                        connectorFailure.set(t);
+                    }
+                    stopped.countDown();
+                });
+                stopper.setDaemon(true);
+                stopper.start();
+                assertThat(stopped.await(10, TimeUnit.SECONDS))
+                        .withFailMessage("stop() hung in cycle %d", cycle).isTrue();
+                assertThat(connectorFailure.get()).isNull();
+                assertThat(clientThreadsAlive()).withFailMessage("client task left behind in cycle %d", cycle).isZero();
+                server.start();
+                target.set(new HostAndPortHolder(server.getHost(), server.getBindPort()));
+            }
+        } finally {
+            done.countDown();
+            connector.join(5_000);
+        }
+    }
+
+    private static final class HostAndPortHolder {
+        private final String host;
+        private final int port;
+
+        HostAndPortHolder(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
+    }
+
     private static long clientThreadsAlive() {
         return Thread.getAllStackTraces().entrySet().stream()
                 .filter(e -> e.getKey().isAlive())
