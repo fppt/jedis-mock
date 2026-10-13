@@ -60,24 +60,27 @@ public class MockExecutor {
         if (("function".equals(name) || "script".equals(name)) && !commandParams.isEmpty()
                 && "kill".equalsIgnoreCase(commandParams.get(0).toString())) {
             ScriptingManager scripting = state.scriptingManager();
-            //A script that already wrote to the dataset cannot be killed, so the
-            //server stays BUSY until it ends. Like Redis, this is checked before
-            //the script-vs-function mismatch: both KILL variants get UNKILLABLE.
-            if (scripting.hasWritten()) {
-                return Response.error(UNKILLABLE_MESSAGE);
-            }
             ScriptingManager.ScriptType expectedScriptType =
                     "function".equals(name) ? ScriptingManager.ScriptType.FUNCTION : ScriptingManager.ScriptType.SCRIPT;
-            ScriptingManager.ScriptType actualScriptType = scripting.getRunningScriptType();
-            // SCRIPT KILL cannot kill a running FUNCTION and vice versa.
-            if (actualScriptType == null || actualScriptType == expectedScriptType) {
-                if (!scripting.requestKill()) {
+            switch (scripting.requestKill(expectedScriptType)) {
+                case NOT_BUSY:
                     return Response.error("NOTBUSY No scripts in execution right now.");
-                }
-                //Reply OK only once the script has actually aborted, so a command
-                //issued right after SCRIPT KILL no longer sees the script as busy.
-                scripting.awaitStopped();
-                return Response.OK;
+                case UNKILLABLE:
+                    //A script that already wrote to the dataset cannot be killed,
+                    //so the server stays BUSY until it ends. Like Redis, this is
+                    //decided before the script-vs-function mismatch: both KILL
+                    //variants get UNKILLABLE.
+                    return Response.error(UNKILLABLE_MESSAGE);
+                case KILLED:
+                    //Reply OK only once the script has actually aborted, so a command
+                    //issued right after SCRIPT KILL no longer sees the script as busy.
+                    scripting.awaitStopped();
+                    return Response.OK;
+                case WRONG_TYPE:
+                default:
+                    //SCRIPT KILL cannot kill a running FUNCTION and vice versa:
+                    //fall through to the BUSY gate below, which names the right command.
+                    break;
             }
         }
 

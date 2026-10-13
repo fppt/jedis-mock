@@ -29,9 +29,18 @@ public class InterruptibleDebugLib extends DebugLib {
     @Override
     public void onInstruction(int pc, Varargs v, int top) {
         if (scriptingManager.isKillRequested()) {
-            throw new LuaError(LuaValue.tableOf(new LuaValue[]{LuaValue.valueOf("err"), LuaValue.valueOf("Script killed by user with SCRIPT KILL...")}));
+            throw killedError();
         }
         super.onInstruction(pc, v, top);
+    }
+
+    /**
+     * The error a killed script dies with. Also raised by the redis.call
+     * bridge when a write is dispatched after the kill was granted, so the
+     * script aborts before the write instead of after it.
+     */
+    public static LuaError killedError() {
+        return new LuaError(LuaValue.tableOf(new LuaValue[]{LuaValue.valueOf("err"), LuaValue.valueOf("Script killed by user with SCRIPT KILL...")}));
     }
 
     /**

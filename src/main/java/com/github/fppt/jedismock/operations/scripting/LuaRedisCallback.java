@@ -103,10 +103,12 @@ public class LuaRedisCallback {
         final Slice result;
         try {
             command.validateArity(args.size());
-            if (!command.readOnly()) {
-                //From here on the script counts as having written, whether or
-                //not the command succeeds: SCRIPT KILL will refuse it (UNKILLABLE).
-                state.scriptingManager().markWrite();
+            if (!command.readOnly() && !state.scriptingManager().markWrite()) {
+                //A kill was granted before this write: abort now rather than
+                //execute a write the killer was promised would not happen.
+                //(When markWrite succeeds the script counts as having written,
+                //whether or not the command succeeds: KILL will say UNKILLABLE.)
+                throw InterruptibleDebugLib.killedError();
             }
             final RedisOperation operation =
                     //Specific support for SELECT,

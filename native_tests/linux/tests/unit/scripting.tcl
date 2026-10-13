@@ -5,7 +5,10 @@
 #  - the server/redis dual-API loop is reduced to the redis EVAL path
 #    (foreach script_compatibility_api {redis}); jedis-mock models the redis.* API;
 #  - the function/eval loop is reduced to EVAL (foreach is_eval {1});
-#  - tests for features jedis-mock does not model are disabled with `if 0 { ... }`.
+#  - tests for features jedis-mock does not model are disabled with `if 0 { ... }`;
+#  - the external:skip tag is dropped from "Timedout scripts that modified data
+#    can't be killed by SCRIPT KILL" (its only purpose upstream is to skip the
+#    test against an external server, but here that tag is denied file-wide).
 #
 
 # jedis-mock: only run the subset of tests the mock currently models. The
@@ -1595,7 +1598,7 @@ start_server {tags {"scripting"}} {
         assert_match {UNKILLABLE*} $e
         catch {r ping} e
         assert_match {BUSY*} $e
-    } {} {external:skip}
+    } {}
 
     # Note: keep this test at the end of this server stanza because it
     # kills the server.

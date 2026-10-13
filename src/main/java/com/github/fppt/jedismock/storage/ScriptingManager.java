@@ -15,13 +15,18 @@ import java.util.List;
  * ({@link OperationExecutorState#lock()}), so at most one runs at a time;
  * {@link #start()} and {@link #stop()} are therefore called by that single
  * script thread while it holds the lock. Everything else must work <em>while</em>
- * the script still holds that lock, so the remaining methods are deliberately
- * lock-free and rely on {@code volatile} visibility.
+ * the script still holds that lock, so the remaining methods never touch it:
+ * the readers ({@link #isBusy()}, {@link #isRunning()}, {@link #isKillRequested()},
+ * {@link #awaitStopped()}, ...) are lock-free and rely on {@code volatile}
+ * visibility, while the state transitions ({@code start}/{@code stop},
+ * {@link #markWrite()}, {@link #requestKill(ScriptType)}) are serialized on this
+ * object's own monitor. That monitor is only ever held for a few field
+ * assignments, never while waiting, so it cannot deadlock against the data lock.
  * <p>
- * The single-writer invariant (only the running-script thread calls
- * {@code start}/{@code stop}) means {@code running} and {@code startNanos} can be
- * plain volatiles: a reader that observes {@code running == true} is guaranteed
- * by the volatile happens-before to also observe the matching {@code startNanos}.
+ * The transitions must be atomic because a kill races the script it targets:
+ * whether a write is dispatched before or after the kill decides between
+ * "the script is UNKILLABLE" and "the script aborts without writing", and no
+ * interleaving may both abort the script and let the write through.
  */
 public final class ScriptingManager {
     /**
@@ -60,7 +65,7 @@ public final class ScriptingManager {
         start(startNanos, ScriptType.FUNCTION, functionInfo);
     }
 
-    private void start(long startNanos, ScriptType scriptType, RunningFunctionInfo functionInfo) {
+    private synchronized void start(long startNanos, ScriptType scriptType, RunningFunctionInfo functionInfo) {
         killRequested = false;
         writeDirty = false;
         this.startNanos = startNanos;
@@ -72,7 +77,7 @@ public final class ScriptingManager {
     /**
      * Mark the end of a script run (normal completion, error, or kill).
      */
-    public void stop() {
+    public synchronized void stop() {
         killRequested = false;
         writeDirty = false;
         running = false;
@@ -81,34 +86,52 @@ public final class ScriptingManager {
     }
 
     /**
-     * Request termination of the currently running script.
+     * Request termination of the currently running script, applying the same
+     * checks in the same order as {@code scriptKill} in real Redis: nothing
+     * running, then a script that already wrote (unkillable, whichever KILL
+     * variant was used), then a {@code SCRIPT KILL} / {@code FUNCTION KILL}
+     * mismatch. The check and the kill are one atomic step, so a write that
+     * is dispatched concurrently either makes the script unkillable or is
+     * refused by {@link #markWrite()}, never both aborted and executed.
      *
-     * @return {@code true} if a script was running, so a kill has been scheduled
-     * and the caller should reply {@code OK}; {@code false} if nothing is
-     * running, so the caller should reply {@code -NOTBUSY}.
+     * @param expectedScriptType the type the KILL variant is allowed to kill
      */
-    public boolean requestKill() {
+    public synchronized KillOutcome requestKill(ScriptType expectedScriptType) {
         if (!running) {
-            return false;
+            return KillOutcome.NOT_BUSY;
+        }
+        if (writeDirty) {
+            return KillOutcome.UNKILLABLE;
+        }
+        if (scriptType != expectedScriptType) {
+            return KillOutcome.WRONG_TYPE;
         }
         killRequested = true;
+        return KillOutcome.KILLED;
+    }
+
+    /**
+     * Record that the running script is about to dispatch a write command.
+     * Called by the script thread once the command passed its arity check and
+     * is about to run, which is also when real Redis sets its write-dirty flag:
+     * a write rejected for arity leaves the script killable, a write that fails
+     * while executing does not.
+     *
+     * @return {@code true} if the write may proceed (the script is now
+     * unkillable); {@code false} if a kill has already been granted, in which
+     * case the script must abort instead of executing the write.
+     */
+    public synchronized boolean markWrite() {
+        if (killRequested) {
+            return false;
+        }
+        writeDirty = true;
         return true;
     }
 
     /**
-     * Record that the running script has dispatched a write command. Called by
-     * the script thread once the command passed its arity check and is about to
-     * run, which is also when real Redis sets its write-dirty flag: a write
-     * rejected for arity leaves the script killable, a write that fails while
-     * executing does not.
-     */
-    public void markWrite() {
-        writeDirty = true;
-    }
-
-    /**
      * @return whether the running script has dispatched a write command, in
-     * which case {@code SCRIPT/FUNCTION KILL} must refuse with {@code -UNKILLABLE}
+     * which case {@code SCRIPT/FUNCTION KILL} refuses with {@code -UNKILLABLE}
      * and the server stays busy until the script ends by itself. Always
      * {@code false} when nothing is running.
      */
@@ -212,5 +235,19 @@ public final class ScriptingManager {
     public enum ScriptType {
         SCRIPT,
         FUNCTION,
+    }
+
+    /**
+     * Result of {@link #requestKill(ScriptType)}, in the order the checks are made.
+     */
+    public enum KillOutcome {
+        /** Nothing is running: reply {@code -NOTBUSY}. */
+        NOT_BUSY,
+        /** The script already wrote: reply {@code -UNKILLABLE}, it runs to completion. */
+        UNKILLABLE,
+        /** A function is running but SCRIPT KILL was used, or vice versa: the caller falls through to the BUSY reply. */
+        WRONG_TYPE,
+        /** The kill has been granted: the script aborts at its next instruction. */
+        KILLED,
     }
 }
