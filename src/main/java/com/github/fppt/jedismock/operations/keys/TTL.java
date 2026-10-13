@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("ttl")
+@RedisCommand(value = "ttl", arity = 2)
 class TTL extends AbstractRedisOperation {
     TTL(RedisBase base, List<Slice> params) {
         super(base, params);

@@ -6,15 +6,10 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
-@RedisCommand("decr")
+@RedisCommand(value = "decr", arity = 2, readOnly = false)
 class Decr extends DecrBy {
     Decr(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 1;
     }
 
     @Override

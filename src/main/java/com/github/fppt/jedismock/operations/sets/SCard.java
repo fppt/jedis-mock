@@ -10,21 +10,11 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Set;
 
-@RedisCommand("scard")
+@RedisCommand(value = "scard", arity = 2)
 class SCard extends AbstractRedisOperation {
 
     SCard(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 1;
     }
 
     protected Slice response() {

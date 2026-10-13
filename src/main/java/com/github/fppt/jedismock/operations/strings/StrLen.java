@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("strlen")
+@RedisCommand(value = "strlen", arity = 2)
 class StrLen extends AbstractRedisOperation {
     StrLen(RedisBase base, List<Slice> params) {
         super(base, params);

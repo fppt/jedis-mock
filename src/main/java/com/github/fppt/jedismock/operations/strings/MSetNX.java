@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("msetnx")
+@RedisCommand(value = "msetnx", arity = -3, readOnly = false)
 public class MSetNX extends AbstractRedisOperation {
     public MSetNX(RedisBase base, List<Slice> params) {
         super(base, params);

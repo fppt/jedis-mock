@@ -10,7 +10,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zrem")
+@RedisCommand(value = "zrem", arity = -3, readOnly = false)
 class ZRem extends AbstractRedisOperation {
 
     ZRem(RedisBase base, List<Slice> params) {

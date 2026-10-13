@@ -12,15 +12,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("hpttl")
+@RedisCommand(value = "hpttl", arity = -5)
 public class HPTTL extends AbstractRedisOperation {
     public HPTTL(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 4;
     }
 
     protected Slice wrap(long pttl) {

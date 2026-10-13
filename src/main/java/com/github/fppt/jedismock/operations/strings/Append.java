@@ -10,7 +10,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("append")
+@RedisCommand(value = "append", arity = 3, readOnly = false)
 class Append extends AbstractRedisOperation {
     Append(RedisBase base, List<Slice> params) {
         super(base, params);

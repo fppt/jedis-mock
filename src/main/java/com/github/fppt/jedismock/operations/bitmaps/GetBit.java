@@ -11,7 +11,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToNonNegativeInteger;
 
-@RedisCommand("getbit")
+@RedisCommand(value = "getbit", arity = 3)
 class GetBit extends AbstractRedisOperation {
     GetBit(RedisBase base, List<Slice> params) {
         super(base, params);

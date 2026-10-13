@@ -11,9 +11,10 @@ import java.util.List;
  * negative to count back from the end. See {@link Substr} for the older name
  * of this same command.
  */
-@RedisCommand("getrange")
+@RedisCommand(value = "getrange", arity = 4)
 class GetRange extends AbstractGetRange {
     GetRange(RedisBase base, List<Slice> params) {
         super(base, params);
     }
+
 }

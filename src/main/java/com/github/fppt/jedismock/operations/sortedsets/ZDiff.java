@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand("zdiff")
+@RedisCommand(value = "zdiff", arity = -3)
 class ZDiff extends AbstractZDiff {
 
     ZDiff(OperationExecutorState state, List<Slice> params) {

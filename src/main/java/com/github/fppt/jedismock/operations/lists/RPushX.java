@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand("rpushx")
+@RedisCommand(value = "rpushx", arity = -3, readOnly = false)
 public class RPushX extends RPush {
     RPushX(OperationExecutorState state, List<Slice> params) {
         super(state, params);

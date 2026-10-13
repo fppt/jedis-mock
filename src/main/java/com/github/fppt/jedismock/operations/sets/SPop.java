@@ -14,15 +14,10 @@ import java.util.Set;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
-@RedisCommand("spop")
+@RedisCommand(value = "spop", arity = -2, readOnly = false)
 class SPop extends AbstractRedisOperation {
     SPop(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     private List<Slice> popper(Set<Slice> collection, int numberToBeRemoved) {

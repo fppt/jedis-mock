@@ -10,15 +10,10 @@ import java.util.List;
  * XRANGE key start end [COUNT count]<br>
  * Supported options: COUNT
  */
-@RedisCommand("xrange")
+@RedisCommand(value = "xrange", arity = -4)
 public class XRange extends Ranges {
     XRange(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 3;
     }
 
     @Override

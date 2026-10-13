@@ -13,7 +13,7 @@ import java.util.Optional;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
-@RedisCommand("setrange")
+@RedisCommand(value = "setrange", arity = 4, readOnly = false)
 public class SetRange extends AbstractRedisOperation {
     public SetRange(RedisBase base, List<Slice> params) {
         super(base, params);

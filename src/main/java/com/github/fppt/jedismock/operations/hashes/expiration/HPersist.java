@@ -12,7 +12,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("hpersist")
+@RedisCommand(value = "hpersist", arity = -5, readOnly = false)
 public class HPersist extends AbstractRedisOperation {
     public HPersist(RedisBase base, List<Slice> params) {
         super(base, params);

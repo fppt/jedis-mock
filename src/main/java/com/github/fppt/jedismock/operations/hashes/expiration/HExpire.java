@@ -6,7 +6,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("hexpire")
+@RedisCommand(value = "hexpire", arity = -6, readOnly = false)
 public class HExpire extends HPExpire {
     public HExpire(RedisBase base, List<Slice> params) {
         super(base, params);

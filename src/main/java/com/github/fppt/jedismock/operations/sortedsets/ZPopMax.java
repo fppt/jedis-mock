@@ -6,10 +6,11 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zpopmax")
+@RedisCommand(value = "zpopmax", arity = -2, readOnly = false)
 public class ZPopMax extends ZPop {
 
     ZPopMax(RedisBase base, List<Slice> params) {
         super(base, params, true);
     }
+
 }

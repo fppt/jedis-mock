@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zremrangebyscore")
+@RedisCommand(value = "zremrangebyscore", arity = 4, readOnly = false)
 public class ZRemRangeByScore extends AbstractZRangeByScore {
 
     ZRemRangeByScore(RedisBase base, List<Slice> params) {

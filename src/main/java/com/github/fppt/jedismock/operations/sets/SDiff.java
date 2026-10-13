@@ -14,15 +14,10 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.HashSet;
 
-@RedisCommand("sdiff")
+@RedisCommand(value = "sdiff", arity = -2)
 class SDiff extends AbstractRedisOperation {
     SDiff(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     final Set<Slice> getDifference() {

@@ -22,16 +22,6 @@ abstract class AbstractGetRange extends AbstractRedisOperation {
     }
 
     @Override
-    protected int minArgs() {
-        return 3;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 3;
-    }
-
-    @Override
     protected Slice response() {
         //Both offsets are parsed before the key is touched, so a malformed one
         //is reported ahead of WRONGTYPE or a missing key

@@ -8,15 +8,10 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
-@RedisCommand("incrby")
+@RedisCommand(value = "incrby", arity = 3, readOnly = false)
 class IncrBy extends IncrOrDecrBy {
     IncrBy(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 2;
     }
 
     long incrementOrDecrementValue(List<Slice> params){

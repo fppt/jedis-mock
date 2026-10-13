@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
-@RedisCommand("lpushx")
+@RedisCommand(value = "lpushx", arity = -3, readOnly = false)
 class LPushX extends LPush {
     LPushX(OperationExecutorState state, List<Slice> params) {
         super(state, params);

@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("hstrlen")
+@RedisCommand(value = "hstrlen", arity = 3)
 public class HStrlen extends AbstractRedisOperation {
     public HStrlen(RedisBase base, List<Slice> params) {
         super(base, params);

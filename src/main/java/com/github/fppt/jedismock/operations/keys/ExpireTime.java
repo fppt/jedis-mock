@@ -8,20 +8,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("expiretime")
+@RedisCommand(value = "expiretime", arity = 2)
 class ExpireTime extends AbstractRedisOperation {
     ExpireTime(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 1;
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     protected Slice response() {

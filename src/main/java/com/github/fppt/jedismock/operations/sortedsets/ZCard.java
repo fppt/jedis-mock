@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zcard")
+@RedisCommand(value = "zcard", arity = 2)
 class ZCard extends AbstractRedisOperation {
 
     ZCard(RedisBase base, List<Slice> params) {

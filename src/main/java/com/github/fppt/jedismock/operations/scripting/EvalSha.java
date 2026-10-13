@@ -9,18 +9,13 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("evalsha")
+@RedisCommand(value = "evalsha", arity = -3)
 public class EvalSha extends AbstractRedisOperation {
     private final OperationExecutorState state;
 
     public EvalSha(final RedisBase base, final List<Slice> params, OperationExecutorState state) {
         super(base, params);
         this.state = state;
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     @Override

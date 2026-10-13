@@ -10,7 +10,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.Arrays;
 import java.util.List;
 
-@RedisCommand("linsert")
+@RedisCommand(value = "linsert", arity = 5, readOnly = false)
 public class LInsert extends AbstractRedisOperation {
     private static final String BEFORE = "BEFORE";
     private static final String AFTER = "AFTER";

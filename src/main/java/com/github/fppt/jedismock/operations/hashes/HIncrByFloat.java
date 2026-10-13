@@ -13,7 +13,7 @@ import java.util.Locale;
 
 import static com.github.fppt.jedismock.Utils.convertToDouble;
 
-@RedisCommand("hincrbyfloat")
+@RedisCommand(value = "hincrbyfloat", arity = 4, readOnly = false)
 class HIncrByFloat extends HIncrBy {
     HIncrByFloat(RedisBase base, List<Slice> params) {
         super(base, params);

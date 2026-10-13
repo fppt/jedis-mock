@@ -21,11 +21,6 @@ public abstract class SStore extends AbstractRedisOperation {
         this.operation = operation;
     }
 
-    @Override
-    protected int minArgs() {
-        return 2;
-    }
-
     /** The event this store reports, e.g. {@code sinterstore}. */
     abstract KeyspaceEvent storeEvent();
 

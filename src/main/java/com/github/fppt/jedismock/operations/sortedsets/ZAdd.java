@@ -19,7 +19,7 @@ import static com.github.fppt.jedismock.operations.sortedsets.ZAdd.Options.LT;
 import static com.github.fppt.jedismock.operations.sortedsets.ZAdd.Options.NX;
 import static com.github.fppt.jedismock.operations.sortedsets.ZAdd.Options.XX;
 
-@RedisCommand("zadd")
+@RedisCommand(value = "zadd", arity = -4, readOnly = false)
 class ZAdd extends AbstractByScoreOperation {
 
     enum Options {

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@RedisCommand("hkeys")
+@RedisCommand(value = "hkeys", arity = 2)
 public class HKeys extends AbstractRedisOperation {
     public HKeys(RedisBase base, List<Slice> params) {
         super(base, params);

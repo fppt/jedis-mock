@@ -3,8 +3,8 @@ package com.github.fppt.jedismock.operations.keys;
 import com.github.fppt.jedismock.Utils;
 import com.github.fppt.jedismock.datastructures.RMDataStructure;
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.operations.RedisCommand;
-import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.KeyspaceEvent;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
@@ -13,14 +13,13 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RedisCommand(value = "copy")
-public class Copy implements RedisOperation {
+@RedisCommand(value = "copy", arity = -3, readOnly = false)
+public class Copy extends AbstractRedisOperation {
     private final OperationExecutorState state;
-    private final List<Slice> params;
     private final List<String> additionalParams;
 
     public Copy(OperationExecutorState state, List<Slice> params) {
-        this.params = params;
+        super(state.base(), params);
         this.state = state;
         this.additionalParams = params
                 .stream().skip(2).map(Slice::toString).collect(Collectors.toList());
@@ -43,12 +42,9 @@ public class Copy implements RedisOperation {
     }
 
     @Override
-    public Slice execute() {
-        if (params.size() < 2) {
-            return Response.error("ERR wrong number of arguments for 'copy' command");
-        }
-        Slice source = params.get(0);
-        Slice destination = params.get(1);
+    protected Slice response() {
+        Slice source = params().get(0);
+        Slice destination = params().get(1);
         RedisBase sourceBase = state.base();
         RMDataStructure value = sourceBase.getValue(source);
         if (value == null) { // source doesn't exist

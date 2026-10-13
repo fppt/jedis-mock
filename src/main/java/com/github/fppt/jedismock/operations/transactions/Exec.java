@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 import static com.github.fppt.jedismock.storage.OperationExecutorState.TransactionState.ERRORED;
 
-@RedisCommand(value = "exec", transactional = false)
+@RedisCommand(value = "exec", transactional = false, arity = 1)
 public class Exec implements RedisOperation {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Exec.class);
     private final OperationExecutorState state;

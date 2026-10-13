@@ -13,7 +13,7 @@ import java.util.ListIterator;
 
 import static com.github.fppt.jedismock.Utils.convertToInteger;
 
-@RedisCommand("lrem")
+@RedisCommand(value = "lrem", arity = 4, readOnly = false)
 class LRem extends AbstractRedisOperation {
     private final int directedNumRemove;
     private final Slice target;

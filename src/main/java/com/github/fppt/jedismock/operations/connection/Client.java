@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 import java.util.List;
 import java.util.Locale;
 
-@RedisCommand(value = "client", transactional = false)
+@RedisCommand(value = "client", transactional = false, arity = -2)
 public class Client implements RedisOperation {
 
     private final OperationExecutorState state;

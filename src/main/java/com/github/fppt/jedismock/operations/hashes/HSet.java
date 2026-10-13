@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("hset")
+@RedisCommand(value = "hset", arity = -4, readOnly = false)
 class HSet extends AbstractRedisOperation {
     HSet(RedisBase base, List<Slice> params) {
         super(base, params);

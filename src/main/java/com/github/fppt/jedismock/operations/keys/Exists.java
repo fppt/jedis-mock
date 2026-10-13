@@ -8,15 +8,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("exists")
+@RedisCommand(value = "exists", arity = -2)
 class Exists extends AbstractRedisOperation {
     Exists(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     protected Slice response() {

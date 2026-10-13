@@ -10,21 +10,11 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.List;
 import java.util.Set;
 
-@RedisCommand("sismember")
+@RedisCommand(value = "sismember", arity = 3)
 public class SIsMember extends AbstractRedisOperation {
 
     SIsMember(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 2;
     }
 
     @Override

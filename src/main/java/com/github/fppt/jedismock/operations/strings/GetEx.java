@@ -21,16 +21,11 @@ import java.util.List;
  * hold a string, so {@code GETEX missing EX 0} replies nil rather than
  * erroring.
  */
-@RedisCommand("getex")
+@RedisCommand(value = "getex", arity = -2, readOnly = false)
 class GetEx extends AbstractRedisOperation {
 
     GetEx(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     /**

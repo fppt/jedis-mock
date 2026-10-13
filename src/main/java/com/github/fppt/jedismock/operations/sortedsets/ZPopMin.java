@@ -6,10 +6,11 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zpopmin")
+@RedisCommand(value = "zpopmin", arity = -2, readOnly = false)
 public class ZPopMin extends ZPop {
 
     ZPopMin(RedisBase base, List<Slice> params) {
         super(base, params, false);
     }
+
 }

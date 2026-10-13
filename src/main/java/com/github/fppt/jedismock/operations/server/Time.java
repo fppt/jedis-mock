@@ -8,16 +8,11 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("time")
+@RedisCommand(value = "time", arity = 1)
 public class Time extends AbstractRedisOperation {
 
     Time(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 0;
     }
 
     @Override

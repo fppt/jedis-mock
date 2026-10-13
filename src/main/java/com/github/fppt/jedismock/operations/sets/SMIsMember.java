@@ -12,15 +12,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@RedisCommand("smismember")
+@RedisCommand(value = "smismember", arity = -3)
 public class SMIsMember extends AbstractRedisOperation {
     SMIsMember(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     @Override

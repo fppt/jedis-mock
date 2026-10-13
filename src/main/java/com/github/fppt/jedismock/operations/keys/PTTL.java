@@ -7,7 +7,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
-@RedisCommand("pttl")
+@RedisCommand(value = "pttl", arity = 2)
 class PTTL extends TTL {
     PTTL(RedisBase base, List<Slice> params) {
         super(base, params);

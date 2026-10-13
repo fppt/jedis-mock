@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand("zunionstore")
+@RedisCommand(value = "zunionstore", arity = -4, readOnly = false)
 class ZUnionStore extends AbstractZUnion {
 
     ZUnionStore(OperationExecutorState state, List<Slice> params) {

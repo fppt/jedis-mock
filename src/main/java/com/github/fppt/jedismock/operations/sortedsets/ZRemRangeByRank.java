@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("zremrangebyrank")
+@RedisCommand(value = "zremrangebyrank", arity = 4, readOnly = false)
 public class ZRemRangeByRank extends AbstractZRangeByIndex {
 
     ZRemRangeByRank(RedisBase base, List<Slice> params) {

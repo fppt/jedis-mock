@@ -13,20 +13,10 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toList;
 
-@RedisCommand("smembers")
+@RedisCommand(value = "smembers", arity = 2)
 class SMembers extends AbstractRedisOperation {
     SMembers(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
-    }
-
-    @Override
-    protected int maxArgs() {
-        return 1;
     }
 
     protected Slice response() {

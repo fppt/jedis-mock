@@ -10,7 +10,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("keys")
+@RedisCommand(value = "keys", arity = 2)
 class Keys extends AbstractRedisOperation {
     Keys(RedisBase base, List<Slice> params) {
         super(base, params);

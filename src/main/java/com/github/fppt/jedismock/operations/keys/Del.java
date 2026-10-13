@@ -9,15 +9,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("del")
+@RedisCommand(value = "del", arity = -2, readOnly = false)
 class Del extends AbstractRedisOperation {
     Del(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     protected Slice response() {

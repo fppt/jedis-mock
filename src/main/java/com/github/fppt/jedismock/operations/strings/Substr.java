@@ -10,9 +10,10 @@ import java.util.List;
  * The original (Redis 1.0) name of {@link GetRange}, deprecated since 2.0 but
  * still dispatched to the very same implementation.
  */
-@RedisCommand("substr")
+@RedisCommand(value = "substr", arity = 4)
 class Substr extends AbstractGetRange {
     Substr(RedisBase base, List<Slice> params) {
         super(base, params);
     }
+
 }

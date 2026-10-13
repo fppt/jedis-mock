@@ -9,7 +9,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.toNanoTimeout;
 
-@RedisCommand("bzpopmin")
+@RedisCommand(value = "bzpopmin", arity = -3, readOnly = false)
 public class BZPopMin extends BZPop {
 
     BZPopMin(OperationExecutorState state, List<Slice> params) {

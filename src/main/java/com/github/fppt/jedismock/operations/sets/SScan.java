@@ -11,18 +11,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@RedisCommand("sscan")
+@RedisCommand(value = "sscan", arity = -3)
 class SScan extends Scan {
 
     private Slice keySlice;
 
     SScan(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 2;
     }
 
     @Override

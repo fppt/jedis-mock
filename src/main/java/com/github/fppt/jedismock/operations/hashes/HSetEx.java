@@ -15,15 +15,10 @@ import java.util.Map;
 
 import static com.github.fppt.jedismock.datastructures.streams.StreamErrors.SYNTAX_ERROR;
 
-@RedisCommand("hsetex")
+@RedisCommand(value = "hsetex", arity = -6, readOnly = false)
 class HSetEx extends AbstractRedisOperation {
     HSetEx(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 5;
     }
 
     protected Slice response() {

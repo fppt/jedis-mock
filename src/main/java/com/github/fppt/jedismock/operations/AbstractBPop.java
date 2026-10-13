@@ -42,11 +42,6 @@ public abstract class AbstractBPop extends AbstractRedisOperation {
     }
 
     @Override
-    protected int minArgs(){
-        return 2;
-    }
-
-    @Override
     protected void doOptionalWork() {
         timeoutNanos = toNanoTimeout(params().get(params().size() - 1).toString());
         keys = params().subList(0, params().size() - 1);

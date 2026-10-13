@@ -11,7 +11,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 
-@RedisCommand("mget")
+@RedisCommand(value = "mget", arity = -2)
 class MGet extends AbstractRedisOperation {
     MGet(RedisBase base, List<Slice> params) {
         super(base, params);

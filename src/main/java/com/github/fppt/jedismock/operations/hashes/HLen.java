@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("hlen")
+@RedisCommand(value = "hlen", arity = 2)
 public class HLen extends AbstractRedisOperation {
     public HLen(RedisBase base, List<Slice> params) {
         super(base, params);

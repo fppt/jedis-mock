@@ -7,8 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-
-@RedisCommand("sinterstore")
+@RedisCommand(value = "sinterstore", arity = -3, readOnly = false)
 class SInterStore extends SStore {
     SInterStore(RedisBase base, List<Slice> params) {
         super(base, params,

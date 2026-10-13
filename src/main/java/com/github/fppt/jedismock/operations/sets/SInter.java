@@ -14,15 +14,10 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.HashSet;
 
-@RedisCommand("sinter")
+@RedisCommand(value = "sinter", arity = -2)
 class SInter extends AbstractRedisOperation {
     SInter(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     final Set<Slice> getIntersection() {

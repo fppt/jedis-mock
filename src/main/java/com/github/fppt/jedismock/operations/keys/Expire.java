@@ -6,7 +6,7 @@ import com.github.fppt.jedismock.datastructures.Slice;
 
 import java.util.List;
 
-@RedisCommand("expire")
+@RedisCommand(value = "expire", arity = -3, readOnly = false)
 class Expire extends PExpire {
     Expire(RedisBase base, List<Slice> params) {
         super(base, params);

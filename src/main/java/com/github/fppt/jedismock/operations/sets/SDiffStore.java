@@ -7,8 +7,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-
-@RedisCommand("sdiffstore")
+@RedisCommand(value = "sdiffstore", arity = -3, readOnly = false)
 class SDiffStore extends SStore {
     SDiffStore(RedisBase base, List<Slice> params) {
         super(base, params,

@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 
 import java.util.List;
 
-@RedisCommand(value = "cluster", transactional = false)
+@RedisCommand(value = "cluster", transactional = false, arity = -2)
 public class Cluster implements RedisOperation {
 
     private static final String NODE_ID = "jedismock";

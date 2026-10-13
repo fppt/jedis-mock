@@ -32,7 +32,6 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
         }
     }
 
-
     public Double getSum(Double score, String increment) {
         if ("+inf".equalsIgnoreCase(increment) || "infinity".equalsIgnoreCase(increment)) {
             if (score == Double.NEGATIVE_INFINITY) {

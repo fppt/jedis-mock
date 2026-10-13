@@ -23,7 +23,7 @@ import java.util.List;
  *
  */
 
-@RedisCommand("ltrim")
+@RedisCommand(value = "ltrim", arity = 4, readOnly = false)
 @SuppressWarnings("all")
 class LTrim extends AbstractRedisOperation {
     LTrim(RedisBase base, List<Slice> params) {

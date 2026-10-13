@@ -16,7 +16,7 @@ import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Opt
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.REV;
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.WITHSCORES;
 
-@RedisCommand("zrange")
+@RedisCommand(value = "zrange", arity = -4)
 class ZRange extends AbstractZRangeByIndex {
 
     ZRange(RedisBase base, List<Slice> params) {

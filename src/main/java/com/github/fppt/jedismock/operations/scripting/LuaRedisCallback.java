@@ -1,6 +1,7 @@
 package com.github.fppt.jedismock.operations.scripting;
 
 import com.github.fppt.jedismock.datastructures.Slice;
+import com.github.fppt.jedismock.operations.CommandDescriptor;
 import com.github.fppt.jedismock.operations.CommandFactory;
 import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.operations.connection.Select;
@@ -93,21 +94,24 @@ public class LuaRedisCallback {
             throw new IllegalStateException("This command is not allowed from script");
         }
 
-        final RedisOperation operation =
-                //Specific support for SELECT,
-                //see https://redis.io/docs/manual/programmability/lua-api/#using-selectcommandsselect-inside-scripts
-                "select".equalsIgnoreCase(operationName) ? new Select(state, args) :
-                        CommandFactory.buildOperation(operationName.toLowerCase(), true, state, args);
-        if (operation == null) {
+        final boolean select = "select".equalsIgnoreCase(operationName);
+        final CommandDescriptor command = CommandFactory.lookup(operationName.toLowerCase());
+        //Only data commands may be called from a script, plus SELECT.
+        if (command == null || !(command.transactional() || select)) {
             throw new IllegalStateException("Unknown command called from script");
         }
         final Slice result;
         try {
+            command.validateArity(args.size());
+            final RedisOperation operation =
+                    //Specific support for SELECT,
+                    //see https://redis.io/docs/manual/programmability/lua-api/#using-selectcommandsselect-inside-scripts
+                    select ? new Select(state, args) : command.instantiate(state, args);
             result = operation.execute();
         } catch (IllegalArgumentException e) {
-            //Some commands signal an arity mismatch by throwing (e.g. INCR with no
-            //key trips an IndexOutOfBounds, wrapped here) rather than returning an
-            //error reply; normalise it like the returned-error case below.
+            //The arity check throws; so may a command that trips an
+            //IndexOutOfBounds on a malformed call (wrapped by execute()).
+            //Normalise both like the returned-error case below.
             if (isArityError(e.getMessage())) {
                 throw new IllegalStateException(WRONG_ARGS_FROM_SCRIPT);
             }

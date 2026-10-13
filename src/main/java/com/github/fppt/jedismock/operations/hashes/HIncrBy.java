@@ -11,7 +11,7 @@ import java.util.List;
 
 import static com.github.fppt.jedismock.Utils.convertToLong;
 
-@RedisCommand("hincrby")
+@RedisCommand(value = "hincrby", arity = 4, readOnly = false)
 class HIncrBy extends AbstractRedisOperation {
     HIncrBy(RedisBase base, List<Slice> params) {
         super(base, params);

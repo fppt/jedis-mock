@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * This sort implementation currently does not implement parameters BY and GET
  * moreover the complexity is currently O(N*log(N)) where N is the number of elements in the list
  */
-@RedisCommand("sort")
+@RedisCommand(value = "sort", arity = -2, readOnly = false)
 public class Sort extends AbstractRedisOperation {
     private static final String LIMIT_PARAM = "LIMIT";
     private static final String ALPHA_PARAM = "ALPHA";

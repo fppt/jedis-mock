@@ -8,7 +8,7 @@ import com.github.fppt.jedismock.storage.OperationExecutorState;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RedisCommand("zintercard")
+@RedisCommand(value = "zintercard", arity = -3)
 class ZInterCard extends AbstractZInter {
 
     ZInterCard(OperationExecutorState state, List<Slice> params) {

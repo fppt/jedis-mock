@@ -6,15 +6,10 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("xrevrange")
+@RedisCommand(value = "xrevrange", arity = -4)
 public class XRevRange extends Ranges {
     public XRevRange(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 3;
     }
 
     @Override

@@ -24,7 +24,7 @@ import static com.github.fppt.jedismock.datastructures.streams.StreamErrors.XREA
  *   [id ...]<br>
  * All options are supported
  */
-@RedisCommand("xread")
+@RedisCommand(value = "xread", arity = -4)
 public class XRead extends AbstractRedisOperation {
     private final Object lock;
     private final boolean isInTransaction;
@@ -40,11 +40,6 @@ public class XRead extends AbstractRedisOperation {
         isInScript = state.scriptingManager().isRunning();
         this.state = state;
         this.blockingManager = state.blockingManager();
-    }
-
-    @Override
-    protected int minArgs() {
-        return 3;
     }
 
     @Override
@@ -191,7 +186,6 @@ public class XRead extends AbstractRedisOperation {
             if (!base().exists(key)) {
                 return; // skip
             }
-
 
             if (map.getTail() == null || id.compareTo(map.getTail()) >= 0) {
                 return; // skip

@@ -6,7 +6,7 @@ import com.github.fppt.jedismock.operations.RedisOperation;
 import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
-@RedisCommand(value = "unwatch", transactional = false)
+@RedisCommand(value = "unwatch", transactional = false, arity = 1)
 public class Unwatch implements RedisOperation {
     private final OperationExecutorState state;
 

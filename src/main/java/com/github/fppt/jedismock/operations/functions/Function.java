@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 import static com.github.fppt.jedismock.Utils.parseQuotedString;
 import static com.github.fppt.jedismock.operations.scripting.ScriptingUtils.libraryLoadErrorMessage;
 
-@RedisCommand("function")
+@RedisCommand(value = "function", arity = -2)
 public class Function extends AbstractRedisOperation {
     private static final Slice USAGE = Response.array(Stream.of(
             "FUNCTION <subcommand> [<arg> [value] [opt] ...]. Subcommands are:",

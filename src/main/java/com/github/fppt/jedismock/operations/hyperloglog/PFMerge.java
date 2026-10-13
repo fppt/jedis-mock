@@ -9,7 +9,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
 
-@RedisCommand("pfmerge")
+@RedisCommand(value = "pfmerge", arity = -2, readOnly = false)
 class PFMerge extends AbstractRedisOperation {
     PFMerge(RedisBase base, List<Slice> params) {
         super(base, params);

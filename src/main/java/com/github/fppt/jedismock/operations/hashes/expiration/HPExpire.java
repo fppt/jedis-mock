@@ -14,7 +14,7 @@ import com.github.fppt.jedismock.storage.RedisBase;
 import java.util.ArrayList;
 import java.util.List;
 
-@RedisCommand("hpexpire")
+@RedisCommand(value = "hpexpire", arity = -6, readOnly = false)
 public class HPExpire extends AbstractRedisOperation {
     public HPExpire(RedisBase base, List<Slice> params) {
         super(base, params);
@@ -65,8 +65,4 @@ public class HPExpire extends AbstractRedisOperation {
         }
     }
 
-    @Override
-    protected int minArgs() {
-        return 5;
-    }
 }

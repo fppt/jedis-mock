@@ -14,15 +14,10 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.HashSet;
 
-@RedisCommand("sunion")
+@RedisCommand(value = "sunion", arity = -2)
 class SUnion extends AbstractRedisOperation {
     SUnion(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     final Set<Slice> getUnion() {

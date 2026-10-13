@@ -11,7 +11,7 @@ import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Opt
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.REV;
 import static com.github.fppt.jedismock.operations.sortedsets.AbstractZRange.Options.WITHSCORES;
 
-@RedisCommand("zrangebylex")
+@RedisCommand(value = "zrangebylex", arity = -4)
 class ZRangeByLex extends AbstractZRangeByLex {
 
     ZRangeByLex(RedisBase base, List<Slice> params) {

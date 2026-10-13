@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-@RedisCommand("zmpop")
+@RedisCommand(value = "zmpop", arity = -4, readOnly = false)
 public class ZMPop extends ZPop {
     enum Options {
         MIN, MAX, COUNT
@@ -23,11 +23,6 @@ public class ZMPop extends ZPop {
 
     ZMPop(RedisBase base, List<Slice> params) {
         super(base, params, false);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 3;
     }
 
     @Override

@@ -12,7 +12,7 @@ import java.util.List;
 import static com.github.fppt.jedismock.Utils.convertToByte;
 import static com.github.fppt.jedismock.Utils.convertToNonNegativeInteger;
 
-@RedisCommand("setbit")
+@RedisCommand(value = "setbit", arity = 4, readOnly = false)
 class SetBit extends AbstractRedisOperation {
     SetBit(RedisBase base, List<Slice> params) {
         super(base, params);

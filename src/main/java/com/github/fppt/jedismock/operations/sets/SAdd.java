@@ -11,15 +11,10 @@ import com.github.fppt.jedismock.datastructures.Slice;
 import java.util.List;
 import java.util.Set;
 
-@RedisCommand("sadd")
+@RedisCommand(value = "sadd", arity = -3, readOnly = false)
 class SAdd extends AbstractRedisOperation {
     SAdd(RedisBase base, List<Slice> params) {
         super(base, params);
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     @Override

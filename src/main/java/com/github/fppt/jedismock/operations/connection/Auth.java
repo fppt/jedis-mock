@@ -6,7 +6,7 @@ import com.github.fppt.jedismock.server.Response;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.storage.OperationExecutorState;
 
-@RedisCommand(value = "auth", transactional = false)
+@RedisCommand(value = "auth", transactional = false, arity = -2)
 public class Auth implements RedisOperation {
     private final OperationExecutorState state;
 

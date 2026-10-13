@@ -29,10 +29,7 @@ public class SupportedOperationsGeneratorTest {
     @Container
     private final GenericContainer<?> redis = new RedisContainer().withExposedPorts(6379);
 
-    public final static Set<String> implementedOperations =
-            CommandRegistries.commands.values().stream()
-                    .flatMap(byName -> byName.keySet().stream())
-                    .collect(Collectors.toSet());
+    public final static Set<String> implementedOperations = CommandRegistries.commands.keySet();
 
     private void writeToFile(List<String> lines) throws IOException {
         Path path = Paths.get(System.getProperty("user.dir"), "supported_operations.md");

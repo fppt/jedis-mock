@@ -28,7 +28,7 @@ import java.util.List;
  * Glob-style patterns in {@code CONFIG GET} are not supported; each argument is
  * treated as a literal parameter name.
  */
-@RedisCommand(value = "config", transactional = false)
+@RedisCommand(value = "config", transactional = false, arity = -2)
 class Config extends AbstractRedisOperation {
     private static final String LUA_TIME_LIMIT = "lua-time-limit";
     private static final String BUSY_REPLY_THRESHOLD = "busy-reply-threshold";
@@ -40,11 +40,6 @@ class Config extends AbstractRedisOperation {
     Config(OperationExecutorState state, List<Slice> params) {
         super(state.base(), params);
         this.state = state;
-    }
-
-    @Override
-    protected int minArgs() {
-        return 1;
     }
 
     @Override
