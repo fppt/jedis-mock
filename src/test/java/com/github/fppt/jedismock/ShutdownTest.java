@@ -20,6 +20,7 @@ import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ExecutorService;
@@ -284,6 +285,76 @@ class ShutdownTest {
         assertThat(clientThreadsAlive()).isZero();
         assertThatThrownBy(() -> ping.get(5, TimeUnit.SECONDS)).cause().isInstanceOf(JedisConnectionException.class);
         parked.close();
+    }
+
+    /**
+     * Two {@code SHUTDOWN}s in flight at once both stop the same generation of
+     * the server. The one that runs late, possibly after the caller restarted
+     * the server, must not act on the new generation: it must neither arm the
+     * kill-on-start flag against it nor publish it as stopped (which would make
+     * the next {@code start()} fail to bind the port that is still open). The
+     * requester of a shutdown request is a client of the generation it was
+     * sent to, and that generation closed it when it stopped, so a request
+     * from a closed client is stale.
+     */
+    @Test
+    void staleShutdownRequestIsIgnored() throws Exception {
+        RedisClient staleRequester = new RedisClient(server, Mockito.mock(Socket.class), c -> { });
+        server.stop();
+        server.start();
+        staleRequester.close();
+
+        staleRequester.shutdownServer();
+        Thread.sleep(300);
+        assertThat(server.isRunning()).isTrue();
+        ScriptingManager scripting = server.getScriptingManager();
+        scripting.start();
+        assertThat(scripting.isKillRequested()).isFalse();
+        scripting.stop();
+        try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort())) {
+            assertThat(jedis.ping()).isEqualTo("PONG");
+        }
+    }
+
+    @Test
+    void concurrentShutdownsStopTheServerOnceAndLeaveARestartAlone() throws Exception {
+        Jedis first = new Jedis(host, port);
+        Jedis second = new Jedis(host, port);
+        ExecutorService shooters = Executors.newFixedThreadPool(2);
+        try {
+            CountDownLatch go = new CountDownLatch(1);
+            Future<?> a = shooters.submit(() -> {
+                go.await();
+                return first.sendCommand(Protocol.Command.SHUTDOWN, "NOSAVE");
+            });
+            Future<?> b = shooters.submit(() -> {
+                go.await();
+                return second.sendCommand(Protocol.Command.SHUTDOWN, "NOSAVE");
+            });
+            go.countDown();
+            for (Future<?> f : List.of(a, b)) {
+                assertThatThrownBy(() -> f.get(5, TimeUnit.SECONDS)).cause().isInstanceOf(JedisConnectionException.class);
+            }
+        } finally {
+            shooters.shutdownNow();
+            first.close();
+            second.close();
+        }
+        awaitStopped();
+
+        server.start();
+        for (int i = 0; i < 40 && shutdownThreadAlive(); i++) {
+            Thread.sleep(50);
+        }
+        assertThat(shutdownThreadAlive()).withFailMessage("shutdown thread still alive").isFalse();
+        assertThat(server.isRunning()).isTrue();
+        ScriptingManager scripting = server.getScriptingManager();
+        scripting.start();
+        assertThat(scripting.isKillRequested()).isFalse();
+        scripting.stop();
+        try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort())) {
+            assertThat(jedis.ping()).isEqualTo("PONG");
+        }
     }
 
     private static long clientThreadsAlive() {

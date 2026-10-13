@@ -158,12 +158,14 @@ public final class RedisClient implements Runnable {
      * reply and the port is released, and a running script is terminated
      * (whether or not it has written) before the server counts as stopped.
      * Done on a separate thread because stopping the server joins its client
-     * threads, and the caller is one of them.
+     * threads, and the caller is one of them. A request that runs late, once
+     * the server it was sent to has already been stopped by another one, is
+     * ignored.
      */
     public void shutdownServer() {
         Thread shutdown = new Thread(() -> {
             try {
-                server.stop();
+                server.stopRequestedBy(this);
             } catch (IOException e) {
                 LOG.error("Error while shutting the server down", e);
             }

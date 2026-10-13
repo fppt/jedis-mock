@@ -50,6 +50,14 @@ public class RedisServer {
     private final RedisConfiguration configuration = new RedisConfiguration();
     private final SubscriptionRegistry subscriptionRegistry = new SubscriptionRegistry();
     private final AtomicLong clientIds = new AtomicLong();
+    /**
+     * Serializes the lifecycle transitions ({@link #start()}, {@link #stop()}
+     * and the stop requested by a SHUTDOWN), so that two of them in flight at
+     * once, say two SHUTDOWNs or a SHUTDOWN racing a restart, cannot act on
+     * different generations of the server at the same time. Never held while
+     * serving a command, so it cannot deadlock against client tasks.
+     */
+    private final Object lifecycle = new Object();
     private volatile ExecutorService singleThreadPool;
     private volatile RedisServiceJob service;
     private volatile Clock clock = Clock.systemDefaultZone();
@@ -95,22 +103,46 @@ public class RedisServer {
     }
 
     public RedisServer start() throws IOException {
-        if (!(service == null)) {
-            throw new IllegalStateException();
+        synchronized (lifecycle) {
+            if (!(service == null)) {
+                throw new IllegalStateException();
+            }
+            scriptingManager.endShutdown();
+            this.service = new RedisServiceJob();
+            singleThreadPool = Executors.newSingleThreadExecutor();
+            serviceFinalization = singleThreadPool.submit(service);
+            return this;
         }
-        scriptingManager.endShutdown();
-        this.service = new RedisServiceJob();
-        singleThreadPool = Executors.newSingleThreadExecutor();
-        serviceFinalization = singleThreadPool.submit(service);
-        return this;
     }
 
     public void stop() throws IOException {
+        synchronized (lifecycle) {
+            doStop(Objects.requireNonNull(service, NOT_RUNNING));
+        }
+    }
+
+    /**
+     * Stop, as requested by a {@code SHUTDOWN} received on one of the
+     * connections. The request is stale, and ignored, when that connection has
+     * been closed: the generation of the server it was sent to has already
+     * stopped (closing its connections), and possibly been restarted, and a
+     * second concurrent SHUTDOWN must neither arm the kill-on-start flag against
+     * the new generation nor publish it as stopped.
+     */
+    void stopRequestedBy(RedisClient requester) throws IOException {
+        synchronized (lifecycle) {
+            if (requester.isClosed() || service == null) {
+                return;
+            }
+            doStop(service);
+        }
+    }
+
+    private void doStop(RedisServiceJob job) throws IOException {
         //Work on locals: once the stopped state is published below, start() may
-        //run concurrently (SHUTDOWN stops asynchronously, and its callers poll
-        //isRunning() before restarting) and replace these fields with the new
-        //server's, which this stop must neither wait on nor shut down.
-        RedisServiceJob job = Objects.requireNonNull(service, NOT_RUNNING);
+        //run (SHUTDOWN stops asynchronously, and its callers poll isRunning()
+        //before restarting) and replace these fields with the new server's,
+        //which this stop must neither wait on nor shut down.
         Future<Void> acceptLoop = serviceFinalization;
         ExecutorService acceptor = singleThreadPool;
         job.stop();
