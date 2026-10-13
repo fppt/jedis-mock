@@ -103,6 +103,11 @@ public class LuaRedisCallback {
         final Slice result;
         try {
             command.validateArity(args.size());
+            if (!command.readOnly()) {
+                //From here on the script counts as having written, whether or
+                //not the command succeeds: SCRIPT KILL will refuse it (UNKILLABLE).
+                state.scriptingManager().markWrite();
+            }
             final RedisOperation operation =
                     //Specific support for SELECT,
                     //see https://redis.io/docs/manual/programmability/lua-api/#using-selectcommandsselect-inside-scripts

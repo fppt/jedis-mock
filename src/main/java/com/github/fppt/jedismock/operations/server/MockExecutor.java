@@ -41,6 +41,10 @@ public class MockExecutor {
             "BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.";
     private static final String BUSY_FUNCTION_MESSAGE =
             "BUSY Redis is busy running a script. You can only call FUNCTION KILL or SHUTDOWN NOSAVE.";
+    private static final String UNKILLABLE_MESSAGE =
+            "UNKILLABLE Sorry the script already executed write commands against the dataset. "
+                    + "You can either wait the script termination or kill the server in a hard way "
+                    + "using the SHUTDOWN NOSAVE command.";
 
     /**
      * Proceed with execution, mocking the Redis behaviour.
@@ -56,6 +60,12 @@ public class MockExecutor {
         if (("function".equals(name) || "script".equals(name)) && !commandParams.isEmpty()
                 && "kill".equalsIgnoreCase(commandParams.get(0).toString())) {
             ScriptingManager scripting = state.scriptingManager();
+            //A script that already wrote to the dataset cannot be killed, so the
+            //server stays BUSY until it ends. Like Redis, this is checked before
+            //the script-vs-function mismatch: both KILL variants get UNKILLABLE.
+            if (scripting.hasWritten()) {
+                return Response.error(UNKILLABLE_MESSAGE);
+            }
             ScriptingManager.ScriptType expectedScriptType =
                     "function".equals(name) ? ScriptingManager.ScriptType.FUNCTION : ScriptingManager.ScriptType.SCRIPT;
             ScriptingManager.ScriptType actualScriptType = scripting.getRunningScriptType();

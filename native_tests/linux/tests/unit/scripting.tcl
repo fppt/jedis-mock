@@ -87,6 +87,7 @@ set ::only_tests {
     {Test loadfile are not available}
     {Test print are not available}
     {Timedout read-only scripts can be killed by SCRIPT KILL}
+    {Timedout scripts that modified data can't be killed by SCRIPT KILL}
     {Timedout script link is still usable after Lua returns}
     {Try trick global protection 1}
     {Try trick global protection 2}

@@ -35,6 +35,7 @@ public final class ScriptingManager {
     private volatile RunningFunctionInfo functionInfo = null;
     private volatile long startNanos = 0L;
     private volatile boolean killRequested = false;
+    private volatile boolean writeDirty = false;
     private volatile long luaTimeLimitMillis = DEFAULT_LUA_TIME_LIMIT_MILLIS;
 
     /**
@@ -61,6 +62,7 @@ public final class ScriptingManager {
 
     private void start(long startNanos, ScriptType scriptType, RunningFunctionInfo functionInfo) {
         killRequested = false;
+        writeDirty = false;
         this.startNanos = startNanos;
         running = true;
         this.scriptType = scriptType;
@@ -72,6 +74,7 @@ public final class ScriptingManager {
      */
     public void stop() {
         killRequested = false;
+        writeDirty = false;
         running = false;
         scriptType = null;
         functionInfo = null;
@@ -90,6 +93,27 @@ public final class ScriptingManager {
         }
         killRequested = true;
         return true;
+    }
+
+    /**
+     * Record that the running script has dispatched a write command. Called by
+     * the script thread once the command passed its arity check and is about to
+     * run, which is also when real Redis sets its write-dirty flag: a write
+     * rejected for arity leaves the script killable, a write that fails while
+     * executing does not.
+     */
+    public void markWrite() {
+        writeDirty = true;
+    }
+
+    /**
+     * @return whether the running script has dispatched a write command, in
+     * which case {@code SCRIPT/FUNCTION KILL} must refuse with {@code -UNKILLABLE}
+     * and the server stays busy until the script ends by itself. Always
+     * {@code false} when nothing is running.
+     */
+    public boolean hasWritten() {
+        return writeDirty;
     }
 
     /**
