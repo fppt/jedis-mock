@@ -344,10 +344,10 @@ class ShutdownTest {
      * A client task blocked on the data lock can only observe that its client
      * is closed, and exit, once it gets that lock. {@code stop()} must
      * therefore not hold the lock while it waits for the client tasks to
-     * terminate, or every such task would force the wait to its timeout and
-     * the server would be published as stopped with the task still alive.
-     * The task is parked by an interceptor until {@code stop()} is already
-     * waiting at the barrier, so that it queues on the lock behind it.
+     * terminate: the wait has no deadline, so holding the lock would leave
+     * the task and {@code stop()} waiting on each other forever. The task is
+     * parked by an interceptor until {@code stop()} is already waiting at the
+     * barrier, so that it queues on the lock behind it.
      */
     @Test
     void stopDoesNotHoldTheDataLockWhileAwaitingClientTasks() throws Exception {
@@ -444,6 +444,66 @@ class ShutdownTest {
         try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort())) {
             assertThat(jedis.ping()).isEqualTo("PONG");
         }
+    }
+
+    /**
+     * {@code stop()} waits for every client task of the server to terminate,
+     * so a client task of that server (a command interceptor, say) calling it
+     * would wait for itself: the call is rejected at once instead, with a
+     * pointer to the supported way, {@code RedisClient.shutdownServer()},
+     * which stops the server from a separate thread as the SHUTDOWN command
+     * does. Rejected before the lifecycle monitor is taken, so a worker can
+     * never hold up an external stop either.
+     */
+    @Test
+    void lifecycleCallsFromAClientWorkerAreRejected() throws Exception {
+        server.stop();
+        AtomicReference<Throwable> rejection = new AtomicReference<>();
+        server.setOptions(ServiceOptions.withInterceptor((state, name, params) -> {
+            if ("set".equals(name)) {
+                try {
+                    server.stop();
+                    return Response.OK;
+                } catch (IllegalStateException e) {
+                    rejection.set(e);
+                    return Response.error("ERR " + e.getMessage());
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+            if ("del".equals(name)) {
+                try {
+                    server.start();
+                    return Response.OK;
+                } catch (IllegalStateException e) {
+                    return Response.error("ERR " + e.getMessage());
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+            if ("incr".equals(name)) {
+                state.owner().shutdownServer();
+                return Response.SKIP;
+            }
+            return MockExecutor.proceed(state, name, params);
+        }));
+        server.start();
+        try (Jedis jedis = new Jedis(server.getHost(), server.getBindPort(), 2_000)) {
+            assertThatThrownBy(() -> jedis.set("k", "v"))
+                    .isInstanceOf(JedisDataException.class)
+                    .hasMessageContaining("shutdownServer");
+            assertThat(rejection.get()).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(() -> jedis.del("k"))
+                    .isInstanceOf(JedisDataException.class)
+                    .hasMessageContaining("shutdownServer");
+            // The server is untouched by the rejected calls.
+            assertThat(server.isRunning()).isTrue();
+            assertThat(jedis.ping()).isEqualTo("PONG");
+
+            // The supported way from inside a command handler works.
+            assertThatThrownBy(() -> jedis.incr("k")).isInstanceOf(JedisConnectionException.class);
+        }
+        awaitStopped();
     }
 
     private static long clientThreadsAlive() {

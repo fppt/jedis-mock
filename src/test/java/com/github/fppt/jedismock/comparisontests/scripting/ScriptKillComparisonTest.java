@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisBusyException;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.time.Duration;
@@ -83,12 +84,15 @@ public class ScriptKillComparisonTest {
                 // The server must remain responsive afterwards.
                 assertThat(jedis.ping()).isEqualTo("PONG");
             }, TestErrorMessages.DEADLOCK_ERROR_MESSAGE);
+            //The killed EVAL has to read the server's error reply off the socket
+            //before the teardown below closes it, otherwise the blocked call fails
+            //with "Socket closed" instead of the error the server actually sent.
+            assertThat(exceptionGate.await(5, TimeUnit.SECONDS)).withFailMessage("eval did not throw an exception").isTrue();
         } finally {
             pool.shutdownNow();
             busyClient.close();
         }
 
-        assertThat(exceptionGate.await(5, TimeUnit.SECONDS)).withFailMessage("eval did not throw an exception").isTrue();
         assertThat(caughtException.get())
                 .isInstanceOf(JedisDataException.class)
                 .hasMessage("ERR Script killed by user with SCRIPT KILL... script: 694a5fe1ddb97a4c6a1bf299d9537c7d3d0f84e7, on @user_script:1.");
@@ -119,19 +123,35 @@ public class ScriptKillComparisonTest {
                 }
             });
 
-            Assertions.assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            Assertions.assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
                 Thread.sleep(500);
                 jedis.scriptKill();
+                //Real Redis re-raises the kill on every line once a pcall swallowed
+                //it, so the loop dies at one of its next iterations, not at once:
+                //wait for the server to come back, as the Valkey test does.
+                for (int i = 0; i < 50 && isBusy(jedis); i++) {
+                    Thread.sleep(100);
+                }
                 assertThat(jedis.ping()).isEqualTo("PONG");
             }, TestErrorMessages.DEADLOCK_ERROR_MESSAGE);
+            //See scriptKillTerminatesRunawayScript: read the reply before closing.
+            assertThat(exceptionGate.await(5, TimeUnit.SECONDS)).withFailMessage("eval did not throw an exception").isTrue();
         } finally {
             pool.shutdownNow();
             busyClient.close();
         }
 
-        assertThat(exceptionGate.await(5, TimeUnit.SECONDS)).withFailMessage("eval did not throw an exception").isTrue();
         assertThat(caughtException.get())
                 .isInstanceOf(JedisDataException.class)
                 .hasMessageContaining("killed by user");
+    }
+
+    private static boolean isBusy(Jedis jedis) {
+        try {
+            jedis.ping();
+            return false;
+        } catch (JedisBusyException e) {
+            return true;
+        }
     }
 }

@@ -26,6 +26,12 @@ import java.util.function.Consumer;
  */
 public final class RedisClient implements Runnable {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(RedisClient.class);
+    /**
+     * The server whose connection the current thread is serving, while it is
+     * running {@link #run()}; lets that server reject lifecycle calls made
+     * from inside a command handler.
+     */
+    private static final ThreadLocal<RedisServer> SERVING = new ThreadLocal<>();
     private final RedisServer server;
     private final Socket socket;
     private final AtomicBoolean running;
@@ -69,14 +75,27 @@ public final class RedisClient implements Runnable {
     }
 
     public void run() {
-        while (running.get() && !socket.isClosed() && !Thread.interrupted()) {
-            Optional<RedisCommand> command = nextCommand();
-            if (command.isPresent()) {
-                Slice response = executor.execCommand(command.get());
-                sendResponse(response, command.toString());
+        SERVING.set(server);
+        try {
+            while (running.get() && !socket.isClosed() && !Thread.interrupted()) {
+                Optional<RedisCommand> command = nextCommand();
+                if (command.isPresent()) {
+                    Slice response = executor.execCommand(command.get());
+                    sendResponse(response, command.toString());
+                }
             }
+        } finally {
+            SERVING.remove();
         }
         LOG.debug("Mock redis connection shut down.");
+    }
+
+    /**
+     * @return whether the current thread is serving a connection of the given
+     * server, i.e. is inside a command handler of it.
+     */
+    static boolean isServing(RedisServer server) {
+        return SERVING.get() == server;
     }
 
     /**

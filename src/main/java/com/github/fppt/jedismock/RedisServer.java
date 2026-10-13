@@ -106,6 +106,7 @@ public class RedisServer {
     }
 
     public RedisServer start() throws IOException {
+        rejectIfInsideCommandHandler("start");
         synchronized (lifecycle) {
             if (!(service == null)) {
                 throw new IllegalStateException();
@@ -119,8 +120,26 @@ public class RedisServer {
     }
 
     public void stop() throws IOException {
+        rejectIfInsideCommandHandler("stop");
         synchronized (lifecycle) {
             doStop(Objects.requireNonNull(service, NOT_RUNNING));
+        }
+    }
+
+    /**
+     * {@link #stop()} waits for every client task of this server to terminate,
+     * so called from one of them (a command interceptor, say) it would wait for
+     * itself; and a client task blocked on the lifecycle monitor would hold up
+     * an external stop the same way. Both are rejected up front, before the
+     * monitor is taken. The supported way to stop the server from inside a
+     * command handler is {@link RedisClient#shutdownServer()}, which does it
+     * from a separate thread, as the SHUTDOWN command does.
+     */
+    private void rejectIfInsideCommandHandler(String method) {
+        if (RedisClient.isServing(this)) {
+            throw new IllegalStateException(method + "() must not be called from a command handler of this server,"
+                    + " which would wait for itself: use RedisClient.shutdownServer() (state.owner().shutdownServer())"
+                    + " to stop it from a separate thread instead");
         }
     }
 
