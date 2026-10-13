@@ -91,6 +91,9 @@ public class MockExecutor {
             try {
                 multi.validateArity(commandParams.size());
             } catch (IllegalArgumentException e) {
+                //A malformed MULTI inside an open transaction is a rejected
+                //command like any other: it dirties the transaction.
+                state.errorTransaction();
                 return Response.error(e.getMessage());
             }
             return multi.instantiate(state, commandParams).execute();
@@ -124,7 +127,14 @@ public class MockExecutor {
                 }
                 //Like Redis, a bad argument count is rejected before the operation
                 //is even built, let alone run or queued (which then dirties the MULTI).
-                command.validateArity(commandParams.size());
+                try {
+                    command.validateArity(commandParams.size());
+                } catch (IllegalArgumentException e) {
+                    if ("exec".equals(name) && state.isTransactionModeOn()) {
+                        return abortExec(state, withoutErrPrefix(e.getMessage()));
+                    }
+                    throw e;
+                }
                 if (!command.transactional()) {
                     //Affects the server or client state, outside the context of a transaction.
                     return command.instantiate(state, commandParams).execute();
@@ -171,13 +181,7 @@ public class MockExecutor {
                         throw new IllegalStateException("Unreachable");
                 }
                 if ("exec".equals(name) && state.isTransactionModeOn()) {
-                    //Real Redis rejects EXEC during a busy script and, because the
-                    //rejected command is EXEC, reports it as an aborted transaction
-                    //that names the cause, discarding the transaction. (Mirrors
-                    //the ERRORED branch of Exec, minus the generic message.)
-                    state.transactionMode(false);
-                    state.tx().clear();
-                    return Response.error("EXECABORT Transaction discarded because of: " + busyMessage);
+                    return abortExec(state, busyMessage);
                 }
                 //A data command rejected with BUSY while being queued in MULTI
                 //dirties the transaction, so a later EXEC aborts (matching real
@@ -193,6 +197,22 @@ public class MockExecutor {
             }
         }
         return null;
+    }
+
+    /**
+     * When real Redis rejects EXEC itself (bad arity, BUSY, ...) it does not
+     * merely dirty the transaction: it discards it on the spot and reports the
+     * abort naming the cause. (Mirrors the ERRORED branch of Exec, minus the
+     * generic message.)
+     */
+    private static Slice abortExec(OperationExecutorState state, String cause) {
+        state.transactionMode(false);
+        state.tx().clear();
+        return Response.error("EXECABORT Transaction discarded because of: " + cause);
+    }
+
+    private static String withoutErrPrefix(String message) {
+        return message.startsWith("ERR ") ? message.substring("ERR ".length()) : message;
     }
 
     /**

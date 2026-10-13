@@ -134,4 +134,31 @@ public class TransactionOperationsTest {
             }
         });
     }
+
+    @TestTemplate
+    public void multiWithWrongArityInsideTransactionDirtiesIt(Jedis jedis) {
+        jedis.sendCommand(Protocol.Command.MULTI);
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.MULTI, "extra"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR wrong number of arguments for 'multi' command");
+        assertThat((byte[]) jedis.sendCommand(Protocol.Command.SET, "foo", "bar")).asString().isEqualTo("QUEUED");
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.EXEC))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("EXECABORT Transaction discarded because of previous errors.");
+        assertThat(jedis.get("foo")).isNull();
+    }
+
+    @TestTemplate
+    public void execWithWrongArityDiscardsTransactionNamingTheCause(Jedis jedis) {
+        jedis.sendCommand(Protocol.Command.MULTI);
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.EXEC, "extra"))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("EXECABORT Transaction discarded because of: "
+                        + "wrong number of arguments for 'exec' command");
+        //The transaction is gone: the next command runs immediately.
+        assertThat((byte[]) jedis.sendCommand(Protocol.Command.SET, "foo", "bar")).asString().isEqualTo("OK");
+        assertThatThrownBy(() -> jedis.sendCommand(Protocol.Command.EXEC))
+                .isInstanceOf(JedisDataException.class)
+                .hasMessage("ERR EXEC without MULTI");
+    }
 }
