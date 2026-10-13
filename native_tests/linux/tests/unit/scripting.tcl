@@ -92,6 +92,7 @@ set ::only_tests {
     {Test loadfile are not available}
     {Test print are not available}
     {Timedout read-only scripts can be killed by SCRIPT KILL}
+    {Timedout read-only scripts can be killed by SCRIPT KILL even when use pcall}
     {Timedout scripts that modified data can't be killed by SCRIPT KILL}
     {SHUTDOWN NOSAVE can kill a timedout script anyway}
     {Timedout script link is still usable after Lua returns}

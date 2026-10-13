@@ -1,8 +1,6 @@
 package com.github.fppt.jedismock.operations.scripting;
 
 import com.github.fppt.jedismock.storage.ScriptingManager;
-import org.luaj.vm2.LuaError;
-import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.DebugLib;
 
@@ -39,8 +37,8 @@ public class InterruptibleDebugLib extends DebugLib {
      * bridge when a write is dispatched after the kill was granted, so the
      * script aborts before the write instead of after it.
      */
-    public static LuaError killedError() {
-        return new LuaError(LuaValue.tableOf(new LuaValue[]{LuaValue.valueOf("err"), LuaValue.valueOf("Script killed by user with SCRIPT KILL...")}));
+    public static ScriptKilledError killedError() {
+        return new ScriptKilledError();
     }
 
     /**

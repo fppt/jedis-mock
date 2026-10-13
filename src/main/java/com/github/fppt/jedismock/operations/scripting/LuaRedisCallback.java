@@ -65,6 +65,11 @@ public class LuaRedisCallback {
     public LuaValue pcall(LuaValue args) {
         try {
             return call(args);
+        } catch (final ScriptKilledError e) {
+            //The kill is not a command error the script may handle: let it
+            //propagate, or a script returning this pcall's result directly
+            //(with no further instruction for the kill hook) would finish.
+            throw e;
         } catch (final Exception e) {
             LuaTable errorTable = new LuaTable();
             //Some exceptions carry no message; String.valueOf avoids an NPE in valueOf.
