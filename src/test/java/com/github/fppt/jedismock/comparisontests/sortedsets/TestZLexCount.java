@@ -34,6 +34,12 @@ public class TestZLexCount {
     }
 
     @TestTemplate
+    public void testZLexCountNonExistingKey(Jedis jedis) {
+        assertThat(jedis.zlexcount("nosuchkey", "-", "+")).isEqualTo(0);
+        assertThat(jedis.zlexcount("nosuchkey", "[a", "(b")).isEqualTo(0);
+    }
+
+    @TestTemplate
     public void testZLexCountAllElements(Jedis jedis) {
         assertThat(jedis.zlexcount(ZSET_KEY, "-", "+")).isEqualTo(9);
     }

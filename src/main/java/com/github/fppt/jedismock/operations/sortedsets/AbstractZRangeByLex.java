@@ -33,6 +33,10 @@ abstract class AbstractZRangeByLex extends AbstractZRange {
     }
 
     private double getScoreFromSlice(Slice value) {
+        //An empty sorted set has no score to take, and any bound selects nothing from it
+        if (mapDBObj.isEmpty()) {
+            return 0;
+        }
         if (startsWithAnyPrefix(value.toString())) {
             String valueString = value.toString().substring(1);
             Slice valueSlice = Slice.create(valueString);

@@ -33,6 +33,11 @@ public class TestZRangeWithByLexArg {
     }
 
     @TestTemplate
+    public void zrangebylexNonExistingKey(Jedis jedis) {
+        assertThat(jedis.zrange("nosuchkey", zrangeByLexParams("-", "+"))).isEmpty();
+    }
+
+    @TestTemplate
     public void zrangebylexKeysCorrectOrderUnbounded(Jedis jedis) {
         List<String> results = jedis.zrange(key, ZRangeParams.zrangeByLexParams("-", "+"));
         assertThat(results).containsExactly("aaa", "bbb", "ccc", "ddd");
