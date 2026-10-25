@@ -41,7 +41,7 @@ public class ZRank extends AbstractByScoreOperation {
                 .headSet(new ZSetEntry(mapDBObj.getScore(member), member)).size();
         return withScores
                 ? Response.array(Stream.of(Response.integer(rank),
-                            Response.integer(Math.round(mapDBObj.getScore(member))))
+                            Response.bulkString(scoreToSlice(mapDBObj.getScore(member))))
                             .collect(Collectors.toList()))
                 : Response.integer(rank);
     }

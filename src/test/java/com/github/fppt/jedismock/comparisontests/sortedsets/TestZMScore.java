@@ -40,4 +40,12 @@ public class TestZMScore {
         expected.add(2.0);
         assertThat(jedis.zmscore(ZSET_KEY, "a")).isEqualTo(expected);
     }
+
+    @TestTemplate
+    public void testZMScoreFractionalScores(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1.5, "a");
+        jedis.zadd(ZSET_KEY, -0.25, "b");
+        jedis.zadd(ZSET_KEY, 3, "c");
+        assertThat(jedis.zmscore(ZSET_KEY, "a", "b", "c")).containsExactly(1.5, -0.25, 3.0);
+    }
 }

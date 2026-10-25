@@ -14,6 +14,16 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
         super(base, params);
     }
 
+    /**
+     * Formats a score for a reply: whole numbers without a fractional part, any other number in full.
+     */
+    protected static Slice scoreToSlice(double score) {
+        if (score % 1 == 0) {
+            return Slice.create(String.format("%.0f", score));
+        }
+        return Slice.create(String.valueOf(score));
+    }
+
     public static double toDouble(String value) {
         if ("nan".equalsIgnoreCase(value)) {
             throw new ArgumentException("*ERR*weight*not*float*");

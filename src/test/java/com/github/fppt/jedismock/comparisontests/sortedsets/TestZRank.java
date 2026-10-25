@@ -4,6 +4,7 @@ import com.github.fppt.jedismock.comparisontests.ComparisonBase;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.util.KeyValue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,5 +35,19 @@ public class TestZRank {
         assertThat(jedis.zrank(ZSET_KEY, "z")).isEqualTo(2);
 
         assertThat(jedis.zrank(ZSET_KEY, "foo")).isNull();
+    }
+
+    @TestTemplate
+    public void testZRankWithScoreFractionalScore(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, 1.5, "a");
+        jedis.zadd(ZSET_KEY, 2.25, "b");
+
+        KeyValue<Long, Double> rank = jedis.zrankWithScore(ZSET_KEY, "b");
+        assertThat(rank.getKey()).isEqualTo(1L);
+        assertThat(rank.getValue()).isEqualTo(2.25);
+
+        KeyValue<Long, Double> revRank = jedis.zrevrankWithScore(ZSET_KEY, "a");
+        assertThat(revRank.getKey()).isEqualTo(1L);
+        assertThat(revRank.getValue()).isEqualTo(1.5);
     }
 }

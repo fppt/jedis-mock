@@ -78,4 +78,12 @@ public class TestZInter {
                 new ZParams().aggregate(ZParams.Aggregate.valueOf("MAX")), ZSET_KEY_1, ZSET_KEY_2);
         assertThat(results).containsExactly(new Tuple("b", 2.0), new Tuple("c", 3.0));
     }
+
+    @TestTemplate
+    public void testZInterWithScoresFractionalScores(Jedis jedis) {
+        jedis.zadd(ZSET_KEY_1, 1.5, "a");
+        jedis.zadd(ZSET_KEY_2, 0.25, "a");
+        assertThat(jedis.zinterWithScores(new ZParams(), ZSET_KEY_1, ZSET_KEY_2))
+                .containsExactly(new Tuple("a", 1.75));
+    }
 }
