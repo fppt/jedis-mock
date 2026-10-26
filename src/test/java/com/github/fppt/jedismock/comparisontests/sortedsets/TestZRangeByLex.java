@@ -31,6 +31,12 @@ public class TestZRangeByLex {
     }
 
     @TestTemplate
+    void zrangebylexNonExistingKey(Jedis jedis) {
+        assertThat(jedis.zrangeByLex("nosuchkey", "-", "+")).isEmpty();
+        assertThat(jedis.zrevrangeByLex("nosuchkey", "+", "-")).isEmpty();
+    }
+
+    @TestTemplate
     void unsignedComparison(Jedis jedis) {
         byte[] key = "f".getBytes();
         byte[] v1 = new byte[]{0x7F};

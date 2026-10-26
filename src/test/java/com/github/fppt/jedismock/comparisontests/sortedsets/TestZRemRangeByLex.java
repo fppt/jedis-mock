@@ -33,6 +33,12 @@ public class TestZRemRangeByLex {
     }
 
     @TestTemplate
+    public void testZRemRangeByLexNonExistingKey(Jedis jedis) {
+        assertThat(jedis.zremrangeByLex("nosuchkey", "-", "+")).isEqualTo(0);
+        assertThat(jedis.exists("nosuchkey")).isFalse();
+    }
+
+    @TestTemplate
     public void testZRemRangeByLexInclusiveRangeNegInf(Jedis jedis) {
         assertThat(jedis.zremrangeByLex(key, "-", "[cool")).isEqualTo(3);
         assertThat(jedis.zrange(key, 0, -1)).containsExactly("down", "elephant", "foo", "great", "hill", "omega");
