@@ -22,12 +22,12 @@ class ZLexCount extends AbstractZRangeByLex {
 
         Slice start = params().get(1);
         if (notValidate(start.toString())) {
-            return buildErrorResponse("start");
+            return buildErrorResponse();
         }
 
         Slice end = params().get(2);
         if (notValidate(end.toString())) {
-            return buildErrorResponse("end");
+            return buildErrorResponse();
         }
 
         return Response.integer(getRange(getStartBound(start), getEndBound(end)).size());

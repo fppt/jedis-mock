@@ -29,10 +29,10 @@ class ZRangeByLex extends AbstractZRangeByLex {
         final Slice start = params().get(1);
         final Slice end = params().get(2);
         if (invalidateStart(start.toString())) {
-            return buildErrorResponse("start");
+            return buildErrorResponse();
         }
         if (invalidateEnd(end.toString())) {
-            return buildErrorResponse("end");
+            return buildErrorResponse();
         }
         return getSliceFromRange(getRange(getStartBound(start), getEndBound(end)));
     }

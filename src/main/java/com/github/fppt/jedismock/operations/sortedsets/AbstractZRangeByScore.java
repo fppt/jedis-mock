@@ -9,6 +9,8 @@ import java.util.List;
 
 abstract class AbstractZRangeByScore extends AbstractZRange {
 
+    private static final String BOUND_NOT_A_FLOAT = "ERR min or max is not a float";
+
     AbstractZRangeByScore(RedisBase base, List<Slice> params) {
         super(base, params);
     }
@@ -19,9 +21,9 @@ abstract class AbstractZRangeByScore extends AbstractZRange {
         if (LOWEST_POSSIBLE_SCORE.equalsIgnoreCase(start)) {
             return ZSetEntryBound.MINUS_INF;
         } else if (start.startsWith(EXCLUSIVE_PREFIX)) {
-            return new ZSetEntryBound(toDouble(start.substring(1)), ZSetEntry.MAX_VALUE, false);
+            return new ZSetEntryBound(toDouble(start.substring(1), BOUND_NOT_A_FLOAT), ZSetEntry.MAX_VALUE, false);
         } else {
-            return new ZSetEntryBound(toDouble(start), ZSetEntry.MIN_VALUE, true);
+            return new ZSetEntryBound(toDouble(start, BOUND_NOT_A_FLOAT), ZSetEntry.MIN_VALUE, true);
         }
     }
 
@@ -31,9 +33,9 @@ abstract class AbstractZRangeByScore extends AbstractZRange {
         if (HIGHEST_POSSIBLE_SCORE.equalsIgnoreCase(end)) {
             return new ZSetEntryBound(Double.POSITIVE_INFINITY, ZSetEntry.MAX_VALUE, end.startsWith(EXCLUSIVE_PREFIX));
         } else if (end.startsWith(EXCLUSIVE_PREFIX)) {
-            return new ZSetEntryBound(toDouble(end.substring(1)), ZSetEntry.MIN_VALUE, false);
+            return new ZSetEntryBound(toDouble(end.substring(1), BOUND_NOT_A_FLOAT), ZSetEntry.MIN_VALUE, false);
         } else {
-            return new ZSetEntryBound(toDouble(end), ZSetEntry.MAX_VALUE, true);
+            return new ZSetEntryBound(toDouble(end, BOUND_NOT_A_FLOAT), ZSetEntry.MAX_VALUE, true);
         }
     }
 
