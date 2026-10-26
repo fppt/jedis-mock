@@ -26,7 +26,9 @@ class ZMScore extends AbstractRedisOperation {
 
         for (int i = 1; i < params().size(); i++) {
             Double score = mapDBObj.getScore(params().get(i));
-            result.add(score == null ? Response.NULL : Response.bulkString(Slice.create(String.valueOf(Math.round(score)))));
+            result.add(score == null
+                    ? Response.NULL
+                    : Response.bulkString(AbstractByScoreOperation.scoreToSlice(score)));
         }
         return Response.array(result);
     }

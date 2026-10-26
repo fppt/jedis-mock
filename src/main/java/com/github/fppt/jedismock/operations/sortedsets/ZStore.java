@@ -196,8 +196,7 @@ abstract class ZStore extends AbstractByScoreOperation {
         startKeysIndex = 0;
         return getFinishedZSet().entries(false).stream()
                 .flatMap(e -> withScores
-                        ? Stream.of(e.getValue(),
-                        Slice.create(String.valueOf(Math.round(e.getScore()))))
+                        ? Stream.of(e.getValue(), scoreToSlice(e.getScore()))
                         : Stream.of(e.getValue()))
                 .map(Response::bulkString)
                 .collect(Collectors.toList());

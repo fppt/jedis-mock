@@ -83,4 +83,13 @@ public class TestZUnion {
         assertThat(results).containsExactly(new Tuple("a", 1.0), new Tuple("b", 2.0),
                 new Tuple("c", 3.0), new Tuple("d", 3.0));
     }
+
+    @TestTemplate
+    public void testZUnionWithScoresFractionalScores(Jedis jedis) {
+        jedis.zadd(ZSET_KEY_1, 1.5, "a");
+        jedis.zadd(ZSET_KEY_2, 0.25, "a");
+        jedis.zadd(ZSET_KEY_2, -2.5, "b");
+        assertThat(jedis.zunionWithScores(new ZParams(), ZSET_KEY_1, ZSET_KEY_2))
+                .containsExactly(new Tuple("b", -2.5), new Tuple("a", 1.75));
+    }
 }

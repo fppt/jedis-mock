@@ -140,4 +140,12 @@ public class TestZDiff {
             assertThat(result).containsExactlyInAnyOrderElementsOf(s.keySet());
         }
     }
+
+    @TestTemplate
+    public void testZDiffWithScoresFractionalScores(Jedis jedis) {
+        jedis.zadd("zfrac1", 1.5, "a");
+        jedis.zadd("zfrac1", -0.5, "b");
+        jedis.zadd("zfrac2", 1, "b");
+        assertThat(jedis.zdiffWithScores("zfrac1", "zfrac2")).containsExactly(new Tuple("a", 1.5));
+    }
 }

@@ -64,4 +64,10 @@ public class TestZPopMin {
 
     }
 
+    @TestTemplate
+    public void testZPopMinFractionalScores(Jedis jedis) {
+        jedis.zadd(ZSET_KEY, -0.5, "a");
+        jedis.zadd(ZSET_KEY, 1.5, "b");
+        assertThat(jedis.zpopmin(ZSET_KEY, 2)).containsExactly(new Tuple("a", -0.5), new Tuple("b", 1.5));
+    }
 }
