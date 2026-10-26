@@ -7,6 +7,7 @@ import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.storage.RedisBase;
 
 import java.util.List;
+import java.util.Locale;
 
 public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
 
@@ -19,7 +20,7 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
      */
     protected static Slice scoreToSlice(double score) {
         if (score % 1 == 0) {
-            return Slice.create(String.format("%.0f", score));
+            return Slice.create(String.format(Locale.ROOT, "%.0f", score));
         }
         return Slice.create(String.valueOf(score));
     }
