@@ -150,4 +150,15 @@ public class TestZInterStore {
 
         assertThat(jedis.ttl(ZSET_KEY_OUT)).isEqualTo(-1);
     }
+
+    @TestTemplate
+    public void zinterstoreIntoOneOfTheSources(Jedis jedis) {
+        jedis.zadd(ZSET_KEY_1, 1, "a");
+        jedis.zadd(ZSET_KEY_1, 2, "b");
+        jedis.zadd(ZSET_KEY_2, 3, "b");
+
+        assertThat(jedis.zinterstore(ZSET_KEY_1, ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(1);
+
+        assertThat(jedis.zrangeWithScores(ZSET_KEY_1, 0, -1)).containsExactly(new Tuple("b", 5.0));
+    }
 }

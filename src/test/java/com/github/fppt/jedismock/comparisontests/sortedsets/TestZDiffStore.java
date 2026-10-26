@@ -70,4 +70,11 @@ public class TestZDiffStore {
 
         assertThat(jedis.ttl(ZSET_KEY_3)).isEqualTo(-1);
     }
+
+    @TestTemplate
+    public void zdiffStoreIntoOneOfTheSources(Jedis jedis) {
+        assertThat(jedis.zdiffStore(ZSET_KEY_1, ZSET_KEY_1, ZSET_KEY_2)).isEqualTo(2);
+
+        assertThat(jedis.zrange(ZSET_KEY_1, 0, -1)).containsExactly("c", "d");
+    }
 }

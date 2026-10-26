@@ -175,12 +175,13 @@ abstract class ZStore extends AbstractByScoreOperation {
      */
     protected long getResultSize(KeyspaceEvent storeEvent) {
         Slice keyDest = params().get(0);
+        startKeysIndex = 1;
+        //The destination may be one of the sources, so it is only replaced once the result is computed
+        RMZSet mapDBObj = getFinishedZSet();
         boolean destinationExisted = base().exists(keyDest);
         if (destinationExisted) {
             base().deleteValue(keyDest);
         }
-        startKeysIndex = 1;
-        RMZSet mapDBObj = getFinishedZSet();
         if (!mapDBObj.isEmpty()) {
             base().putValue(keyDest, mapDBObj, null);
             base().notifyKeyspaceEvent(storeEvent, keyDest);
