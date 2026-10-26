@@ -1,7 +1,6 @@
 package com.github.fppt.jedismock.operations.sortedsets;
 
 import com.github.fppt.jedismock.exception.ArgumentException;
-import com.github.fppt.jedismock.exception.WrongValueTypeException;
 import com.github.fppt.jedismock.datastructures.Slice;
 import com.github.fppt.jedismock.operations.AbstractRedisOperation;
 import com.github.fppt.jedismock.storage.RedisBase;
@@ -79,9 +78,23 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
         return result.toString();
     }
 
+    /**
+     * Parses a score or increment the way ZADD and ZINCRBY do, replying
+     * {@code ERR value is not a valid float} when it cannot be parsed.
+     */
     public static double toDouble(String value) {
+        return toDouble(value, "ERR value is not a valid float");
+    }
+
+    /**
+     * Parses a double argument, rejecting NaN like Redis does.
+     *
+     * @param errorMessage the error reply Redis gives for this argument, which differs
+     *                     between scores, range bounds and weights.
+     */
+    public static double toDouble(String value, String errorMessage) {
         if ("nan".equalsIgnoreCase(value)) {
-            throw new ArgumentException("*ERR*weight*not*float*");
+            throw new ArgumentException(errorMessage);
         }
         if ("+inf".equalsIgnoreCase(value)) {
             return Double.POSITIVE_INFINITY;
@@ -93,7 +106,7 @@ public abstract class AbstractByScoreOperation extends AbstractRedisOperation {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            throw new WrongValueTypeException("*ERR*not*float*");
+            throw new ArgumentException(errorMessage);
         }
     }
 

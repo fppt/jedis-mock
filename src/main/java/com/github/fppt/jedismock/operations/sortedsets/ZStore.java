@@ -90,7 +90,8 @@ abstract class ZStore extends AbstractByScoreOperation {
                for (int i = 0; i < numKeys; i++) {
                    double weight;
                    try {
-                       weight = toDouble(params().get(index + 1).toString());
+                       weight = toDouble(params().get(index + 1).toString(),
+                               "ERR weight value is not a float");
                    } catch (IndexOutOfBoundsException e) {
                        throw new ArgumentException("ERR syntax error*");
                    }

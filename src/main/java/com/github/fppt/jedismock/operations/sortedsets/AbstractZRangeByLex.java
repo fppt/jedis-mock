@@ -55,9 +55,8 @@ abstract class AbstractZRangeByLex extends AbstractZRange {
         return getStartBound(endSlice);
     }
 
-    protected Slice buildErrorResponse(String param) {
-        return Response.error("*ERR*not*string*: Valid " + param + " must start with '" + INCLUSIVE_PREFIX + "' or '"
-                + EXCLUSIVE_PREFIX + "' or unbounded");
+    protected Slice buildErrorResponse() {
+        return Response.error("ERR min or max not valid string range item");
     }
 
     protected boolean invalidateStart(String start) {
